@@ -9,7 +9,7 @@ export type BombRole = 'technician' | 'expert';
 export type BombStatus = 'setup' | 'armed' | 'defused' | 'exploded';
 
 export interface BombShared {
-  seed?: number;
+  seed?: number | null;
   roles?: Record<string, BombRole>;
   status?: BombStatus;
   /** epoch ms when the 5:00 countdown ends */

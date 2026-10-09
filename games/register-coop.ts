@@ -3,8 +3,16 @@
  */
 import { register } from './registry';
 
-// example:
-// import { meta as myGameMeta } from './my-game/meta';
-// register(myGameMeta, () => import('./my-game/Game'));
+import { meta as bombDefusalMeta } from './bomb-defusal/meta';
+register(bombDefusalMeta, () => import('./bomb-defusal/Game'));
+
+import { meta as heistPlannerMeta } from './heist-planner/meta';
+register(heistPlannerMeta, () => import('./heist-planner/Game'));
+
+import { meta as escapeRoomMeta } from './escape-room/meta';
+register(escapeRoomMeta, () => import('./escape-room/Game'));
+
+import { meta as mindMeldMeta } from './mind-meld/meta';
+register(mindMeldMeta, () => import('./mind-meld/Game'));
 
 export {};
