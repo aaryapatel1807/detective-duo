@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import type { GameProps } from '../types';
 import type { TTTShared } from './types';
 import { ROUNDS, WINS_NEEDED, emptyBoard, isDraw, place, winnerOf } from './logic';
+import type { Mark } from './logic';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 
@@ -38,7 +39,7 @@ export default function TicTacToeGame({ room }: GameProps) {
 
   // 'a' = lower player id, 'b' = higher. Stable across rounds.
   const myMark = peer ? (me < peer.id ? 'a' : 'b') : 'a';
-  const markOf = (pid: string): string => (peer && pid === (me < peer.id ? me : peer.id) ? 'a' : 'b');
+  const markOf = (pid: string): Mark => (peer && pid === (me < peer.id ? me : peer.id) ? 'a' : 'b');
   const nameOf = (pid: string | null): string =>
     pid === null ? '—' : pid === me ? room.me.name : (peer?.name ?? 'Partner');
 
