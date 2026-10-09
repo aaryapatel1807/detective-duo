@@ -32,7 +32,8 @@ describe('2048 slide/merge', () => {
     g[0] = 2;
     g[1] = 2;
     const right = move(g, 'right');
-    expect(right.grid.slice(0, 4)).toEqual([0, 0, 2, 2]);
+    expect(right.grid.slice(0, 4)).toEqual([0, 0, 0, 4]);
+    expect(right.gained).toBe(4);
 
     const g2 = emptyGrid();
     g2[0] = 4;
