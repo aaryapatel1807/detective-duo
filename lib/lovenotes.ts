@@ -21,10 +21,12 @@ export function getCoopWins(): number {
   return readJSON<number>(COOP_WINS_KEY, 0);
 }
 
-/** Game agents: call after a co-op victory. Returns the new total. */
+/** Game agents: call after a co-op victory. Returns the new total.
+ * Also unlocks one wax-sealed surprise per win (see unlockSurprise). */
 export function recordCoopWin(): number {
   const next = getCoopWins() + 1;
   writeJSON(COOP_WINS_KEY, next);
+  unlockSurprise();
   return next;
 }
 

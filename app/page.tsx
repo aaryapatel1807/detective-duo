@@ -27,11 +27,7 @@ import { readStr } from '../lib/store';
 import { sounds } from '../lib/sound';
 
 /** Teaser folders for games not yet registered — agents remove entries as they ship. */
-const SEALED_CASES = [
-  { title: 'The Crime Mystery', note: 'Co-op flagship · asymmetric clues', icon: '🔍' },
-  { title: 'Black Stories', note: 'Yes/no lateral puzzles', icon: '🕯️' },
-  { title: 'Cipher Breaker', note: 'Decode for hint tokens', icon: '🔐' },
-];
+const SEALED_CASES: { title: string; note: string; icon: string }[] = [];
 
 function RoomPanel() {
   const room = useRoom();

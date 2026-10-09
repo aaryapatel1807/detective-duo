@@ -15,12 +15,16 @@ import {
   getCoopWins,
   readNotes,
   saveNotes,
+  readSurprises,
+  openSurprise,
   type LoveNote,
+  type UnlockedSurprise,
 } from '../../lib/lovenotes';
 import { sounds } from '../../lib/sound';
 
 export default function LoveNotesPage() {
   const [notes, setNotes] = useState<LoveNote[]>([]);
+  const [surprises, setSurprises] = useState<UnlockedSurprise[]>([]);
   const [to, setTo] = useState('');
   const [text, setText] = useState('');
   const [unlockWins, setUnlockWins] = useState(1);
@@ -28,6 +32,7 @@ export default function LoveNotesPage() {
 
   useEffect(() => {
     setNotes(readNotes());
+    setSurprises(readSurprises());
   }, []);
 
   const save = (next: LoveNote[]) => {
@@ -55,6 +60,12 @@ export default function LoveNotesPage() {
   const breakSeal = (id: string) => {
     sounds.paperShuffle();
     save(notes.map((n) => (n.id === id ? { ...n, opened: true } : n)));
+  };
+
+  const openSurpriseSeal = (id: string) => {
+    sounds.stampThud();
+    openSurprise(id);
+    setSurprises(readSurprises());
   };
 
   const remove = (id: string) => save(notes.filter((n) => n.id !== id));
@@ -158,6 +169,53 @@ export default function LoveNotesPage() {
         <p className="text-center font-type text-[0.72rem] tracking-[0.2em] uppercase text-[var(--ink-faint)]">
           No notes yet — seal the first one above.
         </p>
+      )}
+
+      {/* Wax-sealed surprises — one unlocked per co-op win */}
+      <div className="pt-2">
+        <Typewriter text="Sealed Surprises" as="h2" className="text-xl" />
+        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+          Every co-op victory unlocks a wax-sealed surprise. Break the seal, detective.
+        </p>
+      </div>
+      {surprises.length === 0 ? (
+        <p className="text-center font-type text-[0.72rem] tracking-[0.2em] uppercase text-[var(--ink-faint)]">
+          No surprises yet — win a co-op case together to earn one.
+        </p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <AnimatePresence>
+            {surprises.map((s) => (
+              <motion.div
+                key={s.id}
+                layout
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+              >
+                <GlassCard className="relative min-h-[150px] p-5">
+                  <div className="eyebrow">Field reward</div>
+                  {s.opened ? (
+                    <p className="font-type mt-3 text-sm leading-relaxed">{s.text}</p>
+                  ) : (
+                    <div className="flex flex-col items-center py-3">
+                      <WaxSeal size={56} />
+                      <button
+                        onClick={() => openSurpriseSeal(s.id)}
+                        className="noir-btn-ghost mt-3 !py-2"
+                      >
+                        Break the seal
+                      </button>
+                    </div>
+                  )}
+                  <div className="mt-3 font-type text-[0.62rem] text-[var(--ink-faint)]">
+                    {new Date(s.unlockedAt).toLocaleDateString()}
+                  </div>
+                </GlassCard>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       )}
     </div>
   );
