@@ -7,7 +7,7 @@
 import { useEffect, useState, ComponentType } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { getGame, type GameProps } from '../../../games/registry';
+import { getGame, type GameProps } from '../../../games/all';
 import { useRoom } from '../../../lib/realtime/useRoom';
 import { Typewriter } from '../../../components/Typewriter';
 import { GlassCard } from '../../../components/GlassCard';

@@ -17,7 +17,7 @@ import { Typewriter } from '../components/Typewriter';
 import { GlassCard } from '../components/GlassCard';
 import { RankBar } from '../components/RankBar';
 import { ManilaFolder, Polaroid } from '../components/props';
-import { listGames, categories } from '../games/registry';
+import { listGames, categories } from '../games/all';
 import { useRoom } from '../lib/realtime/useRoom';
 import { getXP } from '../lib/xp';
 import { CASES } from '../lib/content/cases';

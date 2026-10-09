@@ -4,7 +4,8 @@
  *   - `meta`: GameMeta (below)
  *   - default: React component receiving GameProps { room }
  *
- * Register the game in games/registry.ts with register(meta, loader).
+ * Register the game in your workstream's games/register-<workstream>.ts fragment
+ * (see games/REGISTRATION.md) with register(meta, loader).
  * The play shell at /play/[game] looks the game up via getGame(slug)
  * and renders it inside a case-folder frame.
  */

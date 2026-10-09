@@ -8,7 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { GlassCard } from '../../../components/GlassCard';
 import { Typewriter } from '../../../components/Typewriter';
 import { RankBar } from '../../../components/RankBar';
-import { listGames } from '../../../games/registry';
+import { listGames } from '../../../games/all';
 import { useRoom } from '../../../lib/realtime/useRoom';
 import { getXP } from '../../../lib/xp';
 import { sounds } from '../../../lib/sound';

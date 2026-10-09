@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 import { GlassCard } from '../../components/GlassCard';
 import { Typewriter } from '../../components/Typewriter';
-import { gamesFor } from '../../games/registry';
+import { gamesFor } from '../../games/all';
 import { sounds } from '../../lib/sound';
 
 const COMING_SOON = ['2048', 'Wordle', 'Minesweeper', 'Snake', 'Memory Match', 'Daily Puzzle'];
