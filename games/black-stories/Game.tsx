@@ -25,8 +25,8 @@ export default function BlackStoriesGame({ room }: GameProps) {
   const story = gs.storyId ? getStory(gs.storyId) : undefined;
   const qa = gs.qa ?? [];
   const askedCount = gs.askedCount ?? 0;
-  const awarded: Record<string, boolean> = (gs as any).awarded ?? {};
-  const claimedBy: string | null = (gs as any).claimedBy ?? null;
+  const awarded: Record<string, boolean> = gs.awarded ?? {};
+  const claimedBy: string | null = gs.claimedBy ?? null;
 
   const isHost = hostId === room.me.id;
   const isSleuth = hostId !== null && !isHost;

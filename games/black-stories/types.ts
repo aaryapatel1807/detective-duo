@@ -16,5 +16,6 @@ export interface BlackStoriesShared {
   phase?: BlackStoriesPhase;
   qa?: QAEntry[];
   askedCount?: number;
-  awarded?: boolean;
+  awarded?: Record<string, boolean>;
+  claimedBy?: string | null;
 }
