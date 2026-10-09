@@ -3,8 +3,7 @@
  */
 import { register } from './registry';
 
-// example:
-// import { meta as myGameMeta } from './my-game/meta';
-// register(myGameMeta, () => import('./my-game/Game'));
+import { meta as crimeMysteryMeta } from './crime-mystery/meta';
+register(crimeMysteryMeta, () => import('./crime-mystery/Game'));
 
 export {};
