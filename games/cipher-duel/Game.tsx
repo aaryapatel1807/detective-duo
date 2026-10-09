@@ -205,7 +205,7 @@ export default function CipherDuelGame({ room }: GameProps) {
           </div>
           {room.peer && (
             <div className="mt-3 text-center text-xs text-[var(--ink-dim)]">
-              {playerName(room, opponentId)} has made {(guesses[opponentId] ?? []).length} guesses
+              {playerName(room, opponentId)} has made {(opponentId ? guesses[opponentId] ?? [] : []).length} guesses
             </div>
           )}
         </GlassCard>
@@ -218,13 +218,14 @@ export default function CipherDuelGame({ room }: GameProps) {
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 text-left">
             {ids.map((pid) => {
-              const other = pid === room.me.id ? opponentId : room.me.id;
+              const other: string | null = pid === room.me.id ? opponentId : room.me.id;
               const pg = guesses[pid] ?? [];
+              const crackedCode = other ? codes[other] ?? '????' : '—';
               return (
                 <div key={pid} className="glass-card !rounded-2xl p-3">
                   <div className="eyebrow">{playerName(room, pid)} cracked</div>
                   <div className="type-heading mt-1 text-2xl tracking-[0.2em]">
-                    {other ? codes[other] ?? '????' : '—'}
+                    {crackedCode}
                   </div>
                   <div className="text-xs text-[var(--ink-dim)]">
                     in {pg.length} {pg.length === 1 ? 'guess' : 'guesses'}

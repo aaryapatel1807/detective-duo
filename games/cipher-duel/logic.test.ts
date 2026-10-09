@@ -17,13 +17,13 @@ describe('cipher-duel logic', () => {
   it('scores bulls and cows', () => {
     expect(scoreBullsCows('7391', '7391')).toEqual({ bulls: 4, cows: 0 });
     expect(scoreBullsCows('7391', '1973')).toEqual({ bulls: 0, cows: 4 });
-    expect(scoreBullsCows('7391', '7428')).toEqual({ bulls: 1, cows: 1 });
+    expect(scoreBullsCows('7391', '7932')).toEqual({ bulls: 1, cows: 2 });
     expect(scoreBullsCows('7391', '0000')).toEqual({ bulls: 0, cows: 0 });
   });
 
   it('appends scored guesses', () => {
-    const g = addScoredGuess({}, 'p1', '7391', '7428');
-    expect(g.p1).toEqual([{ guess: '7428', bulls: 1, cows: 1 }]);
+    const g = addScoredGuess({}, 'p1', '7391', '7932');
+    expect(g.p1).toEqual([{ guess: '7932', bulls: 1, cows: 2 }]);
   });
 
   it('first exact guess wins', () => {

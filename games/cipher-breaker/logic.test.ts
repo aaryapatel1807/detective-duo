@@ -7,7 +7,7 @@ import {
   normalizeAnswer,
 } from './logic';
 import { BREAKER_CIPHERS } from './content';
-import { caesarDecode, atbashDecode } from '../../../lib/content/ciphers';
+import { caesarDecode, atbashDecode } from '../../lib/content/ciphers';
 
 describe('cipher-breaker logic', () => {
   it('normalizes answers for comparison', () => {

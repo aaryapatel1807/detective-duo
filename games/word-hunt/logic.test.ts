@@ -53,7 +53,8 @@ describe('word-hunt logic', () => {
   });
 
   it('treats Q tiles as Qu', () => {
-    const b = ['Q', 'U', 'I', 'T', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+    // Q(0)-I(1)-T(2) is an adjacent chain; the Q tile covers "QU"
+    const b = ['Q', 'I', 'T', 'X', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M'];
     expect(canFormWord(b, 'QUIT')).toBe(true);
   });
 

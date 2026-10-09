@@ -8,7 +8,7 @@
 import {
   CIPHERS,
   type Cipher,
-} from '../../../lib/content/ciphers';
+} from '../../lib/content/ciphers';
 
 export interface BreakerCipher extends Cipher {
   /** Decoded keyword granted as a hint token on solve. */
@@ -23,6 +23,17 @@ const BANK_KEYWORDS: Record<string, { keyword: string; difficulty: BreakerCipher
   'c-3': { keyword: 'DECOY', difficulty: 'medium' },
   'c-4': { keyword: 'SAFE', difficulty: 'medium' },
   'c-5': { keyword: 'PAPER', difficulty: 'medium' },
+};
+
+/**
+ * The shared bank has typos in three messages (they don't decode to their
+ * solutions). Override them locally so every cipher in THIS game is solvable
+ * — the bank file itself stays untouched (read-only).
+ */
+const MESSAGE_FIXES: Record<string, string> = {
+  'c-2': 'QIIX XLI FERO, LEPJ TEWX XAIPZI', // shift 4 of "MEET THE BANK, HALF PAST TWELVE"
+  'c-3': 'GSV YIRVU RH Z WVXLB', // atbash of "THE BRIEF IS A DECOY"
+  'c-4': 'YMJ SZRGJW YMJ XFKJ MNIJX', // shift 5 of "THE NUMBER THE SAFE HIDES"
 };
 
 const EXTRA_CIPHERS: BreakerCipher[] = [
@@ -61,6 +72,7 @@ const EXTRA_CIPHERS: BreakerCipher[] = [
 export const BREAKER_CIPHERS: BreakerCipher[] = [
   ...CIPHERS.map((c) => ({
     ...c,
+    message: MESSAGE_FIXES[c.id] ?? c.message,
     keyword: BANK_KEYWORDS[c.id]?.keyword ?? 'UNKNOWN',
     difficulty: BANK_KEYWORDS[c.id]?.difficulty ?? ('medium' as const),
   })),
