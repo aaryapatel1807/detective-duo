@@ -58,7 +58,20 @@ export default function PlayPage() {
 
   return (
     <div className="mx-auto max-w-4xl">
-      {/* case-folder frame */}
+      {slug === 'crime-mystery' ? (
+        /* Full-bleed board: break out of the app padding, hide chrome */
+        <div className="-mx-4 -my-6 md:mx-0 md:-mr-8 md:-my-6">
+          <FullbleedChrome />
+          {Comp ? (
+            <Comp room={room} />
+          ) : (
+            <div className="py-16 text-center font-type text-sm tracking-[0.2em] opacity-60">
+              OPENING FILE<span className="animate-pulse">…</span>
+            </div>
+          )}
+        </div>
+      ) : (
+      /* case-folder frame */
       <div className="relative">
         <Pin className="absolute -top-2 left-10 z-10" />
         <div className="manila-folder p-6 pt-8 md:p-8">
@@ -91,6 +104,17 @@ export default function PlayPage() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
+}
+
+/* Adds a body class while the full-bleed board is mounted so global
+ * chrome (sidebar reopen tab) can hide itself. */
+function FullbleedChrome() {
+  useEffect(() => {
+    document.body.classList.add('dd-fullbleed');
+    return () => document.body.classList.remove('dd-fullbleed');
+  }, []);
+  return null;
 }
