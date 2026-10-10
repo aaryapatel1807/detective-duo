@@ -1229,6 +1229,12 @@ a.cm-logo:hover .cm-font-display { text-shadow: 0 0 12px rgba(217, 164, 65, 0.6)
   display: flex;
   align-items: flex-end;
 }
+/* Unlayered CSS beats Tailwind's layered `lg:hidden`; enforce it explicitly. */
+@media (min-width: 1024px) {
+  .cm-sheet-backdrop {
+    display: none !important;
+  }
+}
 
 .cm-sheet {
   width: 100%;
