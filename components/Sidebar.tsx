@@ -62,6 +62,7 @@ export function Sidebar() {
       )}
 
       <motion.aside
+        data-app-sidebar
         initial={false}
         animate={{ x: collapsed ? '-105%' : '0%' }}
         transition={{ type: 'spring', stiffness: 260, damping: 30 }}
