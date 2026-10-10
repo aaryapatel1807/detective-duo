@@ -1,0 +1,48 @@
+/* Noir-flavored word bank for Draw & Guess. 40 hand-written words. */
+
+export const DRAW_WORDS: string[] = [
+  'trenchcoat',
+  'fedora',
+  'revolver',
+  'handcuffs',
+  'fingerprint',
+  'magnifier',
+  'briefcase',
+  'typewriter',
+  'whiskey',
+  'cigar',
+  'vault',
+  'alleyway',
+  'streetlamp',
+  'raincoat',
+  'newspaper',
+  'camera',
+  'binoculars',
+  'lockpick',
+  'diamond',
+  'suitcase',
+  'detective',
+  'suspect',
+  'witness',
+  'getaway car',
+  'mask',
+  'flashlight',
+  'notebook',
+  'coffee',
+  'telephone',
+  'telegram',
+  'pawnshop',
+  'casino',
+  'train station',
+  'fog',
+  'shadow',
+  'key',
+  'safe',
+  'envelope',
+  'bloodhound',
+  'siren',
+];
+
+export function randomWord(rand: () => number = Math.random): string {
+  return DRAW_WORDS[Math.floor(rand() * DRAW_WORDS.length)];
+}
