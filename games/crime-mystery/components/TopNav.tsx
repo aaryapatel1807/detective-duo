@@ -18,15 +18,22 @@ export function TopNav({
   setTab,
   online,
   caseTitle,
+  lobbyHref,
 }: {
   tab: MysteryTab;
   setTab: (t: MysteryTab) => void;
   online: boolean;
   caseTitle?: string;
+  lobbyHref?: string;
 }) {
   return (
     <header className="cm-topnav">
-      <div className="cm-logo">
+      <a
+        href={lobbyHref ?? '/'}
+        className="cm-logo"
+        title="Back to lobby"
+        aria-label="Back to lobby"
+      >
         <span className="cm-logo-mark">
           <Fingerprint size={20} strokeWidth={1.8} />
         </span>
@@ -38,7 +45,7 @@ export function TopNav({
             {caseTitle ? caseTitle.toUpperCase().slice(0, 26) : 'CASE FILES'}
           </div>
         </div>
-      </div>
+      </a>
 
       <nav className="cm-tabs" aria-label="Mystery sections">
         {TABS.map((t) => (

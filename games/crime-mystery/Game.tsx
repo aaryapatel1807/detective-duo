@@ -29,13 +29,11 @@ import type { CaseFile } from '../../lib/content/cases';
 import { sounds } from '../../lib/sound';
 import { TopNav, type MysteryTab } from './components/TopNav';
 import { CaseSelect } from './components/CaseSelect';
-import { CasePanel } from './components/CasePanel';
-import { EvidenceBoard } from './components/EvidenceBoard';
-import { SuspectCarousel } from './components/SuspectCarousel';
+import { BoardView } from './components/board/BoardView';
 import { HypothesesView } from './components/HypothesesView';
 import { NotesView } from './components/NotesView';
 import { ProfileView } from './components/ProfileView';
-import { AccuseView, SolvedView, FailedView, DoubtBanner } from './components/VerdictViews';
+import { AccuseView, SolvedView, FailedView } from './components/VerdictViews';
 
 const SLUG = 'crime-mystery';
 
@@ -51,6 +49,8 @@ export default function CrimeMysteryGame({ room }: GameProps) {
 
   const [tab, setTab] = useState<MysteryTab>('cases');
   const [focusSuspect, setFocusSuspect] = useState<string | null>(null);
+  const boardFullbleed = phase === 'board' && tab === 'cases' && !!activeCase;
+  const lobbyHref = room.roomCode ? `/room/${room.roomCode}` : '/';
 
   const patch = (p: MysteryShared) =>
     room.setShared({ games: { [SLUG]: p } } as Record<string, unknown>);
@@ -106,7 +106,7 @@ export default function CrimeMysteryGame({ room }: GameProps) {
 
   return (
     <div
-      className={`cm-root ${cinzel.variable} ${inter.variable} ${jetbrains.variable} ${caveat.variable}`}
+      className={`cm-root ${boardFullbleed ? 'cm-fullbleed' : ''} ${cinzel.variable} ${inter.variable} ${jetbrains.variable} ${caveat.variable}`}
     >
       <TopNav
         tab={tab}
@@ -116,6 +116,7 @@ export default function CrimeMysteryGame({ room }: GameProps) {
         }}
         online={room.peer !== null}
         caseTitle={activeCase?.title}
+        lobbyHref={lobbyHref}
       />
 
       {phase === 'select' && (
@@ -190,104 +191,42 @@ function CaseWorkspace({
   const sealedIds = caseFile.clues.filter((c) => !mineIds.has(c.id)).map((c) => c.id);
   const caseIndex = Math.max(0, ALL_CASES.findIndex((c) => c.id === caseFile.id));
 
-  const addSticky = () => {
-    const stickies = gs.stickies ?? [];
-    sounds.pinTap();
-    patch({
-      stickies: [
-        ...stickies,
-        {
-          id: `sticky-${Date.now()}`,
-          text: '',
-          pos: { x: 30 + Math.random() * 30, y: 35 + Math.random() * 20 },
-          rotate: Math.random() * 6 - 3,
-        },
-      ],
-    });
-  };
-
-  const scrollToLineup = () => {
-    sounds.typewriterClick();
-    document.getElementById('cm-lineup')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  };
-
   return (
-    <div className="cm-shell">
+    <>
       {tab === 'cases' && (
-        <>
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            {room.peer === null && (
-              <div className="flex overflow-hidden rounded-lg border border-[var(--cm-border)]">
-                {(['a', 'b'] as Side[]).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setPracticeSide(practiceSide === s ? null : s)}
-                    className={`cm-font-mono px-3 py-1.5 text-xs ${
-                      mySide === s
-                        ? 'bg-[var(--cm-gold)] text-black'
-                        : 'text-[var(--cm-ink-dim)]'
-                    }`}
-                    title="Practice: preview a side's deal"
-                  >
-                    {s === 'a' ? 'A-eyes' : 'B-eyes'}
-                  </button>
-                ))}
-              </div>
-            )}
-            <span className="cm-font-mono text-xs text-[var(--cm-ink-dim)]">
-              {room.peer
-                ? `${room.me.name} sees ${mySide === 'a' ? 'A' : 'B'}-clues`
-                : 'Solo practice'}
-            </span>
-            <span className="cm-font-mono ml-auto hidden text-xs italic text-[var(--cm-ink-dim)] sm:inline">
-              “{caseFile.intro.split('.')[0]}.”
-            </span>
-          </div>
-
-          {gs.doubted && <DoubtBanner attempts={gs.attempts ?? 0} />}
-
-          <div className="cm-case-grid">
-            <CasePanel
-              caseFile={caseFile}
-              clues={mine}
-              sealedCount={sealedIds.length}
-              stickiesCount={(gs.stickies ?? []).length}
-              onAddClue={addSticky}
-              onViewLineup={scrollToLineup}
-              caseIndex={caseIndex}
-            />
-            <div className="min-w-0">
-              <EvidenceBoard
-                caseFile={caseFile}
-                gs={gs}
-                patch={patch}
-                mySide={mySide}
-                mine={mine}
-                onOpenSuspect={onOpenSuspect}
-                onAddClue={addSticky}
-              />
-              <SuspectCarousel
-                caseFile={caseFile}
-                onViewProfile={onOpenSuspect}
-                id="cm-lineup"
-              />
-            </div>
-          </div>
-        </>
+        <BoardView
+          room={room}
+          gs={gs}
+          caseFile={caseFile}
+          patch={patch}
+          mySide={mySide}
+          mine={mine}
+          sealedIds={sealedIds}
+          caseIndex={caseIndex}
+          practiceSide={practiceSide}
+          setPracticeSide={setPracticeSide}
+          onOpenSuspect={onOpenSuspect}
+        />
       )}
 
       {tab === 'hypotheses' && (
-        <HypothesesView caseFile={caseFile} focusSuspect={focusSuspect} onAccuse={onAccuse} />
+        <div className="cm-shell">
+          <HypothesesView caseFile={caseFile} focusSuspect={focusSuspect} onAccuse={onAccuse} />
+        </div>
       )}
 
       {tab === 'notes' && (
-        <NotesView room={room} gs={gs} caseFile={caseFile} patch={patch} />
+        <div className="cm-shell">
+          <NotesView room={room} gs={gs} caseFile={caseFile} patch={patch} />
+        </div>
       )}
 
       {tab === 'profile' && (
-        <ProfileView roomLog={gs.log ?? {}} meName={room.me.name} />
+        <div className="cm-shell">
+          <ProfileView roomLog={gs.log ?? {}} meName={room.me.name} />
+        </div>
       )}
-    </div>
+    </>
   );
 }
 

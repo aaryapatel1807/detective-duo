@@ -361,3 +361,8 @@ body {
 *::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* Full-bleed game boards: hide the sidebar reopen tab while mounted. */
+body.dd-fullbleed [data-sidebar-toggle] {
+  display: none !important;
+}

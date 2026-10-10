@@ -53,6 +53,7 @@ export function Sidebar() {
           initial={{ x: -40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           onClick={toggle}
+          data-sidebar-toggle
           className="glass-card fixed left-3 top-1/2 z-40 grid h-16 w-10 -translate-y-1/2 place-items-center text-xl"
           title="Open sidebar"
         >
