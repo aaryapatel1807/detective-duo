@@ -12,136 +12,154 @@ import type { Clue } from '../../lib/content/cases';
 import type { HintExtras, QA } from './types';
 
 export const INTERROGATIONS: Record<string, Record<string, QA[]>> = {
-  /* ================= BANK CASE 1: The Quiet Vault ================= */
+  /* ================= CASE 1: The Empty Theater ================= */
   'quiet-vault': {
-    'Rhea Malhotra': [
+    'Victor Kane': [
       {
-        q: 'Walk me through that night, minute by minute.',
-        a: 'I locked my office at 7, had dinner with my husband, and was asleep by 11. He\'ll tell you the same. I reported the theft myself at 8 AM — why would I steal and then call the police?',
+        q: 'Where were you that night?',
+        a: 'Home. All evening. Alone, reading. A quiet night in — ask my bookshelf.',
       },
       {
-        q: 'Who knew this week\'s vault code?',
-        a: 'Only me. It changes every Monday. I... I may have written it on a sticky note under my keyboard. A moment of laziness. But the note was still there in the morning!',
+        q: 'This comp ticket — Section 12, Row C, in your name, redeemed 21:58?',
+        a: 'I... gave it to a friend. Can\'t recall who. I give away tickets all the time — it\'s the theater business.',
       },
       {
-        q: 'What do you know about Devang?',
-        a: 'He\'s our IT boy. Brilliant, bitter about the promotion. He was in my office last month, "fixing" my PC. I thought nothing of it at the time.',
+        q: 'A man in a trench coat bought coffee across the street at 22:40. In a hurry.',
+        a: 'Plenty of trench coats in this city, detective. It\'s practically a uniform. Was it MY coat? Everyone\'s coat looks the same at night.',
       },
       {
-        q: 'The sandwich from Midnight Bites — yours?',
-        a: 'I haven\'t eaten a midnight sandwich in years. That shop closes at 1 AM. Whoever was in that vault room at 2:47 AM bought dinner hours earlier — someone who planned to stay.',
-      },
-    ],
-    'Devang Shah': [
-      {
-        q: 'Where were you at 2:47 AM?',
-        a: 'Home. Gaming. Alone, unfortunately — no one to vouch for me. I know how that sounds, but it\'s the truth.',
-      },
-      {
-        q: 'Tell me about the keylogger report on your laptop.',
-        a: 'It\'s a diagnostic tool! I run security audits — that\'s literally my job. Finding keyloggers is what I DO. ...It flagged the manager\'s PC last month, yes.',
-      },
-      {
-        q: 'Did you know the vault code?',
-        a: 'No! Only Mrs. Malhotra knew it. I\'m IT, not management. I don\'t get codes, I get blamed when the printer jams.',
-      },
-      {
-        q: 'You were passed over for promotion. Twice.',
-        a: 'And that makes me a thief? I wanted a raise, detective, not a prison sentence. Six minutes in and out at 2:47 AM — that takes planning I... that anyone would need to plan carefully.',
+        q: 'Marcus got a 40-second call at 22:47 — from a burner bought with cash that afternoon.',
+        a: 'I don\'t own a burner phone. Check my records — my personal phone never called him that night. You\'re chasing shadows.',
       },
     ],
-    'Meera Bai': [
+    'Lena Voss': [
       {
-        q: 'What time did your shift end?',
-        a: 'Midnight, as always. I badged out at 12:03 — the machine remembers even when people don\'t. I never came back in.',
+        q: 'Marcus was replacing you next season.',
+        a: 'He told me at dinner. I cried into my soup, detective — and then I went on stage and gave the performance of my life. Two hundred people watched me do it.',
       },
       {
-        q: 'Did you ever see the vault code?',
-        a: 'Once, on a yellow paper under madam\'s keyboard. Little numbers. I cannot read English numerals, so it meant nothing to me. I told no one.',
+        q: 'Where were you at 23:12?',
+        a: 'Taking my bow. The second act ended 23:05, the applause ran long. Ask anyone in Section 12 — front row, they\'ll remember.',
       },
       {
-        q: 'Your son\'s surgery — expensive?',
-        a: 'Very. But I would scrub a thousand floors before I stole, detective. My son needs a mother he can respect more than he needs the operation.',
+        q: 'Did you see Victor that night?',
+        a: 'I saw half the city that night — it\'s a theater. Victor? He avoids premieres since the restaurant failed. Said theaters remind him of debts.',
       },
       {
-        q: 'Did you see anyone near the bank after midnight?',
-        a: 'No. The street was empty when I left. Whoever came at 2:47 came quietly — the vault makes no sound when it\'s opened properly, with the code.',
+        q: 'The film offer in Mumbai — is that why you weren\'t afraid of being replaced?',
+        a: 'Exactly. Marcus replacing me was an inconvenience, not a tragedy. I was already halfway out the stage door.',
+      },
+    ],
+    'Tommy Riggs': [
+      {
+        q: 'Blue wool fibers from your uniform are on the victim\'s coat.',
+        a: 'Intermission! He brushed past me at the lobby doors around nine — I remember, he dropped his program. I never left the lobby after that, the cameras will show you.',
+      },
+      {
+        q: 'You were fired last month.',
+        a: 'For the tip jar. Stupid. The head usher took pity — rehired me off the books, tonight of all nights. If the office finds out I\'m finished, so please —',
+      },
+      {
+        q: 'Did you see anyone go to the rear exit?',
+        a: 'The lobby was mine all night, detective. Nobody passed me going back there after the second act started. Whoever went out the rear didn\'t come through me.',
+      },
+      {
+        q: 'What did you hear around 23:12?',
+        a: 'Applause. The curtain call was still going. Then nothing — then the screaming from the alley. I ran with everyone else.',
+      },
+    ],
+    'Sam Okafor': [
+      {
+        q: 'Three months\' back pay. That\'s a motive.',
+        a: 'It\'s an annoyance. I\'ve been owed before — you don\'t kill the man who signs the checks, detective, you outlive him.',
+      },
+      {
+        q: 'Those lockpick gouges on the rear door — professional opinion?',
+        a: 'An insult, that\'s what. Clumsy gouges, wrong angle, no finesse. A child with a screwdriver. Whoever did that never picked a lock in their life — and I would know.',
+      },
+      {
+        q: 'Where were you at 23:12?',
+        a: 'Striking the set with the crew — three of them will tell you. I didn\'t leave the stage until half past eleven.',
+      },
+      {
+        q: 'You did time for burglary. As a locksmith.',
+        a: 'Two years, served. That\'s why the gouges offend me — people look at me. But a real locksmith doesn\'t leave marks, detective. That door was butchered by an amateur playing burglar.',
       },
     ],
   },
 
-  /* ================= BANK CASE 2: Midnight Express ================= */
+  /* ================= CASE 2: Midnight Express ================= */
   'midnight-express': {
     'Ava D\'Souza': [
       {
-        q: 'Where were you between 23:00 and 00:30?',
-        a: 'The dining car, darling, the whole time. The waiter remembers me — I sent back the soup twice. Ask him.',
+        q: 'Where were you 22:00–23:00?',
+        a: 'The dining car, darling, the whole time. The waiter remembers me — I sent back the soup twice. Ask him, ask the tables around me.',
       },
       {
-        q: 'Your bag contains digitalis. Bitter almonds, in overdose.',
-        a: 'It\'s my heart medicine, prescribed for years. Do I look like someone who wastes her own prescriptions? Rustomji was about to ruin me over the counterfeit line — I wanted him discredited, not dead.',
+        q: 'Your monogrammed scarf was inside the ventilator shaft.',
+        a: 'My scarf was STOLEN from my berth that evening! I said nothing — imagine the scandal, a heiress reporting a stolen scarf while a man dies. Someone wanted it found there.',
       },
       {
-        q: 'Did you know the victim?',
-        a: 'Everyone in the trade knew Rustomji. He called my diamonds "glass with ambition." Charming man. Dead man.',
+        q: 'Rustomji was about to expose your counterfeit diamonds.',
+        a: 'He was about to TRY. My lawyers were ready, my papers were clean. I wanted him discredited in court, detective — not dead in a berth.',
       },
       {
-        q: 'Did you see anyone near berth B-14?',
-        a: 'I was in the dining car, not the coach. But I did notice the collector making an extra round — odd, that. Collectors don\'t usually double back.',
-      },
-    ],
-    'Col. Arjun Rathore (retd.)': [
-      {
-        q: 'You never left your berth, you say.',
-        a: 'That\'s right. Slept like a log. The motion of the train, you know.',
-      },
-      {
-        q: 'Then why is your whisky flask completely full?',
-        a: '...I quit drinking a year ago. The flask is — it\'s a habit. A prop. It makes the other passengers comfortable, a colonel with his flask.',
-      },
-      {
-        q: 'You owed Rustomji ₹10 lakh.',
-        a: 'An old army debt between friends. He never pressed me. Killing him wouldn\'t erase it — the estate would press harder.',
-      },
-      {
-        q: 'Did you hear anything that night?',
-        a: 'Only the train. I sleep heavily — too heavily, my wife used to say. I heard nothing, saw nothing, and I\'m not proud of that.',
+        q: 'Did you know the conductor?',
+        a: 'I know porters from conductors the way I know soup from consommé — barely. He never spoke to me. Why do you ask about HIM?',
       },
     ],
     'Imran Qureshi': [
       {
-        q: 'You checked berth B-14 twice. Once off your route.',
-        a: 'The gentleman asked for water at 23:05 — I carried the glass myself. The second visit... I wanted to make sure he was comfortable. It\'s called service.',
+        q: 'A thread from your uniform is on the ventilator screws.',
+        a: 'I serviced that vent at 21:00 — it\'s in my work log! Rattling grille, passenger complaint. I tightened the screws myself, an hour before anything happened.',
       },
       {
-        q: 'Your prints are on the poisoned glass.',
-        a: 'Of course they are — I CARRIED it! Empty, from the pantry, at his request. I never touched it after he drank. Check the pantry glasses if you don\'t believe me.',
+        q: 'You served the victim\'s tea at 22:00.',
+        a: 'Plain tea, from the pantry urn, in front of the attendant. He was alive and drinking it at half ten — the conductor saw him. The tea was innocent.',
       },
       {
-        q: 'Your brother\'s shop — Rustomji ruined it.',
-        a: 'His loan terms, yes. My brother lost everything. Do I hate Rustomji? Ask my brother. But I\'m a railway man with twenty years of service — I don\'t poison passengers.',
+        q: 'Rustomji\'s company sacked your father.',
+        a: 'Years ago. My father made his peace; I make the beds. Do I like the Rustomjis? No. Did I gas a man through a vent? I don\'t even know what cyanide smells like.',
       },
       {
-        q: 'Who else handled that glass?',
-        a: 'Only the victim, after me. It went from my hand to his berth table. Whatever was in it got there after 23:05 — or before I picked it up. I\'d check the pantry.',
+        q: 'Did you see the conductor near berth B-14?',
+        a: 'He\'s everywhere — it\'s his train. Around quarter past ten? I was two coaches down. Ask the attendant, she tracks us all.',
       },
     ],
-    'Kabir "K" Anand': [
+    'Dr. Arvind Sen': [
       {
-        q: 'Show me your ticket.',
-        a: 'Of course — Surat to Vadodara, first class. ...It\'s a stub. The other half — I must have dropped it. These things happen.',
+        q: 'You carry cyanide antidote kits.',
+        a: 'Because I once watched a poisoning victim die while I fumbled, detective. Never again. The kits are guilt, not equipment.',
       },
       {
-        q: 'The manifest says you were never booked on this coach.',
-        a: 'Manifests have errors! Indian Railways, detective, not the Swiss watch industry. I boarded at Surat like everyone else.',
+        q: 'Where were you at 22:15?',
+        a: 'Two berths down, treating an asthma attack — the patient\'s wife held the lamp. Ask her. I was saving a life while someone was taking one.',
       },
       {
-        q: 'A torn ticket half was found in the victim\'s shoe.',
-        a: 'In his SHOE? That\'s absurd. Why would — look, maybe he picked up litter. Rustomji was a strange man. Ask anyone.',
+        q: 'Rustomji cost you a hospital post.',
+        a: 'His testimony, yes — a decade ago. I rebuilt my practice. Revenge has a shelf life, and mine expired years ago.',
       },
       {
-        q: 'Where are the diamonds now?',
-        a: 'What diamonds? The briefcase is gone and everyone looks at the courier. I was hired to GUARD them, not steal them. ...One diamond in the door seal? I know nothing about that.',
+        q: 'Bitter almonds — you\'d recognize the smell instantly.',
+        a: 'Any doctor would. When they called me to B-14, I knew before I knelt. But knowing the smell and making the vapor are different arts.',
+      },
+    ],
+    'R. Yadav': [
+      {
+        q: 'Where were you 22:00–22:30?',
+        a: 'On rounds. The train doesn\'t run itself, detective — tickets, berths, passengers. I was... around. You know how it is.',
+      },
+      {
+        q: 'Your master-key log shows the vent panel opened at 22:15.',
+        a: 'The log — hmm. I check panels all the time. Rattling, dust, passengers complain. It\'s routine. Probably routine.',
+      },
+      {
+        q: 'Only YOU carry that key.',
+        a: '...The spare is in the office. Anyone could — no. Look, I opened many panels that night. It\'s my job to open panels.',
+      },
+      {
+        q: 'Rustomji\'s company denied your injury claim.',
+        a: 'Paperwork. Denied, appealed, denied again. My pension died in a filing cabinet. But I\'m a railway man, twenty years — I don\'t gas passengers through vents. Ask anyone.',
       },
     ],
   },
@@ -158,26 +176,26 @@ export const INTERROGATIONS: Record<string, Record<string, QA[]>> = {
         a: 'Only me. I changed it that morning — standard rotation. I told no one. I certainly didn\'t write it down anywhere.',
       },
       {
-        q: 'There are cadmium-red flakes on your gala shoes.',
+        q: 'Cadmium-red flakes on your gala shoes — the Bride\'s pigment.',
         a: 'Cadmium red? That\'s... that\'s the Bride\'s pigment. I must have brushed against the wall during hanging. We all handle the art, detective — it\'s a gallery.',
       },
       {
-        q: 'You were seen topping up your lipstick at 21:05.',
+        q: 'A wine glass with fresh lipstick was left on the loading dock.',
         a: 'A woman maintains herself. What does my lipstick have to do with — is there a glass? Someone left a glass on the dock? I never went near the dock.',
       },
     ],
     'Marco Reyes': [
       {
         q: 'You threatened to "take back what\'s mine."',
-        a: 'Words, detective! Artists threaten the weather. My early works are rotting in their storage and it makes me sick — but I was at the bar all night, ask anyone.',
+        a: 'Words, detective! Artists threaten the weather. My early works rot in their storage and it sickens me — but I was at the bar all night, ask anyone.',
       },
       {
         q: 'Do you wear makeup?',
-        a: 'Never. Paint under my nails, yes — makeup, no. Why do you ask about makeup at a time like this?',
+        a: 'Never. Paint under my nails, yes — makeup, no. Why ask about makeup at a time like this?',
       },
       {
         q: 'Did you know the dock code?',
-        a: 'The old one, maybe, from years ago. The new one? Vera changes it like she changes exhibitions. Nobody tells the artist anything.',
+        a: 'The old one, maybe, from years ago. The new one? Vera changes it like exhibitions. Nobody tells the artist anything.',
       },
       {
         q: 'What do you make of the theft?',
@@ -187,7 +205,7 @@ export const INTERROGATIONS: Record<string, Record<string, QA[]>> = {
     'Tommy Briggs': [
       {
         q: 'Your log says "all clear, 21:15." The cameras were dark.',
-        a: 'I... may have dozed off. Twenty minutes, maybe. I wrote the log when I woke up — standard entries, standard times. I didn\'t see anything because there was nothing on the monitors. They were dark!',
+        a: 'I... may have dozed off. Twenty minutes. I wrote the log when I woke — standard entries, standard times. I saw nothing because the monitors were dark!',
       },
       {
         q: 'You disabled the camera loop yourself.',
@@ -205,7 +223,7 @@ export const INTERROGATIONS: Record<string, Record<string, QA[]>> = {
     'Helena Voss': [
       {
         q: 'You left at 20:00. Why so early?',
-        a: 'Galas exhaust me, detective. I said my goodbyes, my driver took me home. The valet will confirm — 20:00 sharp.',
+        a: 'Galas exhaust me, detective. I said my goodbyes; my driver took me home. The valet will confirm — 20:00 sharp.',
       },
       {
         q: 'Do you wear lipstick?',
@@ -213,7 +231,7 @@ export const INTERROGATIONS: Record<string, Record<string, QA[]>> = {
       },
       {
         q: 'You\'ve been buying Marco\'s early works.',
-        a: 'Quietly, yes. Someone should preserve them. If I wanted the Bride I would simply have bought it — I offered twice, in fact.',
+        a: 'Quietly, yes. Someone should preserve them. If I wanted the Bride I would simply have bought it — I offered twice.',
       },
       {
         q: 'Who do you think took it?',
@@ -245,7 +263,7 @@ export const INTERROGATIONS: Record<string, Record<string, QA[]>> = {
     'Rahul Mehta': [
       {
         q: 'Your gym keycard shows no entry all night.',
-        a: 'The... the card reader was broken! I used the side door. I work out at 2 AM, it clears my head. Ask — well. Ask the machines.',
+        a: 'The... the reader was broken! I used the side door. I work out at 2 AM, it clears my head. Ask — well. Ask the machines.',
       },
       {
         q: 'You doubled the fire insurance six weeks ago.',
@@ -267,7 +285,7 @@ export const INTERROGATIONS: Record<string, Record<string, QA[]>> = {
       },
       {
         q: 'You still have a back-door key.',
-        a: '...Yes. I forgot to return it. It\'s in my drawer at home, with old bus passes. Check — it\'s never left the drawer.',
+        a: '...Yes. I forgot to return it. It\'s in my drawer at home, with old bus passes. It\'s never left the drawer.',
       },
       {
         q: 'Where were you 1:00–4:00 AM?',
@@ -303,7 +321,7 @@ export const INTERROGATIONS: Record<string, Record<string, QA[]>> = {
     'Dev Khanna': [
       {
         q: 'Riya was about to fire you.',
-        a: 'Was she? I... I\'d heard rumors. The non-compete would\'ve ended me. But look at the stream — I never left my chair! Minute zero to the collapse, on camera.',
+        a: 'Was she? I\'d heard rumors. The non-compete would\'ve ended me. But look at the stream — I never left my chair! Minute zero to the collapse, on camera.',
       },
       {
         q: 'You recorded a secret farewell episode.',
@@ -343,7 +361,7 @@ export const INTERROGATIONS: Record<string, Record<string, QA[]>> = {
       },
       {
         q: 'Your verified handle was active the minute she drank.',
-        a: 'Exactly — I was at my desk, on camera... well, on chat. My IP, my handle, my assistant beside me. I couldn\'t have touched the bottle from Bandra.',
+        a: 'Exactly — I was at my desk. My IP, my handle, my assistant beside me. I couldn\'t have touched the bottle from Bandra.',
       },
       {
         q: 'Did you know about the sedative?',
@@ -506,24 +524,6 @@ export const INTERROGATIONS: Record<string, Record<string, QA[]>> = {
         a: 'Don\'t. Don\'t ask me that. ...She was dancing most of the night. That\'s all I know. That\'s all I\'ll say.',
       },
     ],
-    'Chef Auguste Dubois': [
-      {
-        q: 'Vikram\'s review closed your Paris restaurant.',
-        a: '"The soufflé of a sad man" — his words. I hated him for a year. Then I built something better here. Revenge is a dish I stopped serving.',
-      },
-      {
-        q: 'You never left the kitchen?',
-        a: 'Never. Three of my staff will swear it — the pass, the ovens, all night. And we never touched the champagne; the waiters poured tableside.',
-      },
-      {
-        q: 'You spat in his soup once.',
-        a: 'A private dinner, years ago. Petty, yes. Poison? I am a chef, detective — my weapons are salt and timing.',
-      },
-      {
-        q: 'Who had access to the flutes?',
-        a: 'The catering crew at setup, the waiters, anyone near the table. The chip on that glass — someone marked it hours before. Ask who was at setup at 16:00.',
-      },
-    ],
     'Meera Krishnan': [
       {
         q: 'You were being fired on Friday.',
@@ -600,24 +600,6 @@ export const INTERROGATIONS: Record<string, Record<string, QA[]>> = {
         a: 'He says months. But... I found his cigarette case in the workroom bin last week. I didn\'t mention it. He\'s my son.',
       },
     ],
-    'Devang Prasad': [
-      {
-        q: 'Guru owed you ₹5 lakh.',
-        a: 'And dead men pay nothing — I know my business, detective. I went to scare him, not kill him. "The hands that owe me," I was going to say.',
-      },
-      {
-        q: 'You were outside at 20:30.',
-        a: 'The lights were on, he was alive — I could see him through the glass, bent over the bench. I lost my nerve. By 21:00 I was across town, hating myself.',
-      },
-      {
-        q: 'Did you enter the shop?',
-        a: 'No. Ask the street — ask my phone. I never touched the door, the drawer, or the loupe. I touch shoulders, not evidence.',
-      },
-      {
-        q: 'Who would poison a loupe?',
-        a: 'Someone who knew the ritual and the bench. Someone patient. Not a debt collector, detective — we\'re impatient people.',
-      },
-    ],
     'Arjun Mehta': [
       {
         q: 'Your Pune ticket is dated the day AFTER the murder.',
@@ -647,7 +629,7 @@ export const INTERROGATIONS: Record<string, Record<string, QA[]>> = {
       },
       {
         q: 'Your trailer door camera: in at 22:05, out at 23:10.',
-        a: 'Learning lines. Alone. The camera doesn\'t lie — I never went near rig A. My assistant\'s cigarette run is irrelevant; I was inside.',
+        a: 'Learning lines. Alone. The camera doesn\'t lie — I never went near rig A.',
       },
       {
         q: 'Did you know the wire would be cut?',
@@ -712,24 +694,6 @@ export const INTERROGATIONS: Record<string, Record<string, QA[]>> = {
         a: 'Whoever was near rig A between half nine and half ten with a serrated knife. That\'s a short list with one name on it, and it isn\'t mine.',
       },
     ],
-    'Roshni Verma': [
-      {
-        q: 'Your complaint against Vicky — HR buried it.',
-        a: 'Months of harassment, buried in a drawer. I kept a copy. And a lawyer\'s card. I was going to ruin him legally, detective — the slow, permanent way.',
-      },
-      {
-        q: 'Café receipt, 22:31, fifteen minutes away.',
-        a: 'Coffee run for the AD team. The barista remembers me — I ordered eleven coffees and complained about the cups. I was off-site when the wire was cut.',
-      },
-      {
-        q: 'Did you know about the rigging knives?',
-        a: 'I\'m a junior AD — I know where the coffee is. Knives, harness keys, rigs: that\'s Karan\'s kingdom.',
-      },
-      {
-        q: 'Are you glad he\'s dead?',
-        a: '...No. I wanted him exposed, in daylight, with cameras. This — this makes him a martyr and me a suspect. I hate it.',
-      },
-    ],
   },
 };
 
@@ -738,40 +702,40 @@ export const HINT_EXTRAS: Record<string, HintExtras> = {
   'quiet-vault': {
     bonus: {
       id: 'qv-x',
-      text: 'FIELD INTEL: The keylogger captured the vault code being typed on the manager\'s PC at 9:14 PM last Monday — keystrokes don\'t lie about who typed them.',
+      text: 'FIELD INTEL: The burner from the 22:47 call was bought with cash at 16:20 — the shopkeeper remembers a man in a trench coat who paid without a word.',
       split: 'both',
     },
     nudges: [
-      'Nudge: only ONE person in this case ever touched the manager\'s keyboard after hours. Who installs their own "security tools"?',
-      'Nudge: the sandwich shop closes at 1 AM. The vault opened at 2:47 AM. Someone ate dinner early — planning a long night.',
+      'Nudge: the ticket stub says Victor was there at 21:58. His mouth says he was home. Paper doesn\'t lie; brothers do.',
+      'Nudge: the lockpick gouges are amateur hour. Ask who BENEFITS from a fake break-in — and who couldn\'t pick a lock to save his life.',
     ],
   },
   'midnight-express': {
     bonus: {
       id: 'mx-x',
-      text: 'FIELD INTEL: The lavatory door latch was jammed from the INSIDE between 23:30 and 00:10 — someone hid in there until the coach slept.',
+      text: 'FIELD INTEL: The ventilator access panel\'s keyhole has fresh brass scratches — the master key turned there recently, and only one key fits.',
       split: 'both',
     },
     nudges: [
-      'Nudge: the torn ticket half was in the VICTIM\'s shoe. Why would a dying man pocket a stranger\'s ticket?',
-      'Nudge: digitalis needs a source. Whose bag held the prescription — and who was in the dining car all night?',
+      'Nudge: the scarf was planted. Ask who had a reason to want Ava D\'Souza blamed.',
+      'Nudge: the tea was drunk safely at 22:30. The poison came later, through the air. Who controls the air on a train?',
     ],
   },
   'the-painted-alibi': {
     bonus: {
       id: 'pa-x',
-      text: 'FIELD INTEL: The gallery\'s keypad audit log shows the dock code was entered at 21:18 — during the camera blackout — by someone who typed it correctly on the FIRST try.',
+      text: 'FIELD INTEL: The keypad audit log shows the dock code entered at 21:18 — during the camera blackout — typed correctly on the FIRST try.',
       split: 'both',
     },
     nudges: [
-      'Nudge: the new code was told to exactly one person. The lipstick glass belongs to someone who was still at the gala at 21:00.',
-      'Nudge: cadmium red is not a color you pick up "brushing against a wall." It\'s a color you pick up carrying a canvas.',
+      'Nudge: the new code was told to exactly one person. The lipstick glass belongs to someone still at the gala at 21:00.',
+      'Nudge: cadmium red isn\'t picked up "brushing against a wall." It\'s picked up carrying a canvas.',
     ],
   },
   'the-midnight-baker': {
     bonus: {
       id: 'mb-x',
-      text: 'FIELD INTEL: A traffic camera two streets from the bakery caught the partner\'s car at 2:41 AM — heading TOWARD the bakery, not the gym.',
+      text: 'FIELD INTEL: A traffic camera two streets from the bakery caught Rahul\'s car at 2:41 AM — heading TOWARD the bakery, not the gym.',
       split: 'both',
     },
     nudges: [
@@ -782,7 +746,7 @@ export const HINT_EXTRAS: Record<string, HintExtras> = {
   'the-poisoned-podcast': {
     bonus: {
       id: 'pp-x',
-      text: 'FIELD INTEL: The studio\'s water cooler log shows the producer took TWO bottles that evening — one for the host, one she never delivered.',
+      text: 'FIELD INTEL: The studio\'s water-cooler log shows the producer took TWO bottles that evening — one for the host, one she never delivered.',
       split: 'both',
     },
     nudges: [
@@ -804,23 +768,23 @@ export const HINT_EXTRAS: Record<string, HintExtras> = {
   'the-masquerade-murder': {
     bonus: {
       id: 'mm-x',
-      text: 'FIELD INTEL: The waiter who served the 23:10 tray remembers the chipped flute was placed at the LEFT end of the tray — by a woman\'s gloved hand — minutes before he lifted it.',
+      text: 'FIELD INTEL: The waiter who served the 23:10 tray remembers the chipped flute placed at the LEFT end — by a woman\'s gloved hand — minutes before he lifted it.',
       split: 'both',
     },
     nudges: [
-      'Nudge: four suspects are pinned to witnessed alibis at 23:05. The fifth slipped away from the dance floor for exactly five minutes.',
+      'Nudge: three suspects are pinned to witnessed alibis at 23:05. The fourth slipped away from the dance floor for exactly five minutes.',
       'Nudge: the chip was cut that afternoon. Who was at the catering setup at 16:00 "choosing the champagne"?',
     ],
   },
   'the-clockmakers-last-tick': {
     bonus: {
       id: 'cm-x',
-      text: 'FIELD INTEL: The back-door bolt was recently oiled — it turned silently. Only someone who knew the shop\'s squeaks would bother.',
+      text: 'FIELD INTEL: The back-door bolt was recently oiled — it turns silently now. Only someone who knew the shop\'s squeaks would bother.',
       split: 'both',
     },
     nudges: [
       'Nudge: the paste was applied 21:30–22:00. The apprentice left at 21:09. The arithmetic clears her — who does it leave?',
-      'Nudge: a ticket for the wrong day, prints on a wiped drawer, and poison from the family farm. Three facts, one name.',
+      'Nudge: a ticket for the wrong day, prints on a wiped drawer, poison from the family farm. Three facts, one name.',
     ],
   },
   'the-final-reel': {
@@ -830,8 +794,8 @@ export const HINT_EXTRAS: Record<string, HintExtras> = {
       split: 'both',
     },
     nudges: [
-      'Nudge: four alibis are airtight — door camera, verified call, timestamped dailies, a 22:31 receipt fifteen minutes away. The fifth alibi has no log entry.',
-      'Nudge: the "all clear" at 21:00 and the cut at 21:30–22:30 were signed by the same hand.',
+      'Nudge: three alibis are airtight — door camera, verified call, timestamped dailies. The fourth alibi has no log entry.',
+      'Nudge: the \'all clear\' at 21:00 and the cut at 21:30–22:30 were signed by the same hand.',
     ],
   },
 };
