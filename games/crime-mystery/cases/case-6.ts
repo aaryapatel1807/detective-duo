@@ -1,4 +1,5 @@
 import type { CaseFile } from '../../../lib/content/cases';
+import ART_EVIDENCE_RAINY_ALLEY from '../../../lib/content/crime-art/rainy_alley';
 import ART_PORTRAITS_BEANIE_MAN from '../../../lib/content/crime-art/beanie_man';
 import ART_PORTRAITS_FLATCAP_MAN from '../../../lib/content/crime-art/flatcap_man';
 import ART_PORTRAITS_OLDER_WOMAN from '../../../lib/content/crime-art/older_woman';
@@ -8,6 +9,7 @@ import ART_PORTRAITS_SCARF_WOMAN from '../../../lib/content/crime-art/scarf_woma
 const CASE_6: CaseFile = {
     id: 'the-lighthouse-keeper',
     title: 'The Lighthouse Keeper',
+    cover: ART_EVIDENCE_RAINY_ALLEY,
     difficulty: 'medium',
     location: 'Blackrock Island Lighthouse',
     intro:

@@ -1,4 +1,5 @@
 import type { CaseFile } from '../../../lib/content/cases';
+import ART_EVIDENCE_TORN_TICKET from '../../../lib/content/crime-art/torn_ticket';
 import ART_PORTRAITS_OLDER_WOMAN from '../../../lib/content/crime-art/older_woman';
 import ART_PORTRAITS_SCARF_WOMAN from '../../../lib/content/crime-art/scarf_woman';
 import ART_PORTRAITS_SUIT_MAN from '../../../lib/content/crime-art/suit_man';
@@ -8,6 +9,7 @@ import ART_PORTRAITS_YOUNG_MAN from '../../../lib/content/crime-art/young_man';
 const CASE_5: CaseFile = {
     id: 'the-poisoned-podcast',
     title: 'The Poisoned Podcast',
+    cover: ART_EVIDENCE_TORN_TICKET,
     difficulty: 'medium',
     location: 'Night Frequency Studio',
     intro:

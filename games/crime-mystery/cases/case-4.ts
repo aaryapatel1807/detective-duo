@@ -1,4 +1,5 @@
 import type { CaseFile } from '../../../lib/content/cases';
+import ART_EVIDENCE_COFFEE_RECEIPT from '../../../lib/content/crime-art/coffee_receipt';
 import ART_PORTRAITS_OLDER_WOMAN from '../../../lib/content/crime-art/older_woman';
 import ART_PORTRAITS_SCARF_WOMAN from '../../../lib/content/crime-art/scarf_woman';
 import ART_PORTRAITS_SUIT_MAN from '../../../lib/content/crime-art/suit_man';
@@ -8,6 +9,7 @@ import ART_PORTRAITS_WORKER_MAN from '../../../lib/content/crime-art/worker_man'
 const CASE_4: CaseFile = {
     id: 'the-midnight-baker',
     title: 'The Midnight Baker',
+    cover: ART_EVIDENCE_COFFEE_RECEIPT,
     difficulty: 'easy',
     location: 'Crumb & Craft Bakery, MG Road',
     intro:
