@@ -362,7 +362,13 @@ body {
   background: transparent;
 }
 
-/* Full-bleed game boards: hide the sidebar reopen tab while mounted. */
+/* Full-bleed game boards: hide all app chrome while mounted. */
 body.dd-fullbleed [data-sidebar-toggle] {
   display: none !important;
+}
+body.dd-fullbleed [data-app-sidebar] {
+  display: none !important;
+}
+body.dd-fullbleed main {
+  padding: 0 !important;
 }
