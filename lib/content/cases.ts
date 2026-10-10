@@ -32,13 +32,27 @@ export type ClueSplit = 'a' | 'b' | 'both';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 export type ClueCard = 'polaroid' | 'note' | 'report';
 
+import ART_PORTRAITS_BEANIE_MAN from './crime-art/beanie_man';
+import ART_PORTRAITS_FLATCAP_MAN from './crime-art/flatcap_man';
+import ART_PORTRAITS_SCARF_WOMAN from './crime-art/scarf_woman';
+import ART_PORTRAITS_SUIT_MAN from './crime-art/suit_man';
+import ART_PORTRAITS_TRENCH_MAN from './crime-art/trench_man';
+import ART_PORTRAITS_WORKER_MAN from './crime-art/worker_man';
+import ART_PORTRAITS_YOUNG_MAN from './crime-art/young_man';
+import ART_EVIDENCE_BROKEN_WATCH from './crime-art/broken_watch';
+import ART_EVIDENCE_COFFEE_RECEIPT from './crime-art/coffee_receipt';
+import ART_EVIDENCE_EMPTY_THEATER from './crime-art/empty_theater';
+import ART_EVIDENCE_LOCKPICK_MARKS from './crime-art/lockpick_marks';
+import ART_EVIDENCE_RAINY_ALLEY from './crime-art/rainy_alley';
+import ART_EVIDENCE_TORN_TICKET from './crime-art/torn_ticket';
+
 export interface Clue {
   id: string;
   text: string;
   split: ClueSplit;
   /** board card style — defaults to 'note' */
   card?: ClueCard;
-  /** evidence image for polaroids, e.g. '/crime-mystery/evidence/empty-theater.webp' */
+  /** evidence image for polaroids, e.g. ART_EVIDENCE_EMPTY_THEATER */
   art?: string;
   /** short label pinned above the card */
   label?: string;
@@ -49,7 +63,7 @@ export interface Suspect {
   motive: string;
   alibi: string;
   secret: string;
-  /** noir portrait, e.g. '/crime-mystery/portraits/trench-man.webp' */
+  /** noir portrait, e.g. ART_PORTRAITS_TRENCH_MAN */
   portrait?: string;
   /** one-line lineup descriptor, e.g. 'MALE · 35-45 YRS · TRENCH COAT' */
   descriptor?: string;
@@ -112,7 +126,7 @@ export const CASES: CaseFile[] = [
     title: 'The Empty Theater',
     difficulty: 'easy',
     location: 'The Grand Regal Theater',
-    cover: '/crime-mystery/evidence/empty-theater.webp',
+    cover: ART_EVIDENCE_EMPTY_THEATER,
     intro:
       'The Grand Regal Theater, 11:20 PM. Minutes after the final curtain of "The Glass Key", owner Marcus Hale is found dead at the rear alley exit — a single blow to the head. The cast is still in costume. Four people stayed late. One of them is a killer.',
     clues: [
@@ -121,7 +135,7 @@ export const CASES: CaseFile[] = [
         text: 'A torn comp ticket — Section 12, Row C, issued in Victor Kane\'s name — was redeemed at 21:58. Victor swears he never came to the theater that night.',
         split: 'both',
         card: 'polaroid',
-        art: '/crime-mystery/evidence/torn-ticket.webp',
+        art: ART_EVIDENCE_TORN_TICKET,
         label: 'TORN THEATER TICKET',
       },
       {
@@ -129,7 +143,7 @@ export const CASES: CaseFile[] = [
         text: 'Marcus Hale\'s wristwatch, smashed in the struggle, stopped at 23:12. The stage manager confirms the second act ended at 23:05 — the killer struck minutes after.',
         split: 'a',
         card: 'polaroid',
-        art: '/crime-mystery/evidence/broken-watch.webp',
+        art: ART_EVIDENCE_BROKEN_WATCH,
         label: 'BROKEN WATCH',
       },
       {
@@ -144,7 +158,7 @@ export const CASES: CaseFile[] = [
         text: 'A 22:40 cash receipt from the café across the street. The barista remembers a man in a trench coat buying black coffee — "in a terrible hurry."',
         split: 'a',
         card: 'polaroid',
-        art: '/crime-mystery/evidence/coffee-receipt.webp',
+        art: ART_EVIDENCE_COFFEE_RECEIPT,
         label: 'COFFEE SHOP RECEIPT',
       },
       {
@@ -152,7 +166,7 @@ export const CASES: CaseFile[] = [
         text: 'Fresh gouges around the rear exit lock — clumsy, amateur work. The department\'s locksmith says a professional would never leave marks like these.',
         split: 'b',
         card: 'polaroid',
-        art: '/crime-mystery/evidence/lockpick-marks.webp',
+        art: ART_EVIDENCE_LOCKPICK_MARKS,
         label: 'LOCKPICK MARKS',
       },
       {
@@ -169,7 +183,7 @@ export const CASES: CaseFile[] = [
         motive: 'Marcus\'s younger brother and co-owner. Owes Marcus ₹30 lakh from a failed restaurant — and Marcus was done waiting.',
         alibi: 'Claims he was home alone all evening, reading. No witness.',
         secret: 'Bought a prepaid burner phone with cash at 16:20 on the day of the murder.',
-        portrait: '/crime-mystery/portraits/trench-man.webp',
+        portrait: ART_PORTRAITS_TRENCH_MAN,
         descriptor: 'MALE · 35-45 YRS · TRENCH COAT',
       },
       {
@@ -177,7 +191,7 @@ export const CASES: CaseFile[] = [
         motive: 'Lead actress. Marcus was replacing her next season — she found out at dinner.',
         alibi: 'On stage from 21:00 to 23:05 — two hundred witnesses. VERIFIED.',
         secret: 'She was planning to quit anyway — a film offer in Mumbai.',
-        portrait: '/crime-mystery/portraits/scarf-woman.webp',
+        portrait: ART_PORTRAITS_SCARF_WOMAN,
         descriptor: 'FEMALE · 25-35 YRS · SCARF',
       },
       {
@@ -185,7 +199,7 @@ export const CASES: CaseFile[] = [
         motive: 'Usher. Fired last month for pocketing tips; Marcus refused to rehire him.',
         alibi: 'Lobby CCTV shows him at his post 22:00–23:30.',
         secret: 'The head usher rehired him off the books that very night — he\'s terrified of being found out.',
-        portrait: '/crime-mystery/portraits/beanie-man.webp',
+        portrait: ART_PORTRAITS_BEANIE_MAN,
         descriptor: 'MALE · 28-38 YRS · BEANIE',
       },
       {
@@ -193,7 +207,7 @@ export const CASES: CaseFile[] = [
         motive: 'Stagehand. Three months\' back pay owed — Marcus kept "forgetting."',
         alibi: 'With the stage crew striking the set until 23:30 — three crew confirm.',
         secret: 'Ex-con. Did two years for burglary — as a locksmith. He hates that everyone knows.',
-        portrait: '/crime-mystery/portraits/flatcap-man.webp',
+        portrait: ART_PORTRAITS_FLATCAP_MAN,
         descriptor: 'MALE · 40-50 YRS · FLAT CAP',
       },
     ],
@@ -206,7 +220,7 @@ export const CASES: CaseFile[] = [
     title: 'Midnight Express',
     difficulty: 'medium',
     location: 'Deccan Express · Berth B-14',
-    cover: '/crime-mystery/evidence/rainy-alley.webp',
+    cover: ART_EVIDENCE_RAINY_ALLEY,
     intro:
       'The 23:40 Deccan Express pulls into Vadodara with diamond merchant Seth Rustomji dead in berth B-14 — locked from the inside — and his briefcase of diamonds gone. The train never stopped between Surat and Vadodara. Four people shared that coach. One of them committed the perfect locked-room murder. It wasn\'t perfect.',
     clues: [
@@ -273,7 +287,7 @@ export const CASES: CaseFile[] = [
         motive: 'Perfume heiress. Rustomji was about to expose her counterfeit diamond line.',
         alibi: 'Dining car 22:00–23:00 — waiter plus three passengers.',
         secret: 'Her monogrammed scarf was stolen from her berth that evening — she reported it to no one, afraid of scandal.',
-        portrait: '/crime-mystery/portraits/scarf-woman.webp',
+        portrait: ART_PORTRAITS_SCARF_WOMAN,
         descriptor: 'FEMALE · 30s · HEIRESS',
       },
       {
@@ -281,7 +295,7 @@ export const CASES: CaseFile[] = [
         motive: 'Porter. Rustomji\'s company sacked his father — a small, old grudge.',
         alibi: 'Serving the next coach 22:00–23:00 — the attendant confirms.',
         secret: 'He pockets lost-and-found cash. Small thefts — never anything like this.',
-        portrait: '/crime-mystery/portraits/young-man.webp',
+        portrait: ART_PORTRAITS_YOUNG_MAN,
         descriptor: 'MALE · 20s · PORTER',
       },
       {
@@ -289,7 +303,7 @@ export const CASES: CaseFile[] = [
         motive: 'Doctor. Rustomji\'s testimony once cost him a hospital post.',
         alibi: 'Treating an asthma attack at 22:15 — witnessed.',
         secret: 'He carries cyanide antidote because he once failed to save a poisoning victim. Guilt, not guilt.',
-        portrait: '/crime-mystery/portraits/suit-man.webp',
+        portrait: ART_PORTRAITS_SUIT_MAN,
         descriptor: 'MALE · 50s · DOCTOR',
       },
       {
@@ -297,7 +311,7 @@ export const CASES: CaseFile[] = [
         motive: 'Conductor. Rustomji\'s freight company denied his injury claim — his pension died with the paperwork.',
         alibi: '"On rounds," he says — no one can place him 22:00–22:30.',
         secret: 'He lifted Ava\'s scarf from her berth at 21:30 — to plant it in the vent.',
-        portrait: '/crime-mystery/portraits/worker-man.webp',
+        portrait: ART_PORTRAITS_WORKER_MAN,
         descriptor: 'MALE · 40s · CONDUCTOR',
       },
     ],
