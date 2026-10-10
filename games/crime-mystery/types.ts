@@ -58,6 +58,18 @@ export interface MysteryShared {
   log?: Record<string, CaseResult>;
   /** playerId -> true once XP was awarded for the solved case. */
   awarded?: Record<string, boolean>;
+  /** Detective-created sticky notes pinned to the board. */
+  stickies?: BoardSticky[];
+  /** Shared detective notepad text (Notes tab). */
+  notepad?: string;
+}
+
+/** A player-authored sticky note on the evidence board. */
+export interface BoardSticky {
+  id: string;
+  text: string;
+  pos: PinPos;
+  rotate: number;
 }
 
 /** A scripted interrogation Q&A pair for one suspect. */
