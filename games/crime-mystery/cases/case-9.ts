@@ -1,4 +1,5 @@
 import type { CaseFile } from '../../../lib/content/cases';
+import ART_EVIDENCE_EMPTY_THEATER from '../../../lib/content/crime-art/empty_theater';
 import ART_PORTRAITS_FLATCAP_MAN from '../../../lib/content/crime-art/flatcap_man';
 import ART_PORTRAITS_SCARF_WOMAN from '../../../lib/content/crime-art/scarf_woman';
 import ART_PORTRAITS_SUIT_MAN from '../../../lib/content/crime-art/suit_man';
@@ -8,6 +9,7 @@ import ART_PORTRAITS_WORKER_MAN from '../../../lib/content/crime-art/worker_man'
 const CASE_9: CaseFile = {
     id: 'the-final-reel',
     title: 'The Final Reel',
+    cover: ART_EVIDENCE_EMPTY_THEATER,
     difficulty: 'hard',
     location: 'Film City · Night Shoot',
     intro:

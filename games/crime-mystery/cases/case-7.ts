@@ -1,4 +1,5 @@
 import type { CaseFile } from '../../../lib/content/cases';
+import ART_EVIDENCE_EMPTY_THEATER from '../../../lib/content/crime-art/empty_theater';
 import ART_PORTRAITS_OLDER_WOMAN from '../../../lib/content/crime-art/older_woman';
 import ART_PORTRAITS_SCARF_WOMAN from '../../../lib/content/crime-art/scarf_woman';
 import ART_PORTRAITS_YOUNG_MAN from '../../../lib/content/crime-art/young_man';
@@ -7,6 +8,7 @@ import ART_PORTRAITS_YOUNG_MAN from '../../../lib/content/crime-art/young_man';
 const CASE_7: CaseFile = {
     id: 'the-masquerade-murder',
     title: 'The Masquerade Murder',
+    cover: ART_EVIDENCE_EMPTY_THEATER,
     difficulty: 'hard',
     location: 'Raheja Masquerade Ball',
     intro:

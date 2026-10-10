@@ -1,4 +1,5 @@
 import type { CaseFile } from '../../../lib/content/cases';
+import ART_EVIDENCE_LOCKPICK_MARKS from '../../../lib/content/crime-art/lockpick_marks';
 import ART_PORTRAITS_BEANIE_MAN from '../../../lib/content/crime-art/beanie_man';
 import ART_PORTRAITS_OLDER_WOMAN from '../../../lib/content/crime-art/older_woman';
 import ART_PORTRAITS_SCARF_WOMAN from '../../../lib/content/crime-art/scarf_woman';
@@ -8,6 +9,7 @@ import ART_PORTRAITS_YOUNG_MAN from '../../../lib/content/crime-art/young_man';
 const CASE_3: CaseFile = {
     id: 'the-painted-alibi',
     title: 'The Painted Alibi',
+    cover: ART_EVIDENCE_LOCKPICK_MARKS,
     difficulty: 'easy',
     location: 'Kala Ghoda Gallery',
     intro:
