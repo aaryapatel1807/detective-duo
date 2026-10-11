@@ -1,0 +1,651 @@
+/* ============================================================
+ * DETECTIVE DUO — shared noir GAME-UI KIT (kit.css)
+ *
+ * One consistent noir look for all games in games/<slug>/.
+ * Tokens match games/crime-mystery/noir.css; everything is
+ * namespaced under .gk-* so it never leaks into hub chrome.
+ *
+ * EXPECTED CSS VARS (all have hex fallbacks, so the kit works
+ * standalone even when the hub token block isn't present):
+ *   --hub-bg        #0a0f1a   noir navy base
+ *   --hub-panel     rgba(13, 20, 36, 0.66) frosted panel
+ *   --hub-panel-2   #111a2e   solid panel
+ *   --hub-border    #1f2a3d   hairline borders
+ *   --hub-gold      #d9a441   THE accent (CTAs, active states)
+ *   --hub-gold-soft rgba(217, 164, 65, 0.14)
+ *   --hub-green     #3ddc84   live / correct / easy
+ *   --hub-red       #b3261e   danger / hard
+ *   --hub-ink       #ece7d9   primary text
+ *   --hub-ink-dim   #8b95a8   secondary text
+ *   --hub-display   Cinzel, serif   display headings
+ *   --hub-mono      'JetBrains Mono', monospace  micro-labels
+ *   --hub-body      Inter, sans-serif  body text
+ *
+ * USAGE: import './kit.css' once in a game's Game.tsx, then use
+ * the <gk-*> components from ./index.ts.
+ * Rules: unlayered custom CSS. Responsive overrides use explicit
+ * @media blocks (never Tailwind's responsive `hidden` against a
+ * custom `display` rule). Mobile-first: everything is single
+ * column / full width until the first breakpoint.
+ * ============================================================ */
+
+/* ---------------- base reset for kit components ---------------- */
+
+.gk-root, .gk-root * {
+  box-sizing: border-box;
+}
+
+.gk-root {
+  --gk-bg: var(--hub-bg, #0a0f1a);
+  --gk-panel: var(--hub-panel, rgba(13, 20, 36, 0.66));
+  --gk-panel-2: var(--hub-panel-2, #111a2e);
+  --gk-border: var(--hub-border, #1f2a3d);
+  --gk-gold: var(--hub-gold, #d9a441);
+  --gk-gold-soft: var(--hub-gold-soft, rgba(217, 164, 65, 0.14));
+  --gk-green: var(--hub-green, #3ddc84);
+  --gk-red: var(--hub-red, #b3261e);
+  --gk-ink: var(--hub-ink, #ece7d9);
+  --gk-ink-dim: var(--hub-ink-dim, #8b95a8);
+  --gk-font-display: var(--hub-display, Cinzel, Georgia, serif);
+  --gk-font-mono: var(--hub-mono, JetBrains Mono, ui-monospace, monospace);
+  --gk-font-body: var(--hub-body, Inter, system-ui, sans-serif);
+  --gk-glass-blur: var(--hub-glass-blur, blur(26px) saturate(1.6));
+
+  color: var(--gk-ink);
+  font-family: var(--gk-font-body);
+  touch-action: manipulation;
+}
+
+/* ============================================================
+ * GameButton
+ * ============================================================ */
+
+.gk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  font-family: var(--gk-font-display);
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.gk-btn:active { transform: scale(0.97); }
+
+.gk-btn:focus-visible {
+  outline: 2px solid var(--gk-gold);
+  outline-offset: 2px;
+}
+
+.gk-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.gk-btn--primary {
+  background: linear-gradient(180deg, #e6b654 0%, var(--gk-gold) 55%, #b9882f 100%);
+  color: #14100a;
+  box-shadow: 0 6px 22px rgba(217, 164, 65, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.gk-btn--primary:hover:not(:disabled) {
+  box-shadow: 0 8px 28px rgba(217, 164, 65, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.gk-btn--ghost {
+  background: rgba(13, 20, 36, 0.45);
+  border-color: rgba(217, 164, 65, 0.35);
+  color: var(--gk-ink);
+}
+
+.gk-btn--ghost:hover:not(:disabled) {
+  border-color: var(--gk-gold);
+  background: var(--gk-gold-soft);
+}
+
+.gk-btn--danger {
+  background: rgba(179, 38, 30, 0.14);
+  border-color: rgba(179, 38, 30, 0.55);
+  color: #f0857a;
+}
+
+.gk-btn--danger:hover:not(:disabled) {
+  background: rgba(179, 38, 30, 0.24);
+}
+
+/* sizes — md (default) is the 44px touch minimum */
+.gk-btn--sm { min-height: 36px; font-size: 0.72rem; padding: 0 0.9rem; border-radius: 10px; }
+.gk-btn--md { min-height: 44px; font-size: 0.875rem; }
+.gk-btn--lg { min-height: 52px; font-size: 1rem; padding: 0 1.75rem; }
+
+/* ============================================================
+ * ScoreHUD — twin score cards (YOU / OPPONENT or SCORE / BEST)
+ * ============================================================ */
+
+.gk-score-hud {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.gk-score-card {
+  background: var(--gk-panel);
+  backdrop-filter: var(--gk-glass-blur);
+  -webkit-backdrop-filter: var(--gk-glass-blur);
+  border: 1px solid var(--gk-border);
+  border-radius: 16px;
+  padding: 0.6rem 0.75rem 0.7rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 28px rgba(0, 0, 0, 0.45);
+  text-align: center;
+  min-width: 0;
+}
+
+.gk-score-label {
+  font-family: var(--gk-font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gk-gold);
+  margin-bottom: 0.25rem;
+}
+
+.gk-score-value {
+  font-family: var(--gk-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 1.6rem;
+  line-height: 1.1;
+  color: var(--gk-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gk-score-sub {
+  font-family: var(--gk-font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  color: var(--gk-ink-dim);
+  margin-top: 0.2rem;
+  text-transform: uppercase;
+}
+
+/* "beat your best" reward glow */
+.gk-score-card--record {
+  border-color: rgba(217, 164, 65, 0.55);
+  box-shadow: 0 0 0 1px rgba(217, 164, 65, 0.25),
+    0 0 26px rgba(217, 164, 65, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.gk-score-card--record .gk-score-value { color: var(--gk-gold); }
+
+/* ============================================================
+ * TurnBanner — glass pill naming whose turn it is.
+ * Footprint is always reserved: the pill renders identically
+ * whether it is your turn or not, so the board never shifts.
+ * ============================================================ */
+
+.gk-turn-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* reserved footprint */
+}
+
+.gk-turn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 1.15rem;
+  border-radius: 999px;
+  background: rgba(13, 20, 36, 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--gk-border);
+  font-family: var(--gk-font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gk-ink-dim);
+  white-space: nowrap;
+}
+
+.gk-turn-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gk-ink-dim);
+  flex: none;
+}
+
+.gk-turn-pill--yours {
+  border-color: rgba(217, 164, 65, 0.55);
+  color: var(--gk-gold);
+  background: rgba(217, 164, 65, 0.1);
+}
+
+.gk-turn-pill--yours .gk-turn-dot {
+  background: var(--gk-gold);
+  box-shadow: 0 0 10px rgba(217, 164, 65, 0.9);
+  animation: gk-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes gk-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gk-turn-pill--yours .gk-turn-dot { animation: none; }
+}
+
+/* ============================================================
+ * ResultModal — end-state overlay on the dimmed board.
+ * Wrap board + modal in .gk-modal-scope (position: relative).
+ * The final board stays visible behind the dimmed overlay.
+ * ============================================================ */
+
+.gk-modal-scope { position: relative; }
+
+.gk-result-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(5, 8, 15, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: gk-fade-in 0.25s ease both;
+}
+
+@keyframes gk-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.gk-result-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--gk-panel);
+  backdrop-filter: var(--gk-glass-blur);
+  -webkit-backdrop-filter: var(--gk-glass-blur);
+  border: 1px solid rgba(217, 164, 65, 0.28);
+  border-radius: 20px;
+  padding: 1.75rem 1.5rem 1.5rem;
+  text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 24px 60px rgba(0, 0, 0, 0.6);
+  animation: gk-pop-in 0.3s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+
+@keyframes gk-pop-in {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.gk-result-eyebrow {
+  font-family: var(--gk-font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gk-ink-dim);
+  margin-bottom: 0.5rem;
+}
+
+.gk-result-headline {
+  font-family: var(--gk-font-display);
+  font-weight: 700;
+  font-size: 1.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gk-gold);
+  margin: 0 0 0.5rem;
+  line-height: 1.15;
+}
+
+.gk-result-card--lose .gk-result-headline { color: #f0857a; }
+.gk-result-card--draw .gk-result-headline { color: var(--gk-ink); }
+
+.gk-result-stat {
+  font-family: var(--gk-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  color: var(--gk-ink);
+  margin: 0 0 1.25rem;
+}
+
+.gk-result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* ============================================================
+ * GameCard — generic tile/cell with noir state fills.
+ * states: default (interactive) / active (focused) /
+ * correct (green) / misplaced (gold) / absent (dim gray)
+ * ============================================================ */
+
+.gk-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.4rem;
+  border-radius: 12px;
+  border: 1px solid var(--gk-border);
+  background: var(--gk-panel-2);
+  color: var(--gk-ink);
+  font-family: var(--gk-font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  text-align: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+
+button.gk-card { cursor: pointer; }
+button.gk-card:active { transform: scale(0.94); }
+
+.gk-card:focus-visible {
+  outline: 2px solid var(--gk-gold);
+  outline-offset: 2px;
+}
+
+.gk-card--default {
+  border-style: solid;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* empty-slot look: bordered outline, colorless */
+.gk-card--empty {
+  background: transparent;
+  border-style: dashed;
+  border-color: rgba(139, 149, 168, 0.35);
+  color: transparent;
+}
+
+.gk-card--active {
+  border-color: var(--gk-gold);
+  box-shadow: 0 0 0 1px var(--gk-gold),
+    0 0 18px rgba(217, 164, 65, 0.35);
+}
+
+.gk-card--correct {
+  background: linear-gradient(180deg, #2fae72 0%, #22845a 100%);
+  border-color: #4be094;
+  color: #0a1410;
+}
+
+.gk-card--misplaced {
+  background: linear-gradient(180deg, #e0b45a 0%, #c1922f 100%);
+  border-color: #f5d76e;
+  color: #14100a;
+}
+
+.gk-card--absent {
+  background: #232c42;
+  border-color: #232c42;
+  color: rgba(236, 231, 217, 0.55);
+}
+
+/* ============================================================
+ * Badge — difficulty + player-count pills
+ * easy = green, medium = gold, hard = red
+ * ============================================================ */
+
+.gk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid;
+  font-family: var(--gk-font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gk-badge--easy {
+  color: var(--gk-green);
+  border-color: rgba(61, 220, 132, 0.5);
+  background: rgba(61, 220, 132, 0.1);
+}
+
+.gk-badge--medium {
+  color: var(--gk-gold);
+  border-color: rgba(217, 164, 65, 0.5);
+  background: var(--gk-gold-soft);
+}
+
+.gk-badge--hard {
+  color: #f0857a;
+  border-color: rgba(179, 38, 30, 0.7);
+  background: rgba(179, 38, 30, 0.16);
+}
+
+.gk-badge--count {
+  color: var(--gk-ink-dim);
+  border-color: var(--gk-border);
+  background: rgba(13, 20, 36, 0.55);
+}
+
+/* ============================================================
+ * ProgressBar — XP-style bar with numbers
+ * ============================================================ */
+
+.gk-progress { width: 100%; }
+
+.gk-progress-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.gk-progress-label {
+  font-family: var(--gk-font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gk-ink-dim);
+}
+
+.gk-progress-numbers {
+  font-family: var(--gk-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--gk-gold);
+  white-space: nowrap;
+}
+
+.gk-progress-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #16202f;
+  border: 1px solid var(--gk-border);
+  overflow: hidden;
+}
+
+.gk-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #b9882f, var(--gk-gold));
+  box-shadow: 0 0 12px rgba(217, 164, 65, 0.45);
+  transition: width 0.35s ease;
+  min-width: 0;
+}
+
+/* ============================================================
+ * TimerChip — subtle mono tabular clock
+ * ============================================================ */
+
+.gk-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--gk-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--gk-ink-dim);
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--gk-border);
+  border-radius: 10px;
+  background: rgba(13, 20, 36, 0.45);
+  white-space: nowrap;
+}
+
+.gk-timer-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+ * DifficultySelect — 3-option selector cards
+ * ============================================================ */
+
+.gk-diff-label {
+  font-family: var(--gk-font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gk-ink-dim);
+  margin-bottom: 0.5rem;
+}
+
+.gk-diff-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+}
+
+.gk-diff-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 56px;
+  padding: 0.65rem 0.4rem;
+  border-radius: 14px;
+  border: 1px solid var(--gk-border);
+  background: var(--gk-panel-2);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+}
+
+.gk-diff-option:active { transform: scale(0.96); }
+
+.gk-diff-option:focus-visible {
+  outline: 2px solid var(--gk-gold);
+  outline-offset: 2px;
+}
+
+.gk-diff-name {
+  font-family: var(--gk-font-display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gk-ink);
+}
+
+.gk-diff-hint {
+  font-family: var(--gk-font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--gk-ink-dim);
+  text-align: center;
+}
+
+.gk-diff-option--selected { border-color: var(--gk-gold); background: var(--gk-gold-soft); }
+.gk-diff-option--selected.gk-diff-option--easy { border-color: var(--gk-green); background: rgba(61, 220, 132, 0.1); }
+.gk-diff-option--selected.gk-diff-option--medium { border-color: var(--gk-gold); background: var(--gk-gold-soft); }
+.gk-diff-option--selected.gk-diff-option--hard { border-color: var(--gk-red); background: rgba(179, 38, 30, 0.16); }
+
+.gk-diff-option--selected .gk-diff-name { color: var(--gk-gold); }
+.gk-diff-option--selected.gk-diff-option--easy .gk-diff-name { color: var(--gk-green); }
+.gk-diff-option--selected.gk-diff-option--hard .gk-diff-name { color: #f0857a; }
+
+/* ============================================================
+ * SectionTitle — mono eyebrow + Cinzel heading
+ * ============================================================ */
+
+.gk-section-eyebrow {
+  font-family: var(--gk-font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gk-gold);
+  margin-bottom: 0.35rem;
+}
+
+.gk-section-title {
+  font-family: var(--gk-font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gk-ink);
+  margin: 0;
+  line-height: 1.2;
+}
+
+/* ============================================================
+ * Responsive display overrides — explicit @media only
+ * (unlayered CSS beats Tailwind utilities by source order,
+ * so these never fight `hidden` classes from Tailwind)
+ * ============================================================ */
+
+@media (min-width: 640px) {
+  .gk-score-value { font-size: 2rem; }
+  .gk-section-title { font-size: 1.85rem; }
+  .gk-result-card { max-width: 420px; }
+  .gk-result-headline { font-size: 2rem; }
+  .gk-result-actions { flex-direction: row; }
+  .gk-result-actions .gk-btn { flex: 1; }
+}
+
+@media (min-width: 1024px) {
+  .gk-score-value { font-size: 2.25rem; }
+}

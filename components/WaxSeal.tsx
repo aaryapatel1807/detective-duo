@@ -2,8 +2,9 @@
 
 import { motion } from 'framer-motion';
 import { cn } from '../lib/cn';
+import './hub-noir.css';
 
-/** Red wax seal (love notes, case-closed stamps). */
+/** Red wax seal with gold ring (love notes, case-closed stamps). */
 export function WaxSeal({
   size = 64,
   className,
@@ -18,7 +19,7 @@ export function WaxSeal({
       initial={{ scale: 0, rotate: -20 }}
       animate={{ scale: 1, rotate: 0 }}
       transition={{ type: 'spring', stiffness: 320, damping: 16 }}
-      className={cn('wax-seal', className)}
+      className={cn('hub-wax', className)}
       style={{ width: size, height: size, fontSize: size * 0.42 }}
       aria-hidden
     >

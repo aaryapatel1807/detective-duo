@@ -8,6 +8,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import '../ui-kit/kit.css';
+import { GameButton, ResultModal, TimerChip, SectionTitle } from '../ui-kit';
 import type { GameProps } from '../types';
 import type { RoomApi } from '../../lib/realtime/useRoom';
 import type { EscapeShared, Hotspot } from './types';
@@ -91,54 +93,55 @@ export default function EscapeRoomGame({ room }: GameProps) {
   const remaining = def.timeMs - (now - (gs.startedAt ?? now));
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="gk-root gk-modal-scope mx-auto max-w-6xl">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="type-heading text-2xl">🔎 {def.title}</h2>
+          <SectionTitle eyebrow="ESCAPE ROOM" title={`🔎 ${def.title}`} />
           <p className="max-w-xl text-sm text-[var(--ink-dim)]">{def.intro}</p>
         </div>
         <div className="flex items-center gap-3">
-          <span
-            className={`font-type text-sm ${remaining <= 0 ? 'text-[var(--blood-bright)]' : 'text-[var(--amber-glow)]'}`}
-            title="Soft timer — flavor only"
-          >
-            ⏳ {remaining > 0 ? fmt(remaining) : 'OVERTIME'}
-          </span>
-          <button onClick={() => startRoom(def.id)} className="noir-btn-ghost !py-1.5 text-xs">
+          <TimerChip
+            seconds={remaining > 0 ? Math.floor(remaining / 1000) : 0}
+            label="TIME"
+          />
+          <GameButton size="sm" variant="ghost" onClick={() => startRoom(def.id)}>
             ↻ Restart room
-          </button>
+          </GameButton>
         </div>
       </div>
 
-      {gs.won ? (
-        <WinView
-          title={def.title}
-          notes={notes.length}
-          onReplay={() => startRoom(def.id)}
-          onSwitch={() => patch(room, { roomId: undefined })}
-        />
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
-          <div className="space-y-3">
-            <RoomScene
-              hotspots={visible}
-              selectedId={selectedId}
-              unlocked={gs.unlocked ?? {}}
-              onSelect={(h) => examine(room, gs, h, setSelectedId)}
-            />
-            <InventoryBar items={inventory} />
-          </div>
-          <div className="space-y-3">
-            <DetailPanel
-              room={room}
-              gs={gs}
-              hotspot={selected}
-              onClose={() => setSelectedId(null)}
-            />
-            <JournalPanel notes={notes} />
-          </div>
+      <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+        <div className="space-y-3">
+          <RoomScene
+            hotspots={visible}
+            selectedId={selectedId}
+            unlocked={gs.unlocked ?? {}}
+            onSelect={(h) => examine(room, gs, h, setSelectedId)}
+          />
+          <InventoryBar items={inventory} />
         </div>
-      )}
+        <div className="space-y-3">
+          <DetailPanel
+            room={room}
+            gs={gs}
+            hotspot={selected}
+            onClose={() => setSelectedId(null)}
+          />
+          <JournalPanel notes={notes} />
+        </div>
+      </div>
+
+      <ResultModal
+        open={!!gs.won}
+        eyebrow={def.title.toUpperCase()}
+        headline="Escaped"
+        tone="win"
+        stat={`${notes.length} CLUE${notes.length === 1 ? '' : 'S'} IN THE JOURNAL · +${XP_AWARDS.coopWin} XP EACH`}
+        primaryLabel="Replay room"
+        onPrimary={() => startRoom(def.id)}
+        secondaryLabel="Other room"
+        onSecondary={() => patch(room, { roomId: undefined })}
+      />
     </div>
   );
 }
@@ -175,7 +178,7 @@ function hasItemRef(room: RoomApi, gs: EscapeShared, itemId: string): boolean {
 
 function RoomSelect({ onStart }: { onStart: (id: string) => void }) {
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="gk-root mx-auto max-w-3xl">
       <GlassCard className="p-8 text-center">
         <h2 className="type-heading text-2xl">🔎 Escape Room</h2>
         <p className="mx-auto mt-2 max-w-lg text-sm text-[var(--ink-dim)]">
@@ -389,9 +392,9 @@ function DetailPanel({
               maxLength={4}
               className={`noir-input w-28 text-center font-type text-xl tracking-[0.3em] ${badCode ? 'border-[var(--blood-bright)]' : ''}`}
             />
-            <button onClick={submitCode} className="noir-btn !px-5">
+            <GameButton onClick={submitCode}>
               Unlock
-            </button>
+            </GameButton>
           </div>
           {badCode && (
             <p className="mt-1 text-xs text-[var(--blood-bright)]">
@@ -402,9 +405,9 @@ function DetailPanel({
       )}
 
       {takeable && !needItem && (
-        <button onClick={take} className="noir-btn mt-3 w-full !py-2.5">
+        <GameButton onClick={take} className="mt-3 w-full">
           ✋ Take {(h.item ?? h.inside)!.name} {(h.item ?? h.inside)!.icon}
-        </button>
+        </GameButton>
       )}
       {taken && (
         <p className="mt-3 text-xs text-[var(--ink-faint)]">Picked clean — nothing left here.</p>
@@ -438,45 +441,5 @@ function JournalPanel({ notes }: { notes: { id: string; title: string; text: str
         </div>
       )}
     </div>
-  );
-}
-
-/* ---------------- win ---------------- */
-
-function WinView({
-  title,
-  notes,
-  onReplay,
-  onSwitch,
-}: {
-  title: string;
-  notes: number;
-  onReplay: () => void;
-  onSwitch: () => void;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.96 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="glass-card-strong mx-auto max-w-xl p-10 text-center"
-    >
-      <div className="text-6xl">🗝️</div>
-      <h3 className="type-heading mt-4 text-3xl">ESCAPED</h3>
-      <p className="mt-2 text-sm text-[var(--ink-dim)]">
-        The exit key turns — {title} couldn't hold you. {notes} clue
-        {notes === 1 ? '' : 's'} in the journal. Textbook teamwork.
-      </p>
-      <div className="eyebrow mt-3 text-[var(--amber-glow)]">
-        +{XP_AWARDS.coopWin} XP each · love-notes surprise unlocked 💌
-      </div>
-      <div className="mt-6 flex justify-center gap-3">
-        <button onClick={onReplay} className="noir-btn !px-8 !py-3">
-          Replay room
-        </button>
-        <button onClick={onSwitch} className="noir-btn-ghost !px-8 !py-3">
-          Other room
-        </button>
-      </div>
-    </motion.div>
   );
 }

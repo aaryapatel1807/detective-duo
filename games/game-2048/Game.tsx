@@ -8,7 +8,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { GameProps } from '../types';
 import { GlassCard } from '../../components/GlassCard';
-import { Typewriter } from '../../components/Typewriter';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { readJSON, writeJSON } from '../../lib/store';
 import { sounds } from '../../lib/sound';
@@ -21,6 +20,8 @@ import {
   type Direction,
   type Grid,
 } from './logic';
+import '../ui-kit/kit.css';
+import { GameButton, ResultModal, ScoreHUD, SectionTitle } from '../ui-kit';
 
 const BEST_KEY = 'dd-solo-2048-best';
 
@@ -155,23 +156,16 @@ export default function Game2048({ room }: GameProps) {
   const showWin = won && !keepGoing && !over;
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="gk-root gk-modal-scope mx-auto max-w-md">
       <div className="mb-4 text-center">
-        <Typewriter text="2048 — Evidence Merge" as="h2" className="text-xl" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+        <SectionTitle eyebrow="NOIR DETECTIVE" title="2048 · Evidence Merge" />
+        <p className="mt-2 text-sm text-[var(--ink-dim)]">
           Arrow keys, WASD, or swipe. Merge matching tiles to file the 2048.
         </p>
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-3">
-        <GlassCard className="p-3 text-center">
-          <div className="eyebrow">Score</div>
-          <div className="type-heading mt-1 text-3xl">{score}</div>
-        </GlassCard>
-        <GlassCard className="p-3 text-center">
-          <div className="eyebrow">Best</div>
-          <div className="type-heading mt-1 text-3xl text-[var(--amber-glow)]">{best}</div>
-        </GlassCard>
+      <div className="mb-4">
+        <ScoreHUD leftLabel="SCORE" leftValue={score} rightLabel="BEST" rightValue={best} />
       </div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -198,33 +192,35 @@ export default function Game2048({ room }: GameProps) {
         </GlassCard>
       </motion.div>
 
-      {showWin && (
-        <GlassCard className="mt-4 border-[var(--amber-glow)] p-5 text-center">
-          <div className="type-heading text-xl text-[var(--amber-glow)]">🎉 Case cracked — 2048 filed!</div>
-          <p className="mt-1 text-sm text-[var(--ink-dim)]">+{XP_AWARDS.soloWin} XP logged to your detective record.</p>
-          <button onClick={() => setKeepGoing(true)} className="noir-btn mt-4">
-            Keep merging
-          </button>
-        </GlassCard>
-      )}
-
-      {over && (
-        <GlassCard className="mt-4 p-5 text-center">
-          <div className="type-heading text-xl">🗃️ Case cold — no moves left</div>
-          <p className="mt-1 text-sm text-[var(--ink-dim)]">Final score {score}. The evidence room awaits.</p>
-          <button onClick={newGame} className="noir-btn mt-4">
-            Open new case
-          </button>
-        </GlassCard>
-      )}
-
       {!over && !showWin && (
         <div className="mt-4 text-center">
-          <button onClick={newGame} className="noir-btn-ghost">
+          <GameButton variant="ghost" size="sm" onClick={newGame}>
             ↺ New case
-          </button>
+          </GameButton>
         </div>
       )}
+
+      <ResultModal
+        open={showWin}
+        eyebrow="2048 · NOIR DETECTIVE"
+        headline="Case Cracked"
+        tone="win"
+        stat={`SCORE ${score} · BEST ${best} · +${XP_AWARDS.soloWin} XP`}
+        primaryLabel="Keep merging"
+        onPrimary={() => setKeepGoing(true)}
+        secondaryLabel="New case"
+        onSecondary={newGame}
+      />
+
+      <ResultModal
+        open={over}
+        eyebrow="NO MOVES LEFT"
+        headline="Case Cold"
+        tone="lose"
+        stat={`FINAL SCORE ${score} · BEST ${best}`}
+        primaryLabel="Open new case"
+        onPrimary={newGame}
+      />
     </div>
   );
 }

@@ -7,12 +7,12 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 import type { GameProps } from '../types';
 import { TAP_TARGET, tapWinner } from './logic';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
-import { GlassCard } from '../../components/GlassCard';
+import '../ui-kit/kit.css';
+import { GameButton, ResultModal, ScoreHUD, SectionTitle } from '../ui-kit';
 
 interface TapShared {
   taps?: Record<string, number>;
@@ -55,54 +55,48 @@ export default function TapDuelGame({ room }: GameProps) {
     room.setShared({ games: { 'sample-tap': { taps: {}, winner: null } } });
   };
 
+  const peerName = room.peer?.name ?? 'Partner';
+  const winnerName = winner === room.me.id ? 'You' : peerName;
+
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="gk-root gk-modal-scope mx-auto max-w-xl">
       <div className="mb-4 rounded-xl border border-dashed border-[var(--amber-glow)] bg-[rgba(232,163,61,0.08)] px-4 py-2 text-center font-type text-[0.72rem] tracking-[0.18em] uppercase text-[var(--ink-dim)]">
         ⚠ Sample game — proves the registry + realtime contract
       </div>
 
-      <GlassCard className="p-8 text-center">
-        <h2 className="type-heading text-2xl">Tap Duel</h2>
+      <div className="mb-5 text-center">
+        <SectionTitle eyebrow="DUO PRACTICE" title="Tap Duel" />
         <p className="mt-2 text-sm text-[var(--ink-dim)]">
           First detective to {TAP_TARGET} taps cracks the case.
         </p>
+      </div>
 
-        {winner ? (
-          <div className="mt-6">
-            <div className="type-heading text-xl text-[var(--amber-glow)]">
-              🏆 Case closed by {winner === room.me.id ? 'YOU' : room.peer?.name ?? 'partner'}!
-            </div>
-            <button onClick={reset} className="noir-btn-ghost mt-5">
-              New round
-            </button>
+      <ScoreHUD leftLabel="You" leftValue={myTaps} rightLabel={peerName} rightValue={peerTaps} />
+
+      {!winner && (
+        <>
+          <div className="mt-6 text-center">
+            <GameButton variant="primary" size="lg" onClick={tap} className="w-full sm:w-auto sm:!px-14">
+              👆 Tap
+            </GameButton>
           </div>
-        ) : (
-          <>
-            <div className="mt-6 grid grid-cols-2 gap-4">
-              <div className="glass-card !rounded-2xl p-4">
-                <div className="eyebrow">You</div>
-                <div className="type-heading mt-1 text-4xl">{myTaps}</div>
-              </div>
-              <div className="glass-card !rounded-2xl p-4">
-                <div className="eyebrow">{room.peer?.name ?? 'Partner'}</div>
-                <div className="type-heading mt-1 text-4xl">{peerTaps}</div>
-              </div>
-            </div>
-            <motion.button
-              whileTap={{ scale: 0.92 }}
-              onClick={tap}
-              className="noir-btn mt-8 !px-14 !py-6 !text-lg"
-            >
-              👆 TAP
-            </motion.button>
-            {!room.roomCode && (
-              <p className="mt-4 text-xs text-[var(--ink-faint)]">
-                Solo practice — create a room from the hub to duel live.
-              </p>
-            )}
-          </>
-        )}
-      </GlassCard>
+          {!room.roomCode && (
+            <p className="mt-4 text-center text-xs text-[var(--ink-faint)]">
+              Solo practice — create a room from the hub to duel live.
+            </p>
+          )}
+        </>
+      )}
+
+      <ResultModal
+        open={!!winner}
+        eyebrow="TAP DUEL"
+        headline={winner === room.me.id ? 'Case Closed' : 'Partner Wins'}
+        tone={winner === room.me.id ? 'win' : 'draw'}
+        stat={`${winnerName.toUpperCase()} · ${winner === room.me.id ? myTaps : peerTaps} TAPS`}
+        primaryLabel="New round"
+        onPrimary={reset}
+      />
     </div>
   );
 }

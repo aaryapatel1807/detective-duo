@@ -23,8 +23,9 @@ import { randomWord } from '../../lib/content/words';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
-import { Typewriter } from '../../components/Typewriter';
 import { ManilaFolder } from '../../components/props';
+import '../ui-kit/kit.css';
+import { GameButton, GameCard, TurnBanner, ScoreHUD, ResultModal, SectionTitle } from '../ui-kit';
 
 const SLUG = 'hangman-duel';
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -153,10 +154,9 @@ export default function HangmanDuelGame({ room }: GameProps) {
   };
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="gk-root mx-auto max-w-2xl">
       <div className="mb-4 text-center">
-        <div className="eyebrow">Case file № 07 — Word & Code Duels</div>
-        <Typewriter as="h2" text="HANGMAN DUEL" className="type-heading mt-1 text-3xl" />
+        <SectionTitle eyebrow="Case file № 07 — Word & Code Duels" title="Hangman Duel" />
         <p className="mt-1 text-sm text-[var(--ink-dim)]">
           One secret word. Alternate letter guesses. Fewest strikes over {HANGMAN_ROUNDS}{' '}
           rounds closes the case.
@@ -175,19 +175,29 @@ export default function HangmanDuelGame({ room }: GameProps) {
               Solo practice — create a room from the hub to duel live.
             </p>
           )}
-          <button onClick={startMatch} className="noir-btn mt-5">
+          <GameButton variant="primary" onClick={startMatch} className="mt-5">
             🗂 Open the case file
-          </button>
+          </GameButton>
         </ManilaFolder>
       )}
 
       {phase === 'play' && (
         <GlassCard className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="eyebrow">Round {round + 1} / {HANGMAN_ROUNDS}</div>
-            <div className="eyebrow">
-              {myTurn ? '🎯 Your move' : `⏳ ${playerName(room, turn)} is guessing`}
-            </div>
+          <TurnBanner
+            isYourTurn={myTurn}
+            yourText="🎯 Your move"
+            theirText={room.peer ? `⏳ ${playerName(room, turn)} is guessing` : '⏳ Waiting'}
+          />
+          <div className="mx-auto mt-2 max-w-sm">
+            <ScoreHUD
+              leftLabel={playerName(room, ids[0]).toUpperCase()}
+              leftValue={roundStrikes[ids[0]] ?? 0}
+              leftSub={`round ${roundStrikes[ids[0]] ?? 0}/${HANGMAN_MAX_STRIKES} · total ${totalStrikes[ids[0]] ?? 0}`}
+              rightLabel={ids[1] ? playerName(room, ids[1]).toUpperCase() : `ROUND ${round + 1}/${HANGMAN_ROUNDS}`}
+              rightValue={ids[1] ? (roundStrikes[ids[1]] ?? 0) : round + 1}
+              rightSub={ids[1] ? `round ${roundStrikes[ids[1]] ?? 0}/${HANGMAN_MAX_STRIKES} · total ${totalStrikes[ids[1]] ?? 0}` : undefined}
+              record="none"
+            />
           </div>
 
           {/* masked word */}
@@ -207,44 +217,22 @@ export default function HangmanDuelGame({ room }: GameProps) {
             })}
           </div>
 
-          {/* strikes */}
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            {ids.map((pid) => (
-              <div key={pid} className="glass-card !rounded-2xl p-3 text-center">
-                <div className="eyebrow">{playerName(room, pid)}</div>
-                <div className="mt-1 font-type text-lg text-[var(--blood)]">
-                  {'✕'.repeat(Math.min(roundStrikes[pid] ?? 0, HANGMAN_MAX_STRIKES)) || '·'}
-                </div>
-                <div className="text-xs text-[var(--ink-dim)]">
-                  {roundStrikes[pid] ?? 0} / {HANGMAN_MAX_STRIKES} strikes · total{' '}
-                  {totalStrikes[pid] ?? 0}
-                </div>
-              </div>
-            ))}
-          </div>
-
           {/* letter board */}
           <div className="mt-5 grid grid-cols-7 gap-1.5 sm:grid-cols-9">
             {LETTERS.map((L) => {
               const used = guessed.includes(L);
               const hit = used && word.includes(L);
               return (
-                <motion.div key={L} whileTap={myTurn && !used ? { scale: 0.9 } : undefined}>
-                  <button
-                    disabled={!myTurn || used}
-                    onClick={() => guess(L)}
-                    className={
-                      'w-full rounded-md border py-1.5 font-type text-sm transition ' +
-                      (used
-                        ? hit
-                          ? 'border-[var(--amber-glow)] bg-[rgba(232,163,61,0.18)] text-[var(--amber-glow)]'
-                          : 'border-transparent bg-[rgba(0,0,0,0.35)] text-[var(--ink-faint)] line-through'
-                        : 'border-[var(--glass-border)] bg-[rgba(255,255,255,0.04)] text-[var(--ink)] hover:border-[var(--brass)]')
-                    }
-                  >
-                    {L}
-                  </button>
-                </motion.div>
+                <GameCard
+                  key={L}
+                  state={used ? (hit ? 'correct' : 'absent') : 'default'}
+                  onClick={() => guess(L)}
+                  disabled={!myTurn || used}
+                  ariaLabel={`Guess letter ${L}`}
+                  className="!min-h-0 !min-w-0 !rounded-md !p-0 !py-1.5 !text-sm"
+                >
+                  {L}
+                </GameCard>
               );
             })}
           </div>
@@ -264,35 +252,49 @@ export default function HangmanDuelGame({ room }: GameProps) {
       )}
 
       {phase === 'over' && (
-        <ManilaFolder className="p-6 text-center">
-          <div className="type-heading text-2xl">
-            {winner === 'draw'
-              ? '🤝 Case inconclusive — a draw'
-              : winner === room.me.id
-                ? '🏆 You closed the case!'
-                : `🕵️ ${playerName(room, winner)} closed the case`}
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            {ids.map((pid) => (
-              <div key={pid} className="glass-card !rounded-2xl p-3">
-                <div className="eyebrow">{playerName(room, pid)}</div>
-                <div className="type-heading mt-1 text-3xl">{totalStrikes[pid] ?? 0}</div>
-                <div className="text-xs text-[var(--ink-dim)]">total strikes</div>
-              </div>
-            ))}
-          </div>
-          <div className="paper-strip mt-4 text-left">
-            {history.map((h, i) => (
-              <div key={i} className="text-xs">
-                R{i + 1}: <span className="font-type">{h.word}</span> —{' '}
-                {h.winner === 'draw' ? 'draw' : playerName(room, h.winner)}
-              </div>
-            ))}
-          </div>
-          <button onClick={reset} className="noir-btn mt-5">
-            🔁 New investigation
-          </button>
-        </ManilaFolder>
+        <div className="gk-modal-scope">
+          <ManilaFolder className="p-6 text-center">
+            <div className="mx-auto max-w-sm">
+              <ScoreHUD
+                leftLabel={playerName(room, ids[0]).toUpperCase()}
+                leftValue={totalStrikes[ids[0]] ?? 0}
+                leftSub="total strikes"
+                rightLabel={ids[1] ? playerName(room, ids[1]).toUpperCase() : 'rounds'}
+                rightValue={ids[1] ? (totalStrikes[ids[1]] ?? 0) : HANGMAN_ROUNDS}
+                rightSub={ids[1] ? 'total strikes' : 'played'}
+                record="none"
+              />
+            </div>
+            <div className="paper-strip mt-4 text-left">
+              {history.map((h, i) => (
+                <div key={i} className="text-xs">
+                  R{i + 1}: <span className="font-type">{h.word}</span> —{' '}
+                  {h.winner === 'draw' ? 'draw' : playerName(room, h.winner)}
+                </div>
+              ))}
+            </div>
+            <div className="mt-5">
+              <GameButton variant="primary" onClick={reset}>
+                🔁 New investigation
+              </GameButton>
+            </div>
+          </ManilaFolder>
+          <ResultModal
+            open
+            eyebrow="Investigation closed"
+            headline={
+              winner === 'draw'
+                ? 'Case inconclusive — draw'
+                : winner === room.me.id
+                  ? 'You closed the case'
+                  : `${playerName(room, winner)} closed the case`
+            }
+            stat={`${totalStrikes[winner === 'draw' ? room.me.id : (winner as string) ?? room.me.id] ?? 0} strikes · ${HANGMAN_ROUNDS} rounds`}
+            tone={winner === 'draw' ? 'draw' : winner === room.me.id ? 'win' : 'lose'}
+            primaryLabel="🔁 New investigation"
+            onPrimary={reset}
+          />
+        </div>
       )}
     </div>
   );

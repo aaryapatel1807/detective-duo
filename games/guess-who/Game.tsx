@@ -21,6 +21,8 @@ import { firstTurn, isCorrectAccusation, remainingAfterAnswer } from './logic';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
+import '../ui-kit/kit.css';
+import { GameButton, TurnBanner, ProgressBar, ResultModal, SectionTitle } from '../ui-kit';
 
 interface QLog {
   attr: BooleanAttr;
@@ -178,18 +180,19 @@ export default function GuessWhoGame({ room }: GameProps) {
   const myPickSuspect = myPick ? getSuspect(myPick) : undefined;
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="gk-root mx-auto max-w-3xl">
       <div className="mb-5 text-center">
-        <div className="eyebrow">Lineup · 12 suspects</div>
-        <h2 className="type-heading mt-1 text-2xl">Guess Who: Suspects</h2>
+        <SectionTitle eyebrow="Lineup · 12 suspects" title="Guess Who: Suspects" />
         {phase === 'play' && (
-          <div className="mt-2 text-xs text-[var(--ink-dim)]">
-            {myTurn ? (
-              <span className="text-[var(--amber-glow)]">🎯 Your move, detective</span>
-            ) : (
-              <span>Waiting on {practice ? 'the desk' : room.peer?.name ?? 'partner'}…</span>
-            )}
-            {' · '} {remaining.length} suspects standing
+          <div className="mx-auto mt-3 max-w-md">
+            <TurnBanner
+              isYourTurn={myTurn}
+              yourText="🎯 Your move, detective"
+              theirText={practice ? '⏳ The desk is thinking' : `⏳ Waiting on ${room.peer?.name ?? 'partner'}`}
+            />
+            <div className="mt-2">
+              <ProgressBar label="Suspects standing" value={remaining.length} max={SUSPECTS.length} />
+            </div>
           </div>
         )}
       </div>
@@ -216,9 +219,9 @@ export default function GuessWhoGame({ room }: GameProps) {
           </div>
           {!peerId && !practice && (
             <div className="mt-4 text-center">
-              <button onClick={startPractice} className="noir-btn-ghost">
+              <GameButton variant="ghost" onClick={startPractice}>
                 🎲 Practice vs the desk (solo)
-              </button>
+              </GameButton>
             </div>
           )}
         </GlassCard>
@@ -250,9 +253,9 @@ export default function GuessWhoGame({ room }: GameProps) {
                   <option key={k} value={k}>Is your suspect {ATTRIBUTE_LABELS[k]}?</option>
                 ))}
               </select>
-              <button onClick={ask} className="noir-btn" disabled={!myTurn}>
+              <GameButton variant="primary" onClick={ask} disabled={!myTurn}>
                 Ask ❓
-              </button>
+              </GameButton>
               <span className="ml-auto text-xs text-[var(--ink-faint)]">
                 My secret: <b className="text-[var(--ink)]">{myPickSuspect?.name ?? '—'}</b>
               </span>
@@ -307,15 +310,15 @@ export default function GuessWhoGame({ room }: GameProps) {
                 <p className="mt-1 text-xs text-[var(--blood-bright)]">
                   ⚠ Wrong accusation loses the case on the spot.
                 </p>
-                <div className="mt-4 flex justify-center gap-3">
-                  <button onClick={() => accuse(accusing)} className="noir-btn">⚖️ Make the accusation</button>
-                  <button onClick={() => setAccusing(null)} className="noir-btn-ghost">Keep digging</button>
+                <div className="mt-4 flex flex-wrap justify-center gap-3">
+                  <GameButton variant="danger" onClick={() => accuse(accusing)}>⚖️ Make the accusation</GameButton>
+                  <GameButton variant="ghost" onClick={() => setAccusing(null)}>Keep digging</GameButton>
                 </div>
               </div>
             ) : (
-              <button onClick={() => setAccusing(remaining[0]?.id ?? SUSPECTS[0].id)} className="noir-btn" disabled={!myTurn}>
+              <GameButton variant="primary" onClick={() => setAccusing(remaining[0]?.id ?? SUSPECTS[0].id)} disabled={!myTurn}>
                 ⚖️ Make an accusation…
-              </button>
+              </GameButton>
             )}
             {accusing === null && (
               <div className="mt-3 flex flex-wrap justify-center gap-2">
@@ -336,28 +339,37 @@ export default function GuessWhoGame({ room }: GameProps) {
 
       {/* ---- game over ---- */}
       {phase === 'over' && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <GlassCard className="p-8 text-center">
-            <div className="wax-seal mx-auto mb-3" />
-            {resolved && (
-              <>
-                <div className="type-heading text-xl text-[var(--amber-glow)]">
-                  {resolved.correct ? '🎯 BULLSEYE!' : '💥 WRONG ACCUSATION!'}
-                </div>
-                <p className="mt-2 text-sm text-[var(--ink-dim)]">
-                  {resolved.correct
-                    ? `${resolved.accuserId === room.me.id ? 'You named' : 'Your partner named'} ${getSuspect(resolved.suspectId)?.name} — and the cuffs are on.`
-                    : `${resolved.accuserId === room.me.id ? 'You accused' : 'Your partner accused'} ${getSuspect(resolved.suspectId)?.name} — an innocent. Case blown.`}
-                </p>
-              </>
-            )}
-            <p className="mt-3 text-sm">
-              Winner: <b className="text-[var(--amber-glow)]">{winner === room.me.id ? 'YOU' : winner === 'desk' ? 'The Desk' : room.peer?.name ?? 'Partner'}</b>
-              {' · '} +{XP_AWARDS.duoWin} XP
-            </p>
-            <button onClick={reset} className="noir-btn mt-5">🔄 New lineup</button>
-          </GlassCard>
-        </motion.div>
+        <div className="gk-modal-scope">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <GlassCard className="p-8 text-center">
+              {resolved && (
+                <>
+                  <p className="mt-2 text-sm text-[var(--ink-dim)]">
+                    {resolved.correct
+                      ? `${resolved.accuserId === room.me.id ? 'You named' : 'Your partner named'} ${getSuspect(resolved.suspectId)?.name} — and the cuffs are on.`
+                      : `${resolved.accuserId === room.me.id ? 'You accused' : 'Your partner accused'} ${getSuspect(resolved.suspectId)?.name} — an innocent. Case blown.`}
+                  </p>
+                </>
+              )}
+              <p className="mt-3 text-sm">
+                Winner: <b className="text-[var(--amber-glow)]">{winner === room.me.id ? 'YOU' : winner === 'desk' ? 'The Desk' : room.peer?.name ?? 'Partner'}</b>
+                {' · '} +{XP_AWARDS.duoWin} XP
+              </p>
+              <div className="mt-5">
+                <GameButton variant="primary" onClick={reset}>🔄 New lineup</GameButton>
+              </div>
+            </GlassCard>
+          </motion.div>
+          <ResultModal
+            open
+            eyebrow="Lineup closed"
+            headline={resolved ? (resolved.correct ? 'Bullseye' : 'Wrong accusation') : 'Case closed'}
+            stat={`Winner: ${winner === room.me.id ? 'YOU' : winner === 'desk' ? 'The Desk' : room.peer?.name ?? 'Partner'}`}
+            tone={winner === room.me.id ? 'win' : 'lose'}
+            primaryLabel="🔄 New lineup"
+            onPrimary={reset}
+          />
+        </div>
       )}
     </div>
   );

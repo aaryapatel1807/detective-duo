@@ -7,6 +7,8 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import '../ui-kit/kit.css';
+import { GameButton } from '../ui-kit';
 import type { RoomApi } from '../../lib/realtime/useRoom';
 import { sounds } from '../../lib/sound';
 
@@ -125,9 +127,9 @@ export default function ChatBox({
           maxLength={200}
           className="noir-input min-w-0 flex-1 !py-2 text-sm"
         />
-        <button type="submit" className="noir-btn !px-4 !py-2 text-sm">
+        <GameButton type="submit" size="sm">
           Send
-        </button>
+        </GameButton>
       </form>
     </div>
   );

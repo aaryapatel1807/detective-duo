@@ -23,6 +23,8 @@ import {
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
+import '../ui-kit/kit.css';
+import { GameButton, GameCard, TimerChip, ResultModal, SectionTitle } from '../ui-kit';
 
 export default function LogicGridsGame({ room }: GameProps) {
   const gs: LogicGridsShared = room.shared?.games?.['logic-grids'] ?? {};
@@ -122,13 +124,12 @@ export default function LogicGridsGame({ room }: GameProps) {
   const peerFinished = peerId !== null && finished[peerId] !== undefined;
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="gk-root mx-auto max-w-3xl">
       <div className="mb-5 text-center">
-        <div className="eyebrow">Evidence board · elimination puzzle</div>
-        <h2 className="type-heading mt-1 text-2xl">Logic Grids</h2>
+        <SectionTitle eyebrow="Evidence board · elimination puzzle" title="Logic Grids" />
         {phase === 'solving' && (
-          <div className="mt-2 flex items-center justify-center gap-4 text-xs text-[var(--ink-dim)]">
-            <span className="type-heading text-xl text-[var(--amber-glow)]">⏱️ {formatMs(myFinished ? finished[room.me.id] : elapsed)}</span>
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-xs text-[var(--ink-dim)]">
+            <TimerChip seconds={Math.floor((myFinished ? finished[room.me.id] : elapsed) / 1000)} label="⏱️ Elapsed" />
             <span className="rounded-full border border-[var(--glass-border)] px-3 py-1 capitalize">{mode}</span>
             {peerFinished && <span className="text-[#7ee787]">Partner finished in {formatMs(finished[peerId!])}</span>}
           </div>
@@ -165,7 +166,7 @@ export default function LogicGridsGame({ room }: GameProps) {
           <p className="mt-2 text-center text-xs text-[var(--ink-faint)]">
             {selMode === 'race' ? 'Fastest correct grid takes the case.' : 'Both detectives must crack it — the desk celebrates together.'}
           </p>
-          <button onClick={() => start()} className="noir-btn mx-auto mt-4 block">🔍 Start the clock</button>
+          <GameButton variant="primary" onClick={() => start()} className="mx-auto mt-4 block">🔍 Start the clock</GameButton>
         </GlassCard>
       )}
 
@@ -203,20 +204,17 @@ export default function LogicGridsGame({ room }: GameProps) {
                         const m = marks[ri]?.[ci] ?? 'empty';
                         return (
                           <td key={c} className="p-1">
-                            <motion.button
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => toggleCell(ri, ci)}
-                              disabled={myFinished}
-                              className={`flex h-12 w-12 items-center justify-center rounded-lg border text-xl transition-colors sm:h-14 sm:w-14 ${
-                                m === 'yes'
-                                  ? 'border-[#7ee787] bg-[rgba(76,175,80,0.15)] text-[#7ee787]'
-                                  : m === 'no'
-                                    ? 'border-[var(--blood-bright)] bg-[rgba(211,58,44,0.12)] text-[var(--blood-bright)]'
-                                    : 'border-[var(--glass-border)] bg-[rgba(0,0,0,0.2)] hover:border-[var(--amber-glow)]'
-                              }`}
-                            >
-                              {m === 'yes' ? '✓' : m === 'no' ? '✗' : ''}
-                            </motion.button>
+                            <motion.div whileTap={myFinished ? undefined : { scale: 0.9 }}>
+                              <GameCard
+                                state={m === 'yes' ? 'correct' : m === 'no' ? 'absent' : 'default'}
+                                onClick={() => toggleCell(ri, ci)}
+                                disabled={myFinished}
+                                ariaLabel={`Cell ${r} ${c}`}
+                                className="!h-12 !w-12 !min-h-0 !min-w-0 !rounded-lg !p-0 !text-xl sm:!h-14 sm:!w-14"
+                              >
+                                {m === 'yes' ? '✓' : m === 'no' ? '✗' : ''}
+                              </GameCard>
+                            </motion.div>
                           </td>
                         );
                       })}
@@ -232,7 +230,7 @@ export default function LogicGridsGame({ room }: GameProps) {
               {myFinished ? (
                 <p className="text-sm text-[#7ee787]">✅ Locked in at {formatMs(finished[room.me.id])}. {mode === 'coop' && !peerFinished ? 'Waiting on your partner…' : ''}</p>
               ) : (
-                <button onClick={check} className="noir-btn">🔍 Check solution</button>
+                <GameButton variant="primary" onClick={check}>🔍 Check solution</GameButton>
               )}
             </div>
           </GlassCard>
@@ -241,29 +239,38 @@ export default function LogicGridsGame({ room }: GameProps) {
 
       {/* ---- over ---- */}
       {phase === 'over' && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <GlassCard className="p-8 text-center">
-            <div className="wax-seal mx-auto mb-3" />
-            <div className="type-heading text-xl text-[var(--amber-glow)]">
-              {mode === 'coop' ? '🤝 CASE CRACKED TOGETHER!' : '🏁 GRID CLOSED'}
-            </div>
-            <div className="mt-3 space-y-1 text-sm">
-              <div>You: <b className="text-[var(--amber-glow)]">{finished[room.me.id] !== undefined ? formatMs(finished[room.me.id]) : '—'}</b></div>
-              {peerId && <div>{room.peer?.name ?? 'Partner'}: <b className="text-[var(--amber-glow)]">{finished[peerId] !== undefined ? formatMs(finished[peerId]) : '—'}</b></div>}
-            </div>
-            {mode === 'race' && (
-              <p className="mt-3 text-lg">
-                Winner: <b className="text-[var(--amber-glow)]">{winner === room.me.id ? 'YOU' : room.peer?.name ?? 'Partner'}</b>
-                {' · '} +{XP_AWARDS.duoWin} XP
-              </p>
-            )}
-            {mode === 'coop' && <p className="mt-3 text-sm text-[var(--ink-dim)]">+{XP_AWARDS.coopWin} XP each — the desk salutes you.</p>}
-            <div className="mt-5 flex justify-center gap-3">
-              <button onClick={() => start(gridId ?? undefined)} className="noir-btn">🔄 Same grid, again</button>
-              <button onClick={reset} className="noir-btn-ghost">Lobby</button>
-            </div>
-          </GlassCard>
-        </motion.div>
+        <div className="gk-modal-scope">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <GlassCard className="p-8 text-center">
+              <div className="mt-3 space-y-1 text-sm">
+                <div>You: <b className="text-[var(--amber-glow)]">{finished[room.me.id] !== undefined ? formatMs(finished[room.me.id]) : '—'}</b></div>
+                {peerId && <div>{room.peer?.name ?? 'Partner'}: <b className="text-[var(--amber-glow)]">{finished[peerId] !== undefined ? formatMs(finished[peerId]) : '—'}</b></div>}
+              </div>
+              {mode === 'race' && (
+                <p className="mt-3 text-lg">
+                  Winner: <b className="text-[var(--amber-glow)]">{winner === room.me.id ? 'YOU' : room.peer?.name ?? 'Partner'}</b>
+                  {' · '} +{XP_AWARDS.duoWin} XP
+                </p>
+              )}
+              {mode === 'coop' && <p className="mt-3 text-sm text-[var(--ink-dim)]">+{XP_AWARDS.coopWin} XP each — the desk salutes you.</p>}
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <GameButton variant="primary" onClick={() => start(gridId ?? undefined)}>🔄 Same grid, again</GameButton>
+                <GameButton variant="ghost" onClick={reset}>Lobby</GameButton>
+              </div>
+            </GlassCard>
+          </motion.div>
+          <ResultModal
+            open
+            eyebrow={mode === 'coop' ? 'Case cracked together' : 'Grid closed'}
+            headline={mode === 'coop' ? 'Solved together' : winner === room.me.id ? 'You closed the grid' : `${room.peer?.name ?? 'Partner'} was faster`}
+            stat={finished[room.me.id] !== undefined ? formatMs(finished[room.me.id]) : '—'}
+            tone={mode === 'coop' ? 'win' : winner === room.me.id ? 'win' : 'lose'}
+            primaryLabel="🔄 Same grid, again"
+            onPrimary={() => start(gridId ?? undefined)}
+            secondaryLabel="Lobby"
+            onSecondary={reset}
+          />
+        </div>
       )}
     </div>
   );

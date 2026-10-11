@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from '../../components/GlassCard';
 import { Typewriter } from '../../components/Typewriter';
 import { WaxSeal } from '../../components/WaxSeal';
+import { Pin } from '../../components/Pin';
 import {
   getCoopWins,
   readNotes,
@@ -21,6 +22,97 @@ import {
   type UnlockedSurprise,
 } from '../../lib/lovenotes';
 import { sounds } from '../../lib/sound';
+import '../../components/hub-noir.css';
+
+function SealedNoteCard({
+  n,
+  unlocked,
+  onBreak,
+  onRemove,
+}: {
+  n: LoveNote;
+  unlocked: boolean;
+  onBreak: () => void;
+  onRemove: () => void;
+}) {
+  const sealed = !n.opened;
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+    >
+      <GlassCard className="relative min-h-[190px] p-5">
+        <button
+          onClick={onRemove}
+          className="hub-icon-btn absolute right-2 top-2"
+          title="Discard note"
+          aria-label="Discard note"
+        >
+          ✕
+        </button>
+        <div className="hub-eyebrow">To: {n.to}</div>
+        {sealed ? (
+          <div className="flex flex-col items-center py-4">
+            <WaxSeal size={64} />
+            <div className="hub-mono mt-3 text-center text-[0.72rem] tracking-[0.18em] uppercase text-[var(--hub-ink-dim)]">
+              {unlocked
+                ? 'Sealed — tap to open'
+                : `Sealed · unlocks at ${n.unlockWins} co-op win${n.unlockWins === 1 ? '' : 's'}`}
+            </div>
+            {unlocked && (
+              <button onClick={onBreak} className="hub-btn-ghost mt-3">
+                Break the seal
+              </button>
+            )}
+          </div>
+        ) : (
+          <p className="hub-hand hub-note-opened mt-3 whitespace-pre-wrap">
+            {n.text}
+          </p>
+        )}
+        <div className="hub-note-date mt-3">
+          {new Date(n.createdAt).toLocaleDateString()}
+        </div>
+      </GlassCard>
+    </motion.div>
+  );
+}
+
+function SurpriseCard({
+  s,
+  onOpen,
+}: {
+  s: UnlockedSurprise;
+  onOpen: () => void;
+}) {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+    >
+      <GlassCard className="relative min-h-[150px] p-5">
+        <div className="hub-eyebrow">Field reward</div>
+        {s.opened ? (
+          <p className="hub-hand hub-note-opened mt-3">{s.text}</p>
+        ) : (
+          <div className="flex flex-col items-center py-3">
+            <WaxSeal size={56} />
+            <button onClick={onOpen} className="hub-btn-ghost mt-3">
+              Break the seal
+            </button>
+          </div>
+        )}
+        <div className="hub-note-date mt-3">
+          {new Date(s.unlockedAt).toLocaleDateString()}
+        </div>
+      </GlassCard>
+    </motion.div>
+  );
+}
 
 export default function LoveNotesPage() {
   const [notes, setNotes] = useState<LoveNote[]>([]);
@@ -71,152 +163,105 @@ export default function LoveNotesPage() {
   const remove = (id: string) => save(notes.filter((n) => n.id !== id));
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <div>
-        <Typewriter text="Love Notes" as="h1" className="text-2xl" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
-          Sealed with wax. Notes unlock after co-op victories —{' '}
-          <span className="font-type text-[var(--amber-glow)]">{wins} won so far</span>.
-        </p>
-      </div>
-
-      <GlassCard className="p-6">
-        <div className="eyebrow mb-3">Write a sealed note</div>
-        <div className="grid gap-3">
-          <input
-            className="noir-input"
-            placeholder="To… (partner's name)"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-          />
-          <textarea
-            className="noir-input min-h-[110px] resize-y"
-            placeholder="Pour your heart out, detective…"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="font-type text-[0.72rem] tracking-[0.14em] uppercase text-[var(--ink-dim)]">
-              Unlock after
-              <select
-                className="noir-input ml-2 !w-auto"
-                value={unlockWins}
-                onChange={(e) => setUnlockWins(Number(e.target.value))}
-              >
-                <option value={0}>0 co-op wins (now)</option>
-                <option value={1}>1 co-op win</option>
-                <option value={3}>3 co-op wins</option>
-                <option value={5}>5 co-op wins</option>
-              </select>
-            </label>
-            <button onClick={sealNote} className="noir-btn ml-auto">
-              Seal it 💌
-            </button>
-          </div>
+    <div className="hub-page">
+      <div className="mx-auto max-w-3xl space-y-5">
+        <div>
+          <Typewriter text="Love Notes" as="h1" className="hub-page-title" />
+          <p className="hub-sub">
+            Sealed with wax. Notes unlock after co-op victories —{' '}
+            <span className="hub-mono text-[var(--hub-gold)]">
+              {wins} won so far
+            </span>
+            .
+          </p>
         </div>
-      </GlassCard>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <AnimatePresence>
-          {notes.map((n) => {
-            const unlocked = wins >= n.unlockWins;
-            const sealed = !n.opened;
-            return (
-              <motion.div
-                key={n.id}
-                layout
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-              >
-                <GlassCard className="relative min-h-[190px] p-5">
-                  <button
-                    onClick={() => remove(n.id)}
-                    className="absolute right-3 top-3 text-[var(--ink-faint)] hover:text-[var(--blood-bright)]"
-                    title="Discard note"
-                  >
-                    ✕
-                  </button>
-                  <div className="eyebrow">To: {n.to}</div>
-                  {sealed ? (
-                    <div className="flex flex-col items-center py-4">
-                      <WaxSeal size={64} />
-                      <div className="font-type mt-3 text-[0.72rem] tracking-[0.18em] uppercase text-[var(--ink-dim)]">
-                        {unlocked ? 'Sealed — tap to open' : `Sealed · unlocks at ${n.unlockWins} co-op win${n.unlockWins === 1 ? '' : 's'}`}
-                      </div>
-                      {unlocked && (
-                        <button onClick={() => breakSeal(n.id)} className="noir-btn-ghost mt-3 !py-2">
-                          Break the seal
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="font-type mt-3 whitespace-pre-wrap text-sm leading-relaxed">
-                      {n.text}
-                    </p>
-                  )}
-                  <div className="mt-3 font-type text-[0.62rem] text-[var(--ink-faint)]">
-                    {new Date(n.createdAt).toLocaleDateString()}
-                  </div>
-                </GlassCard>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-      </div>
+        <GlassCard className="relative p-6">
+          <Pin className="absolute -top-2 left-10" />
+          <div className="hub-eyebrow mb-3">Write a sealed note</div>
+          <div className="grid gap-3">
+            <input
+              className="hub-input"
+              placeholder="To… (partner's name)"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              aria-label="Note recipient"
+            />
+            <textarea
+              className="hub-input min-h-[110px] resize-y"
+              placeholder="Pour your heart out, detective…"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              aria-label="Note text"
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="hub-mono text-[0.72rem] tracking-[0.14em] uppercase text-[var(--hub-ink-dim)]">
+                Unlock after
+                <select
+                  className="hub-input ml-2"
+                  value={unlockWins}
+                  onChange={(e) => setUnlockWins(Number(e.target.value))}
+                  aria-label="Unlock threshold"
+                >
+                  <option value={0}>0 co-op wins (now)</option>
+                  <option value={1}>1 co-op win</option>
+                  <option value={3}>3 co-op wins</option>
+                  <option value={5}>5 co-op wins</option>
+                </select>
+              </label>
+              <button onClick={sealNote} className="hub-btn ml-auto">
+                Seal it 💌
+              </button>
+            </div>
+          </div>
+        </GlassCard>
 
-      {notes.length === 0 && (
-        <p className="text-center font-type text-[0.72rem] tracking-[0.2em] uppercase text-[var(--ink-faint)]">
-          No notes yet — seal the first one above.
-        </p>
-      )}
-
-      {/* Wax-sealed surprises — one unlocked per co-op win */}
-      <div className="pt-2">
-        <Typewriter text="Sealed Surprises" as="h2" className="text-xl" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
-          Every co-op victory unlocks a wax-sealed surprise. Break the seal, detective.
-        </p>
-      </div>
-      {surprises.length === 0 ? (
-        <p className="text-center font-type text-[0.72rem] tracking-[0.2em] uppercase text-[var(--ink-faint)]">
-          No surprises yet — win a co-op case together to earn one.
-        </p>
-      ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           <AnimatePresence>
-            {surprises.map((s) => (
-              <motion.div
-                key={s.id}
-                layout
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-              >
-                <GlassCard className="relative min-h-[150px] p-5">
-                  <div className="eyebrow">Field reward</div>
-                  {s.opened ? (
-                    <p className="font-type mt-3 text-sm leading-relaxed">{s.text}</p>
-                  ) : (
-                    <div className="flex flex-col items-center py-3">
-                      <WaxSeal size={56} />
-                      <button
-                        onClick={() => openSurpriseSeal(s.id)}
-                        className="noir-btn-ghost mt-3 !py-2"
-                      >
-                        Break the seal
-                      </button>
-                    </div>
-                  )}
-                  <div className="mt-3 font-type text-[0.62rem] text-[var(--ink-faint)]">
-                    {new Date(s.unlockedAt).toLocaleDateString()}
-                  </div>
-                </GlassCard>
-              </motion.div>
+            {notes.map((n) => (
+              <SealedNoteCard
+                key={n.id}
+                n={n}
+                unlocked={wins >= n.unlockWins}
+                onBreak={() => breakSeal(n.id)}
+                onRemove={() => remove(n.id)}
+              />
             ))}
           </AnimatePresence>
         </div>
-      )}
+
+        {notes.length === 0 && (
+          <p className="hub-mono text-center text-[0.72rem] tracking-[0.2em] uppercase text-[var(--hub-ink-dim)]">
+            No notes yet — seal the first one above.
+          </p>
+        )}
+
+        {/* Wax-sealed surprises — one unlocked per co-op win */}
+        <div className="pt-2">
+          <Typewriter text="Sealed Surprises" as="h2" className="text-xl" />
+          <p className="hub-sub">
+            Every co-op victory unlocks a wax-sealed surprise. Break the seal,
+            detective.
+          </p>
+        </div>
+        {surprises.length === 0 ? (
+          <p className="hub-mono text-center text-[0.72rem] tracking-[0.2em] uppercase text-[var(--hub-ink-dim)]">
+            No surprises yet — win a co-op case together to earn one.
+          </p>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <AnimatePresence>
+              {surprises.map((s) => (
+                <SurpriseCard
+                  key={s.id}
+                  s={s}
+                  onOpen={() => openSurpriseSeal(s.id)}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

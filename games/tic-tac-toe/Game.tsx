@@ -6,6 +6,15 @@
 
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import '../ui-kit/kit.css';
+import {
+  GameButton,
+  ScoreHUD,
+  TurnBanner,
+  ResultModal,
+  GameCard,
+  SectionTitle,
+} from '../ui-kit';
 import type { GameProps } from '../types';
 import type { TTTShared } from './types';
 import { ROUNDS, WINS_NEEDED, emptyBoard, isDraw, place, winnerOf } from './logic';
@@ -84,68 +93,82 @@ export default function TicTacToeGame({ room }: GameProps) {
 
   const roundOver = roundWinner !== null;
   const playable = !roundOver && turn === me && peer !== null;
+  const inLobby = board.every((c) => c === null) && round === 1 && turn === null;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 style={{ fontFamily: 'var(--font-type)' }} className="text-xl tracking-wide">
-          🔍 TIC-TAC-TOE
-        </h2>
-        <div className="text-sm opacity-80" style={{ fontFamily: 'var(--font-type)' }}>
-          ROUND {round}/{ROUNDS} · {GLYPH[myMark]} {nameOf(me)} {scores[me] ?? 0} — {scores[peer?.id ?? ''] ?? 0} {nameOf(peer?.id ?? null)}
-        </div>
-      </div>
+    <div className="gk-root space-y-4">
+      <SectionTitle
+        eyebrow={`ROUND ${round} OF ${ROUNDS} · FIRST TO ${WINS_NEEDED}`}
+        title="🔍 Tic-Tac-Toe"
+      />
+      <ScoreHUD
+        leftLabel="YOU"
+        leftValue={scores[me] ?? 0}
+        rightLabel="OPPONENT"
+        rightValue={scores[peer?.id ?? ''] ?? 0}
+      />
 
       {!peer && (
-        <div className="glass-card p-4 text-sm" style={{ fontFamily: 'var(--font-type)' }}>
+        <div className="glass-card p-4 text-sm">
           ⏳ Waiting for your partner… (code <span className="font-bold">{room.roomCode ?? '—'}</span>)
         </div>
       )}
 
       <div className="mx-auto max-w-sm">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-5">
-          {roundOver || matchWinner ? (
-            <div className="flex flex-col items-center gap-3 py-6">
-              <div className="text-4xl">
-                {matchWinner ? (matchWinner === me ? '🏆' : '🕯️') : roundWinner === 'draw' ? '🤝' : GLYPH[markOf(roundWinner ?? '')]}
-              </div>
-              <p className="text-center text-sm" style={{ fontFamily: 'var(--font-type)' }}>
-                {matchWinner
-                  ? `Case closed — ${nameOf(matchWinner)} takes it ${scores[matchWinner] ?? 0} rounds to ${scores[matchWinner === me ? (peer?.id ?? '') : me] ?? 0}.`
-                  : roundWinner === 'draw'
-                    ? 'Stalemate — nobody blinks.'
-                    : `${nameOf(roundWinner)} takes round ${round}.`}
-              </p>
-              <button className="noir-btn" onClick={matchWinner ? startMatch : nextRound}>
-                {matchWinner ? '🔁 New match' : '➡️ Next round'}
-              </button>
-            </div>
-          ) : board.every((c) => c === null) && round === 1 && turn === null ? (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card gk-modal-scope p-5"
+        >
+          {inLobby ? (
             <div className="flex flex-col items-center gap-3 py-8">
-              <p className="text-sm opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
+              <p className="text-sm opacity-70">
                 🔍 opens against 🕵 — best of {ROUNDS}, first to {WINS_NEEDED}.
               </p>
-              <button className="noir-btn" onClick={startMatch} disabled={!peer}>
+              <GameButton onClick={startMatch} disabled={!peer}>
                 📁 Open the case
-              </button>
+              </GameButton>
             </div>
           ) : (
             <>
-              <p className="mb-3 text-center text-sm opacity-80" style={{ fontFamily: 'var(--font-type)' }}>
-                {turn === me ? `Your move — ${GLYPH[myMark]}` : `${nameOf(turn)} is marking…`}
-              </p>
+              {!roundOver && (
+                <TurnBanner
+                  isYourTurn={turn === me}
+                  yourText="Your move"
+                  theirText={`${nameOf(turn)} is marking…`}
+                />
+              )}
               <div className="grid grid-cols-3 gap-2">
                 {board.map((cell, i) => (
-                  <button
+                  <GameCard
                     key={i}
                     onClick={() => play(i)}
                     disabled={!playable || cell !== null}
-                    className="flex aspect-square items-center justify-center rounded-lg border border-white/10 bg-white/5 text-4xl transition-all hover:border-amber-300/60 hover:bg-amber-300/10 disabled:cursor-default"
+                    ariaLabel={cell ? `Marked ${GLYPH[cell]}` : `Empty cell ${i + 1}`}
+                    className="aspect-square"
                   >
-                    {cell ? GLYPH[cell] : ''}
-                  </button>
+                    {cell ? <span style={{ fontSize: '2rem' }}>{GLYPH[cell]}</span> : ''}
+                  </GameCard>
                 ))}
               </div>
+              <ResultModal
+                open={!!matchWinner}
+                eyebrow={matchWinner === me ? 'CASE FILE CLOSED' : 'CASE GONE COLD'}
+                headline={matchWinner === me ? 'Case closed' : 'Case slips away'}
+                tone={matchWinner === me ? 'win' : 'lose'}
+                stat={`FINAL SCORE — YOU ${scores[me] ?? 0} · OPPONENT ${scores[peer?.id ?? ''] ?? 0}`}
+                primaryLabel="🔁 New match"
+                onPrimary={startMatch}
+              />
+              <ResultModal
+                open={roundOver && !matchWinner}
+                eyebrow={`ROUND ${round} DECIDED`}
+                headline={roundWinner === 'draw' ? 'Stalemate' : `${nameOf(roundWinner)} takes it`}
+                tone={roundWinner === 'draw' ? 'draw' : roundWinner === me ? 'win' : 'lose'}
+                stat={`YOU ${scores[me] ?? 0} — ${scores[peer?.id ?? ''] ?? 0} OPPONENT`}
+                primaryLabel="➡️ Next round"
+                onPrimary={nextRound}
+              />
             </>
           )}
         </motion.div>

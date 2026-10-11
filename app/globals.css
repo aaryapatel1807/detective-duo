@@ -40,9 +40,22 @@
   --paper: #efe6cf;
 
   /* page backdrop */
-  --bg-base: #141114;
+  --bg-base: #0a0f1a;
   --lamp-x: 72%;
   --lamp-y: -6%;
+
+  /* hub redesign tokens (dark navy noir) */
+  --hub-bg: #0a0f1a;
+  --hub-panel: rgba(13, 20, 36, 0.66);
+  --hub-panel-2: #111a2e;
+  --hub-border: #1f2a3d;
+  --hub-gold: #d9a441;
+  --hub-gold-soft: rgba(217, 164, 65, 0.14);
+  --hub-green: #3ddc84;
+  --hub-red: #b3261e;
+  --hub-ink: #ece7d9;
+  --hub-ink-dim: #8b95a8;
+  --hub-glass-blur: blur(26px) saturate(1.6);
 }
 
 [data-theme='light'] {
@@ -69,6 +82,19 @@
   --paper: #f7f1df;
 
   --bg-base: #e9dfc9;
+
+  /* hub tokens — light "case-file paper" values */
+  --hub-bg: #f1e9d6;
+  --hub-panel: rgba(255, 255, 255, 0.68);
+  --hub-panel-2: #fffdf6;
+  --hub-border: rgba(120, 90, 40, 0.28);
+  --hub-gold: #a5691a;
+  --hub-gold-soft: rgba(166, 105, 26, 0.12);
+  --hub-green: #1d9e54;
+  --hub-red: #a3231a;
+  --hub-ink: #2b2118;
+  --hub-ink-dim: rgba(43, 33, 24, 0.66);
+  --hub-glass-blur: blur(26px) saturate(1.4);
 }
 
 html,
@@ -369,6 +395,289 @@ body.dd-fullbleed [data-sidebar-toggle] {
 body.dd-fullbleed [data-app-sidebar] {
   display: none !important;
 }
+body.dd-fullbleed [data-bottom-nav] {
+  display: none !important;
+}
 body.dd-fullbleed main {
   padding: 0 !important;
+}
+
+/* ============================================================
+   HUB REDESIGN — shell chrome (noir)
+   Token utilities + app-shell layout (sidebar / bottom nav).
+   Unlayered rules below intentionally beat Tailwind's layered
+   utilities; responsive display is handled with explicit @media.
+   ============================================================ */
+
+body {
+  font-family: var(--hub-body), var(--font-sans);
+}
+
+/* ---------- font utilities ---------- */
+
+.hub-display {
+  font-family: var(--hub-display), 'Cinzel', Georgia, serif;
+}
+
+.hub-mono {
+  font-family: var(--hub-mono), 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.hub-hand {
+  font-family: var(--hub-hand), 'Caveat', cursive;
+}
+
+/* ---------- frosted noir panel ---------- */
+
+.hub-glass {
+  background: var(--hub-panel);
+  -webkit-backdrop-filter: var(--hub-glass-blur);
+  backdrop-filter: var(--hub-glass-blur);
+  border: 1px solid rgba(217, 164, 65, 0.14);
+  border-radius: 22px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- micro labels / eyebrows ---------- */
+
+.hub-eyebrow {
+  font-family: var(--hub-mono), 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.6875rem; /* 11px — never smaller */
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--hub-ink-dim);
+}
+
+/* ---------- buttons ---------- */
+
+.hub-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.7rem 1.4rem;
+  border-radius: 14px;
+  border: 1px solid var(--hub-gold);
+  background: linear-gradient(180deg, rgba(217, 164, 65, 0.28), rgba(217, 164, 65, 0.1));
+  color: var(--hub-ink);
+  font-family: var(--hub-mono), 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.hub-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(217, 164, 65, 0.35);
+}
+.hub-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.hub-btn:focus-visible,
+.hub-btn-ghost:focus-visible,
+.hub-tab:focus-visible,
+.hub-navlink:focus-visible {
+  outline: 2px solid var(--hub-gold);
+  outline-offset: 2px;
+}
+
+.hub-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.7rem 1.4rem;
+  border-radius: 14px;
+  border: 1px solid var(--hub-border);
+  background: transparent;
+  color: var(--hub-ink-dim);
+  font-family: var(--hub-mono), 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.hub-btn-ghost:hover {
+  color: var(--hub-ink);
+  border-color: var(--hub-gold);
+}
+
+/* ---------- pill badge ---------- */
+
+.hub-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid var(--hub-border);
+  background: rgba(13, 20, 36, 0.5);
+  color: var(--hub-ink-dim);
+  font-family: var(--hub-mono), 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---------- app shell: main ---------- */
+
+.hub-main {
+  min-height: 100vh;
+  padding: 1.5rem 1rem 7rem; /* 112px bottom clears the floating tab bar */
+  transition: padding 0.3s ease;
+}
+@media (min-width: 1024px) {
+  .hub-main {
+    padding: 1.5rem 2rem 1.5rem 300px; /* clears the 268px sidebar */
+  }
+}
+
+/* ---------- app shell: sidebar (desktop only, >= lg) ---------- */
+
+.hub-sidebar {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .hub-sidebar {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.hub-sidebar-toggle {
+  display: none;
+  place-items: center;
+}
+@media (min-width: 1024px) {
+  .hub-sidebar-toggle {
+    display: grid;
+  }
+}
+
+.hub-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  border: 1px solid var(--hub-border);
+  background: rgba(13, 20, 36, 0.6);
+  color: var(--hub-ink-dim);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.hub-icon-btn:hover {
+  color: var(--hub-gold);
+  border-color: var(--hub-gold);
+}
+
+/* Sidebar nav links: JetBrains Mono labels, gold active pill */
+.hub-navlink {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0.625rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid transparent;
+  color: var(--hub-ink-dim);
+  font-family: var(--hub-mono), 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.hub-navlink:hover {
+  color: var(--hub-ink);
+  border-color: var(--hub-border);
+}
+.hub-navlink.active {
+  background: var(--hub-gold-soft);
+  border-color: rgba(217, 164, 65, 0.35);
+  color: var(--hub-gold);
+}
+
+/* ---------- app shell: bottom nav (mobile only, < lg) ---------- */
+
+.hub-bottomnav {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 50;
+  display: none;
+}
+@media (max-width: 1023.98px) {
+  .hub-bottomnav {
+    display: block;
+  }
+}
+
+.hub-bottomnav-inner {
+  display: flex;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 28px;
+  background: var(--hub-panel);
+  -webkit-backdrop-filter: var(--hub-glass-blur);
+  backdrop-filter: var(--hub-glass-blur);
+  border: 1px solid rgba(217, 164, 65, 0.16);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.hub-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 56px; /* >= 44px touch target */
+  padding: 8px 2px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  color: var(--hub-ink-dim);
+  text-decoration: none;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.hub-tab:active {
+  transform: scale(0.96);
+}
+/* Active tab = gold-tinted pill behind icon + label (shape, not color alone) */
+.hub-tab.active {
+  background: var(--hub-gold-soft);
+  border-color: rgba(217, 164, 65, 0.32);
+  color: var(--hub-gold);
+}
+.hub-tab-icon {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+.hub-tab-label {
+  font-family: var(--hub-body), system-ui, sans-serif;
+  font-size: 0.6875rem; /* 11px — never smaller */
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }

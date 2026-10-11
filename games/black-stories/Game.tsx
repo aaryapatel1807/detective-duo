@@ -15,6 +15,8 @@ import { appendQuestion, answerQuestion, validQuestion } from './logic';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
+import '../ui-kit/kit.css';
+import { GameButton, ResultModal, SectionTitle } from '../ui-kit';
 
 const ANSWER_LABEL: Record<Answer, string> = { yes: 'YES', no: 'NO', irrelevant: 'IRRELEVANT' };
 
@@ -102,9 +104,8 @@ export default function BlackStoriesGame({ room }: GameProps) {
 
   const header = (
     <div className="mb-5 text-center">
-      <div className="eyebrow">Case file · lateral puzzle</div>
-      <h2 className="type-heading mt-1 text-2xl">Black Stories</h2>
-      <div className="mt-2 flex items-center justify-center gap-3 text-xs text-[var(--ink-dim)]">
+      <SectionTitle eyebrow="Case file · lateral puzzle" title="Black Stories" />
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-xs text-[var(--ink-dim)]">
         <span className="rounded-full border border-[var(--glass-border)] px-3 py-1">
           🎙️ Host: {hostId === room.me.id ? 'You' : room.peer && hostId === room.peer.id ? room.peer.name : '—'}
         </span>
@@ -116,7 +117,7 @@ export default function BlackStoriesGame({ room }: GameProps) {
   );
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="gk-root mx-auto max-w-2xl">
       {header}
 
       {/* ---- role picking ---- */}
@@ -130,16 +131,16 @@ export default function BlackStoriesGame({ room }: GameProps) {
             <motion.div whileHover={{ y: -3 }} className="manila-folder p-5 text-left">
               <div className="type-heading text-lg">🎙️ The Host</div>
               <p className="mt-2 text-xs text-[var(--ink-dim)]">Reads the full story, answers yes / no / irrelevant.</p>
-              <button onClick={becomeHost} className="noir-btn mt-4 w-full" disabled={!!hostId}>
+              <GameButton variant="primary" onClick={becomeHost} className="mt-4 w-full" disabled={!!hostId}>
                 Become host
-              </button>
+              </GameButton>
             </motion.div>
             <motion.div whileHover={{ y: -3 }} className="manila-folder p-5 text-left">
               <div className="type-heading text-lg">🔍 The Sleuth</div>
               <p className="mt-2 text-xs text-[var(--ink-dim)]">Hears only the riddle, interrogates with questions.</p>
-              <button onClick={becomeSleuth} className="noir-btn mt-4 w-full" disabled={!!hostId || !bothHere}>
+              <GameButton variant="primary" onClick={becomeSleuth} className="mt-4 w-full" disabled={!!hostId || !bothHere}>
                 Become sleuth
-              </button>
+              </GameButton>
             </motion.div>
           </div>
           {!bothHere && (
@@ -241,26 +242,26 @@ export default function BlackStoriesGame({ room }: GameProps) {
                   className="noir-input flex-1"
                   maxLength={300}
                 />
-                <button onClick={askQuestion} className="noir-btn" disabled={!validQuestion(question)}>
+                <GameButton variant="primary" onClick={askQuestion} disabled={!validQuestion(question)}>
                   Ask ❓
-                </button>
+                </GameButton>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 {!claimedBy && (
-                  <button
+                  <GameButton
+                    variant="ghost"
                     onClick={() => {
                       sounds.stampThud();
                       patch({ claimedBy: room.me.id });
                       room.send('bs-claim', { from: room.me.id });
                     }}
-                    className="noir-btn-ghost"
                   >
                     🕵️ I cracked it!
-                  </button>
+                  </GameButton>
                 )}
-                <button onClick={() => reveal(false)} className="noir-btn-ghost">
+                <GameButton variant="ghost" onClick={() => reveal(false)}>
                   🏳️ Surrender — reveal solution
-                </button>
+                </GameButton>
               </div>
               {claimedBy === room.me.id && (
                 <p className="mt-3 text-xs text-[var(--amber-glow)]">
@@ -275,17 +276,17 @@ export default function BlackStoriesGame({ room }: GameProps) {
             <GlassCard className="border-[var(--amber-glow)] p-5 text-center">
               <div className="type-heading text-lg">The sleuth claims they cracked it!</div>
               <p className="mt-1 text-xs text-[var(--ink-dim)]">Did they speak the truth, host?</p>
-              <div className="mt-4 flex justify-center gap-3">
-                <button onClick={() => reveal(true)} className="noir-btn">✅ Correct — case solved</button>
-                <button
+              <div className="mt-4 flex flex-wrap justify-center gap-3">
+                <GameButton variant="primary" onClick={() => reveal(true)}>✅ Correct — case solved</GameButton>
+                <GameButton
+                  variant="ghost"
                   onClick={() => {
                     sounds.typewriterClick();
                     patch({ claimedBy: null });
                   }}
-                  className="noir-btn-ghost"
                 >
                   ❌ Not quite — keep digging
-                </button>
+                </GameButton>
               </div>
             </GlassCard>
           )}
@@ -293,29 +294,38 @@ export default function BlackStoriesGame({ room }: GameProps) {
           {/* host reveal */}
           {phase === 'questioning' && isHost && (
             <div className="text-center">
-              <button onClick={() => reveal(true)} className="noir-btn-ghost">
+              <GameButton variant="ghost" onClick={() => reveal(true)}>
                 🗝️ Mark solved — reveal the truth
-              </button>
+              </GameButton>
             </div>
           )}
 
           {/* solution reveal */}
           {(phase === 'solved' || phase === 'surrendered') && (
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-              <GlassCard className="p-6 text-center">
-                <div className="wax-seal mx-auto mb-3" />
-                <div className="type-heading text-xl text-[var(--amber-glow)]">
-                  {phase === 'solved' ? '🎉 CASE CRACKED!' : '📜 THE TRUTH, REVEALED'}
-                </div>
-                <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[var(--ink-dim)]">{story.solution}</p>
-                <div className="mt-3 text-xs text-[var(--ink-faint)]">
-                  Solved in {askedCount} question{askedCount === 1 ? '' : 's'} · +{XP_AWARDS.coopWin} XP each
-                </div>
-                <button onClick={newRound} className="noir-btn mt-5">
-                  📂 Next case
-                </button>
-              </GlassCard>
-            </motion.div>
+            <div className="gk-modal-scope">
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+                <GlassCard className="p-6 text-center">
+                  <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[var(--ink-dim)]">{story.solution}</p>
+                  <div className="mt-3 text-xs text-[var(--ink-faint)]">
+                    Solved in {askedCount} question{askedCount === 1 ? '' : 's'} · +{XP_AWARDS.coopWin} XP each
+                  </div>
+                  <div className="mt-5">
+                    <GameButton variant="primary" onClick={newRound}>
+                      📂 Next case
+                    </GameButton>
+                  </div>
+                </GlassCard>
+              </motion.div>
+              <ResultModal
+                open
+                eyebrow="The truth, revealed"
+                headline={phase === 'solved' ? 'CASE CRACKED!' : 'SURRENDERED — TRUTH REVEALED'}
+                stat={`${askedCount} question${askedCount === 1 ? '' : 's'} · +${XP_AWARDS.coopWin} XP each`}
+                tone={phase === 'solved' ? 'win' : 'draw'}
+                primaryLabel="📂 Next case"
+                onPrimary={newRound}
+              />
+            </div>
           )}
         </div>
       )}

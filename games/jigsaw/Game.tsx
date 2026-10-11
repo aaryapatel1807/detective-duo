@@ -10,7 +10,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { GameProps } from '../types';
 import { GlassCard } from '../../components/GlassCard';
-import { Typewriter } from '../../components/Typewriter';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { readStr } from '../../lib/store';
 import { PHOTO_ME_KEY, PHOTO_PARTNER_KEY } from '../../lib/profile';
@@ -26,6 +25,8 @@ import {
   type JigPiece,
 } from './logic';
 import type { JigSource } from './types';
+import '../ui-kit/kit.css';
+import { GameButton, ProgressBar, ResultModal, SectionTitle } from '../ui-kit';
 
 const FALLBACK_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'><defs><linearGradient id='sky' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#33291a'/><stop offset='1' stop-color='#12100c'/></linearGradient></defs><rect width='600' height='600' fill='url(#sky)'/><circle cx='470' cy='105' r='72' fill='#e8d9b0' opacity='0.14'/><circle cx='470' cy='105' r='50' fill='#e8d9b0' opacity='0.92'/><rect x='15' y='310' width='95' height='290' fill='#1d1812'/><rect x='120' y='225' width='115' height='375' fill='#251e15'/><rect x='245' y='340' width='85' height='260' fill='#1d1812'/><rect x='340' y='185' width='125' height='415' fill='#2a2118'/><rect x='475' y='290' width='105' height='310' fill='#1d1812'/><g fill='#e8a33d' opacity='0.85'><rect x='140' y='250' width='18' height='24'/><rect x='168' y='250' width='18' height='24'/><rect x='196' y='250' width='18' height='24'/><rect x='140' y='290' width='18' height='24'/><rect x='196' y='290' width='18' height='24'/><rect x='360' y='215' width='20' height='26'/><rect x='392' y='215' width='20' height='26'/><rect x='424' y='215' width='20' height='26'/><rect x='360' y='258' width='20' height='26'/><rect x='424' y='258' width='20' height='26'/><rect x='360' y='301' width='20' height='26'/><rect x='392' y='301' width='20' height='26'/></g><path d='M0 430 L600 370' stroke='#a03030' stroke-width='4'/><circle cx='140' cy='416' r='9' fill='#c8a24a'/><circle cx='430' cy='387' r='9' fill='#c8a24a'/><circle cx='290' cy='401' r='9' fill='#c8a24a'/></svg>`;
 
@@ -141,23 +142,24 @@ export default function JigsawGame({ room }: GameProps) {
   });
 
   return (
-    <div className="mx-auto max-w-lg">
+    <div className="gk-root gk-modal-scope mx-auto max-w-lg">
       <div className="mb-4 text-center">
-        <Typewriter text="Jigsaw — Evidence Photo" as="h2" className="text-xl" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+        <SectionTitle eyebrow="EVIDENCE PHOTO" title="Jigsaw" />
+        <p className="mt-2 text-sm text-[var(--ink-dim)]">
           Drag pieces from the tray onto the board. They snap when close to home.
         </p>
       </div>
 
-      <div className="mb-3 flex flex-wrap justify-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
         {[3, 4].map((sizeOpt) => (
-          <button
+          <GameButton
             key={sizeOpt}
+            size="sm"
+            variant={sizeOpt === n ? 'primary' : 'ghost'}
             onClick={() => newPuzzle(sizeOpt)}
-            className={sizeOpt === n ? 'noir-btn !py-2' : 'noir-btn-ghost !py-2'}
           >
             {sizeOpt}×{sizeOpt}
-          </button>
+          </GameButton>
         ))}
         <span className="mx-1 hidden self-center text-[var(--ink-faint)] sm:inline">|</span>
         {(
@@ -169,26 +171,24 @@ export default function JigsawGame({ room }: GameProps) {
         ).map(([src, label]) => {
           const missing = src === 'me' ? !photos.me : src === 'partner' ? !photos.partner : false;
           return (
-            <button
+            <GameButton
               key={src}
+              size="sm"
+              variant={src === source ? 'primary' : 'ghost'}
               onClick={() => setSource(src)}
               disabled={missing}
-              title={missing ? 'Upload a photo in Settings first' : label}
-              className={`${src === source ? 'noir-btn !py-2' : 'noir-btn-ghost !py-2'} disabled:opacity-40`}
+              ariaLabel={missing ? 'Upload a photo in Settings first' : label}
             >
               {label}
-            </button>
+            </GameButton>
           );
         })}
       </div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <GlassCard className="p-4">
-          <div className="mb-2 flex items-center justify-between font-type text-xs tracking-[0.14em] uppercase text-[var(--ink-dim)]">
-            <span>
-              Placed {placedCount}/{n * n}
-            </span>
-            {done && <span className="text-[var(--amber-glow)]">🎉 reassembled!</span>}
+          <div className="mb-4">
+            <ProgressBar label="PIECES PLACED" value={placedCount} max={n * n} />
           </div>
 
           <div
@@ -224,20 +224,18 @@ export default function JigsawGame({ room }: GameProps) {
               />
             ))}
           </div>
-
-          {done && (
-            <div className="mt-3 rounded-xl border border-[var(--amber-glow)] bg-[rgba(232,163,61,0.1)] p-4 text-center">
-              <div className="type-heading text-lg text-[var(--amber-glow)]">
-                🎉 Photo reassembled!
-              </div>
-              <p className="mt-1 text-sm text-[var(--ink-dim)]">+{XP_AWARDS.soloWin} XP filed.</p>
-              <button onClick={() => newPuzzle(n)} className="noir-btn mt-3">
-                ↺ Scatter again
-              </button>
-            </div>
-          )}
         </GlassCard>
       </motion.div>
+
+      <ResultModal
+        open={done}
+        eyebrow="EVIDENCE PHOTO"
+        headline="Photo Reassembled"
+        tone="win"
+        stat={`${n * n} PIECES · +${XP_AWARDS.soloWin} XP FILED`}
+        primaryLabel="Scatter again"
+        onPrimary={() => newPuzzle(n)}
+      />
     </div>
   );
 }

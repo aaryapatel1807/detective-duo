@@ -2,8 +2,9 @@
 
 import { ReactNode } from 'react';
 import { cn } from '../lib/cn';
+import './hub-noir.css';
 
-/** Frosted-glass card (NutriAI "Glass Office" style). */
+/** Frosted-glass noir card. */
 export function GlassCard({
   children,
   className,
@@ -14,7 +15,7 @@ export function GlassCard({
   strong?: boolean;
 }) {
   return (
-    <div className={cn(strong ? 'glass-card-strong' : 'glass-card', className)}>
+    <div className={cn(strong ? 'hub-glass-strong' : 'hub-glass', className)}>
       {children}
     </div>
   );

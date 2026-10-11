@@ -9,6 +9,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import '../ui-kit/kit.css';
+import {
+  GameButton,
+  ScoreHUD,
+  ResultModal,
+  SectionTitle,
+} from '../ui-kit';
 import type { GameProps } from '../types';
 import type { RoomApi } from '../../lib/realtime/useRoom';
 import type { MindShared } from './types';
@@ -117,7 +124,7 @@ export default function MindMeldGame({ room }: GameProps) {
 
   if (!room.peer) {
     return (
-      <div className="mx-auto max-w-xl">
+      <div className="gk-root mx-auto max-w-xl">
         <GlassCard className="p-10 text-center">
           <div className="text-5xl">🔮</div>
           <h2 className="type-heading mt-4 text-2xl">Mind Meld</h2>
@@ -130,59 +137,34 @@ export default function MindMeldGame({ room }: GameProps) {
     );
   }
 
-  if (gs.won) {
-    return (
-      <WinView
-        rounds={round - 1}
-        partnerName={room.peer.name}
-        onReplay={reset}
-      />
-    );
-  }
-
   return (
-    <div className="mx-auto max-w-3xl">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="type-heading text-2xl">🔮 Mind Meld</h2>
-          <p className="text-sm text-[var(--ink-dim)]">
-            Round {round} · {room.me.name} × {room.peer.name}
-          </p>
-        </div>
-        <div className="flex gap-1.5" title={`${matches}/${MIND_WIN_MATCHES} matches`}>
-          {Array.from({ length: MIND_WIN_MATCHES }).map((_, i) => (
-            <span
-              key={i}
-              className={`h-3.5 w-3.5 rounded-full border ${
-                i < matches
-                  ? 'border-[var(--amber-glow)] bg-[var(--amber-glow)] shadow-[0_0_10px_rgba(232,163,61,0.7)]'
-                  : 'border-[var(--glass-border)] bg-transparent'
-              }`}
-            />
-          ))}
-        </div>
+    <div className="gk-root gk-modal-scope mx-auto max-w-3xl">
+      <div className="mb-4">
+        <SectionTitle
+          eyebrow={`ROUND ${round} · ${room.me.name} × ${room.peer.name}`}
+          title="🔮 Mind Meld"
+        />
+      </div>
+      <div className="mb-4">
+        <ScoreHUD
+          leftLabel="MATCHES"
+          leftValue={matches}
+          rightLabel="TO GO"
+          rightValue={Math.max(0, MIND_WIN_MATCHES - matches)}
+        />
       </div>
 
       {/* theme card */}
       <div className="manila-folder p-6 text-center">
-        <span className="eyebrow">
-          {theme ? `🎲 Theme ${themeIdx + 1}/${MIND_THEMES.length} — ${theme.label}` : '🌀 Aftermath round'}
-        </span>
-        {theme ? (
-          <>
-            <div className="type-heading mt-2 text-5xl tracking-[0.15em]">{theme.prompt}</div>
-            <p className="mt-2 text-sm italic text-[var(--ink-dim)]">{theme.hint}</p>
-          </>
-        ) : (
-          <>
-            <div className="type-heading mt-2 text-3xl tracking-wide">
-              {gs.customTheme || `${(gs.prevA ?? '').toUpperCase()} + ${(gs.prevB ?? '').toUpperCase()}`}
-            </div>
-            <p className="mt-2 text-sm italic text-[var(--ink-dim)]">
-              No match last round — your word must relate to <b>BOTH</b> of these.
-            </p>
-          </>
-        )}
+        <SectionTitle
+          eyebrow={theme ? `🎲 THEME ${themeIdx + 1}/${MIND_THEMES.length} — ${theme.label}` : '🌀 AFTERMATH ROUND'}
+          title={theme ? theme.prompt : (gs.customTheme || `${(gs.prevA ?? '').toUpperCase()} + ${(gs.prevB ?? '').toUpperCase()}`)}
+        />
+        <p className="mt-2 text-sm italic text-[var(--ink-dim)]">
+          {theme
+            ? theme.hint
+            : 'No match last round — your word must relate to BOTH of these.'}
+        </p>
       </div>
 
       {/* the two minds */}
@@ -209,9 +191,9 @@ export default function MindMeldGame({ room }: GameProps) {
                 autoFocus
                 className="noir-input min-w-0 flex-1 text-center font-type text-lg tracking-[0.2em]"
               />
-              <button type="submit" className="noir-btn !px-5" disabled={!draft.trim()}>
+              <GameButton type="submit" disabled={!draft.trim()}>
                 Seal
-              </button>
+              </GameButton>
             </form>
           )}
         </MindCard>
@@ -254,9 +236,9 @@ export default function MindMeldGame({ room }: GameProps) {
               </p>
             </>
           )}
-          <button onClick={nextRound} className="noir-btn mt-4 !px-10 !py-3">
+          <GameButton onClick={nextRound} className="mt-4">
             {match && matches + 1 >= MIND_WIN_MATCHES ? '✨ Complete the meld' : '▶ Next round'}
-          </button>
+          </GameButton>
         </motion.div>
       )}
 
@@ -270,6 +252,16 @@ export default function MindMeldGame({ room }: GameProps) {
           Type one word and seal it — neither of you sees the other's until both are in.
         </p>
       )}
+
+      <ResultModal
+        open={!!gs.won}
+        eyebrow="MELD COMPLETE"
+        headline="Minds melded"
+        tone="win"
+        stat={`${MIND_WIN_MATCHES} MATCHES IN ${round - 1} ROUNDS · +${XP_AWARDS.coopWin} XP EACH`}
+        primaryLabel="Meld again"
+        onPrimary={reset}
+      />
     </div>
   );
 }
@@ -315,36 +307,5 @@ function MindCard({
       </div>
       {children}
     </div>
-  );
-}
-
-function WinView({
-  rounds,
-  partnerName,
-  onReplay,
-}: {
-  rounds: number;
-  partnerName: string;
-  onReplay: () => void;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.96 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="glass-card-strong mx-auto max-w-xl p-10 text-center"
-    >
-      <div className="text-6xl">🔮⚡</div>
-      <h3 className="type-heading mt-4 text-3xl">MINDS MELDED</h3>
-      <p className="mt-2 text-sm text-[var(--ink-dim)]">
-        {MIND_WIN_MATCHES} matches in {rounds} rounds — you and {partnerName} are
-        officially sharing one brain cell. A detective-grade one.
-      </p>
-      <div className="eyebrow mt-3 text-[var(--amber-glow)]">
-        +{XP_AWARDS.coopWin} XP each · love-notes surprise unlocked 💌
-      </div>
-      <button onClick={onReplay} className="noir-btn mt-6 !px-10 !py-3">
-        Meld again
-      </button>
-    </motion.div>
   );
 }

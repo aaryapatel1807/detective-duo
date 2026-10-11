@@ -7,6 +7,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import '../ui-kit/kit.css';
+import {
+  GameButton,
+  ScoreHUD,
+  TurnBanner,
+  ResultModal,
+  SectionTitle,
+} from '../ui-kit';
 import type { GameProps } from '../types';
 import type { BattleshipShared } from './types';
 import {
@@ -41,6 +49,8 @@ export default function BattleshipGame({ room }: GameProps) {
   const myShots: Record<number, 'hit' | 'miss'> = shots[me] ?? {};
   const peerShots: Record<number, 'hit' | 'miss'> = peer ? (shots[peer.id] ?? {}) : {};
   const myTaken = new Set(myShips.flat());
+  const hitsLanded = Object.values(myShots).filter((s) => s === 'hit').length;
+  const hitsTaken = Object.values(peerShots).filter((s) => s === 'hit').length;
 
   useEffect(() => {
     if (winner && winner === me && !awardedRef.current) {
@@ -146,7 +156,7 @@ export default function BattleshipGame({ room }: GameProps) {
 
   const grid = (own: boolean, title: string) => (
     <div>
-      <h3 style={{ fontFamily: 'var(--font-type)' }} className="mb-2 text-sm tracking-widest opacity-80">
+      <h3 className="mb-2 text-sm tracking-widest opacity-80">
         {title}
       </h3>
       <div className="grid gap-0.5" style={{ gridTemplateColumns: `repeat(${GRID}, minmax(0, 1fr))` }}>
@@ -160,7 +170,8 @@ export default function BattleshipGame({ room }: GameProps) {
               key={cell}
               onClick={own ? (placeable ? () => placeAt(cell) : undefined) : onClick}
               disabled={own ? !placeable : !onClick}
-              className={`flex aspect-square items-center justify-center rounded border text-sm transition-all ${cls} ${
+              aria-label={label ? `${label} at cell ${cell + 1}` : `Cell ${cell + 1}`}
+              className={`flex aspect-square min-h-[40px] items-center justify-center rounded border text-sm transition-all ${cls} ${
                 placeable ? 'cursor-pointer ring-1 ring-amber-300/50' : ''
               }`}
             >
@@ -173,78 +184,98 @@ export default function BattleshipGame({ room }: GameProps) {
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 style={{ fontFamily: 'var(--font-type)' }} className="text-xl tracking-wide">
-          🚢 BATTLESHIP
-        </h2>
-        <div className="text-sm opacity-80" style={{ fontFamily: 'var(--font-type)' }}>
-          {phase === 'battle' && `TURN: ${turn === me ? 'YOU' : nameOf(turn).toUpperCase()}`}
-        </div>
-      </div>
+    <div className="gk-root space-y-4">
+      <SectionTitle
+        eyebrow={
+          phase === 'battle' ? 'MIDNIGHT HARBOR · OPEN FIRE' :
+          phase === 'place' ? 'DEPLOY YOUR FLEET' :
+          '8×8 HARBOR · 4 SHIPS EACH'
+        }
+        title="🚢 Battleship"
+      />
+      {phase === 'battle' && (
+        <ScoreHUD
+          leftLabel="HITS LANDED"
+          leftValue={hitsLanded}
+          rightLabel="HITS TAKEN"
+          rightValue={hitsTaken}
+        />
+      )}
 
       {!peer && (
-        <div className="glass-card p-4 text-sm" style={{ fontFamily: 'var(--font-type)' }}>
+        <div className="glass-card p-4 text-sm">
           ⏳ Waiting for your partner… (code <span className="font-bold">{room.roomCode ?? '—'}</span>)
         </div>
       )}
 
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card gk-modal-scope p-4">
         {phase === 'lobby' && (
           <div className="flex flex-col items-center gap-3 py-8">
-            <p className="text-center text-sm opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
+            <p className="text-center text-sm opacity-70">
               Four ships each on the midnight harbor. Place them in secret, then hunt.
             </p>
-            <button className="noir-btn" onClick={startPlacement} disabled={!peer}>
+            <GameButton onClick={startPlacement} disabled={!peer}>
               📁 Deploy fleets
-            </button>
+            </GameButton>
           </div>
         )}
 
         {phase === 'place' && (
           <>
-            <p className="mb-3 text-sm opacity-80" style={{ fontFamily: 'var(--font-type)' }}>
+            <p className="mb-3 text-sm opacity-80">
               {ready[me]
                 ? `Fleet ready. Waiting for ${nameOf(peer?.id ?? null)}…`
                 : `Place ship ${myShips.length + 1} of ${SHIP_SIZES.length} — size ${nextSize} (${horizontal ? 'horizontal ↔' : 'vertical ↕'}).`}
             </p>
             <div className="mb-3 flex flex-wrap gap-2">
-              <button className="noir-btn noir-btn-ghost" onClick={() => setHorizontal(!horizontal)} disabled={!!ready[me]}>
+              <GameButton variant="ghost" size="sm" onClick={() => setHorizontal(!horizontal)} disabled={!!ready[me]}>
                 🔄 Rotate ({horizontal ? '↔' : '↕'})
-              </button>
-              <button className="noir-btn noir-btn-ghost" onClick={clearShips} disabled={!!ready[me] || myShips.length === 0}>
+              </GameButton>
+              <GameButton variant="ghost" size="sm" onClick={clearShips} disabled={!!ready[me] || myShips.length === 0}>
                 🧹 Clear
-              </button>
-              <button className="noir-btn" onClick={markReady} disabled={!!ready[me] || myShips.length < SHIP_SIZES.length}>
+              </GameButton>
+              <GameButton variant="primary" size="sm" onClick={markReady} disabled={!!ready[me] || myShips.length < SHIP_SIZES.length}>
                 ⚓ Ready
-              </button>
+              </GameButton>
             </div>
             {grid(true, `YOUR HARBOR — ${nameOf(me).toUpperCase()}`)}
           </>
         )}
 
         {phase === 'battle' && (
-          <div className="grid gap-6 md:grid-cols-2">
+          <>
+            <TurnBanner
+              isYourTurn={turn === me}
+              yourText="Your shot — fire"
+              theirText={`${nameOf(turn)} is firing…`}
+            />
+            <div className="grid gap-6 md:grid-cols-2">
+              {grid(true, `YOUR HARBOR — ${nameOf(me).toUpperCase()}`)}
+              {grid(false, `ENEMY WATERS — ${nameOf(peer?.id ?? null).toUpperCase()}`)}
+            </div>
+          </>
+        )}
+
+        {phase === 'over' && (
+          <div className="grid gap-6 md:grid-cols-2" aria-hidden="true">
             {grid(true, `YOUR HARBOR — ${nameOf(me).toUpperCase()}`)}
             {grid(false, `ENEMY WATERS — ${nameOf(peer?.id ?? null).toUpperCase()}`)}
           </div>
         )}
 
-        {phase === 'over' && (
-          <div className="flex flex-col items-center gap-3 py-8">
-            <div className="text-4xl">{winner === me ? '🏆' : '🕯️'}</div>
-            <p className="text-center text-sm" style={{ fontFamily: 'var(--font-type)' }}>
-              {winner === me
-                ? 'Direct hit — the enemy fleet rests on the harbor floor.'
-                : `${nameOf(winner)} sends your fleet to the deep.`}
-            </p>
-            <button className="noir-btn" onClick={startPlacement}>🔁 New battle</button>
-          </div>
-        )}
+        <ResultModal
+          open={phase === 'over'}
+          eyebrow="BATTLE DECIDED"
+          headline={winner === me ? 'Harbor secured' : 'Fleet lost'}
+          tone={winner === me ? 'win' : 'lose'}
+          stat={`HITS LANDED ${hitsLanded} · HITS TAKEN ${hitsTaken}`}
+          primaryLabel="🔁 New battle"
+          onPrimary={startPlacement}
+        />
       </motion.div>
 
       {phase === 'battle' && (
-        <p className="text-center text-xs opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
+        <p className="text-center text-xs opacity-70">
           💥 hit · 🌊 miss · sink all {SHIP_SIZES.length} enemy ships to win.
         </p>
       )}

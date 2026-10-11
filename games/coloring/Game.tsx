@@ -9,13 +9,14 @@ import { useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { GameProps } from '../types';
 import { GlassCard } from '../../components/GlassCard';
-import { Typewriter } from '../../components/Typewriter';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { readJSON, writeJSON } from '../../lib/store';
 import { sounds } from '../../lib/sound';
 import { PAGES, PALETTE, type ArtDecor, type ArtRegion, type ShapeKind } from './art';
 import { filledCount, isComplete, setFill, type Fills } from './logic';
 import type { ColoringSaves } from './types';
+import '../ui-kit/kit.css';
+import { GameButton, SectionTitle } from '../ui-kit';
 
 const SAVES_KEY = 'dd-coloring-saves';
 
@@ -92,26 +93,27 @@ export default function ColoringGame({ room }: GameProps) {
   const finishedPages = PAGES.filter((p) => saves[p.id]?.done).length;
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="gk-root mx-auto max-w-xl">
       <div className="mb-4 text-center">
-        <Typewriter text="Coloring — The Sketchbook" as="h2" className="text-xl" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+        <SectionTitle eyebrow="THE SKETCHBOOK" title="Coloring" />
+        <p className="mt-2 text-sm text-[var(--ink-dim)]">
           Pick a color, click a region. Finished pieces stay in your case file ({finishedPages}/4).
         </p>
       </div>
 
       <div className="mb-3 flex flex-wrap justify-center gap-2">
         {PAGES.map((p) => (
-          <button
+          <GameButton
             key={p.id}
+            size="sm"
+            variant={p.id === page.id ? 'primary' : 'ghost'}
             onClick={() => {
               setPageId(p.id);
               sounds.paperShuffle();
             }}
-            className={p.id === page.id ? 'noir-btn !py-2' : 'noir-btn-ghost !py-2'}
           >
             {p.icon} {p.title} {saves[p.id]?.done ? '✓' : ''}
-          </button>
+          </GameButton>
         ))}
       </div>
 
@@ -122,11 +124,12 @@ export default function ColoringGame({ room }: GameProps) {
               <button
                 key={c.hex}
                 title={c.name}
+                aria-label={`Pick ${c.name}`}
                 onClick={() => {
                   setColor(c.hex);
                   sounds.typewriterClick();
                 }}
-                className={`h-9 w-9 rounded-full border-2 ${
+                className={`h-11 w-11 rounded-full border-2 transition-transform ${
                   color === c.hex ? 'scale-110 border-[var(--amber-glow)]' : 'border-[rgba(0,0,0,0.4)]'
                 }`}
                 style={{ background: c.hex }}
@@ -165,9 +168,9 @@ export default function ColoringGame({ room }: GameProps) {
           )}
 
           <div className="mt-3 text-center">
-            <button onClick={clearPage} className="noir-btn-ghost !py-2">
+            <GameButton variant="danger" size="sm" onClick={clearPage}>
               ↺ Clear page
-            </button>
+            </GameButton>
           </div>
         </GlassCard>
       </motion.div>

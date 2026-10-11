@@ -8,6 +8,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import '../ui-kit/kit.css';
+import { GameButton, ProgressBar } from '../ui-kit';
 import type { GameProps } from '../types';
 import type { RoomApi } from '../../lib/realtime/useRoom';
 import type { BombRole, BombShared, BombStatus } from './types';
@@ -187,9 +189,10 @@ export default function BombDefusalGame({ room }: GameProps) {
 
   const remaining = (gs.deadline ?? 0) - now;
   const timeDanger = status === 'armed' && remaining < 60_000;
+  const modulesDefused = [wiresDone, keypadDone, simonDone, passwordDone].filter(Boolean).length;
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="gk-root mx-auto max-w-5xl">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="type-heading text-2xl">💣 Bomb Defusal</h2>
@@ -223,6 +226,12 @@ export default function BombDefusalGame({ room }: GameProps) {
           </div>
         )}
       </div>
+
+      {status === 'armed' && (
+        <div className="mb-4 max-w-md">
+          <ProgressBar label="MODULES DEFUSED" value={modulesDefused} max={4} />
+        </div>
+      )}
 
       {status === 'setup' && (
         <SetupView
@@ -335,13 +344,15 @@ function SetupView({
           Solo practice — arm the device and you can flip between both views.
         </p>
       )}
-      <button
+      <GameButton
+        variant="danger"
+        size="lg"
         onClick={onArm}
         disabled={!myRole && !!room.peer && !roles[room.peer?.id ?? '']}
-        className="noir-btn mt-6 !px-10 !py-4 disabled:opacity-40"
+        className="mt-6"
       >
         🔴 ARM THE DEVICE
-      </button>
+      </GameButton>
     </GlassCard>
   );
 }
@@ -372,18 +383,20 @@ function TechnicianView({
     <div className="space-y-4">
       {solo && (
         <div className="flex gap-2">
-          <button
+          <GameButton
+            size="sm"
+            variant={myRole === 'technician' ? 'primary' : 'ghost'}
             onClick={() => onChoose('technician')}
-            className={`noir-btn-ghost !py-1.5 text-xs ${myRole === 'technician' ? '!border-[var(--amber-glow)]' : ''}`}
           >
             🧰 Bomb view
-          </button>
-          <button
+          </GameButton>
+          <GameButton
+            size="sm"
+            variant={myRole === 'expert' ? 'primary' : 'ghost'}
             onClick={() => onChoose('expert')}
-            className={`noir-btn-ghost !py-1.5 text-xs ${myRole === 'expert' ? '!border-[var(--amber-glow)]' : ''}`}
           >
             📖 Manual view
-          </button>
+          </GameButton>
         </div>
       )}
       {myRole === 'expert' && solo ? (
@@ -603,9 +616,9 @@ function SimonModule({
           flashes, then press the RESPONSE colors your Expert dictates.
         </p>
         {!done && !watching && (
-          <button onClick={() => setReplay((r) => r + 1)} className="noir-btn-ghost !py-1 text-xs">
+          <GameButton size="sm" variant="ghost" onClick={() => setReplay((r) => r + 1)}>
             ↻ Replay
-          </button>
+          </GameButton>
         )}
       </div>
       <div className="grid grid-cols-4 gap-3">
@@ -669,20 +682,20 @@ function PasswordModule({
       <div className="flex items-center justify-center gap-4">
         {wheels.map((letters, w) => (
           <div key={w} className="flex flex-col items-center gap-1">
-            <button onClick={() => spin(w, -1)} disabled={done} className="noir-btn-ghost !px-3 !py-1">
+            <GameButton size="sm" variant="ghost" onClick={() => spin(w, -1)} disabled={done} ariaLabel="Spin wheel down">
               ▲
-            </button>
+            </GameButton>
             <div className="flex h-20 w-16 items-center justify-center rounded-xl border border-[var(--brass)] bg-[rgba(0,0,0,0.4)] font-type text-4xl text-[var(--amber-glow)]">
               {letters[idx[w] ?? 0]}
             </div>
-            <button onClick={() => spin(w, 1)} disabled={done} className="noir-btn-ghost !px-3 !py-1">
+            <GameButton size="sm" variant="ghost" onClick={() => spin(w, 1)} disabled={done} ariaLabel="Spin wheel up">
               ▼
-            </button>
+            </GameButton>
           </div>
         ))}
-        <button onClick={submit} disabled={done} className="noir-btn ml-2 !px-6 !py-3">
+        <GameButton onClick={submit} disabled={done} className="ml-2">
           SUBMIT
-        </button>
+        </GameButton>
       </div>
     </ModuleCard>
   );
@@ -709,20 +722,20 @@ function ExpertView({ room }: { room: RoomApi }) {
           ))}
         </div>
         <div className="mt-4 flex justify-between">
-          <button
+          <GameButton
+            variant="ghost"
             onClick={() => { setPage((x) => Math.max(0, x - 1)); sounds.paperShuffle(); }}
             disabled={page === 0}
-            className="noir-btn-ghost disabled:opacity-40"
           >
             ← Prev
-          </button>
-          <button
+          </GameButton>
+          <GameButton
+            variant="ghost"
             onClick={() => { setPage((x) => Math.min(MANUAL_PAGES.length - 1, x + 1)); sounds.paperShuffle(); }}
             disabled={page === MANUAL_PAGES.length - 1}
-            className="noir-btn-ghost disabled:opacity-40"
           >
             Next →
-          </button>
+          </GameButton>
         </div>
       </div>
       <div className="glass-card !rounded-2xl p-4">
@@ -775,9 +788,9 @@ function EndView({
           +{XP_AWARDS.coopWin} XP each · love-notes surprise unlocked 💌
         </div>
       )}
-      <button onClick={onReset} className="noir-btn mt-6 !px-10 !py-3">
+      <GameButton onClick={onReset} className="mt-6">
         {won ? 'New device' : 'Try again'}
-      </button>
+      </GameButton>
     </motion.div>
   );
 }

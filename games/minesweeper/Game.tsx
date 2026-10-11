@@ -8,7 +8,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { GameProps } from '../types';
 import { GlassCard } from '../../components/GlassCard';
-import { Typewriter } from '../../components/Typewriter';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { readJSON, writeJSON } from '../../lib/store';
 import { sounds } from '../../lib/sound';
@@ -23,6 +22,17 @@ import {
   type Difficulty,
 } from './logic';
 import type { SweepBest, SweepStatus } from './types';
+import '../ui-kit/kit.css';
+import {
+  DifficultyBadge,
+  DifficultySelect,
+  GameButton,
+  ResultModal,
+  ScoreHUD,
+  SectionTitle,
+  TimerChip,
+  type Difficulty as KitDifficulty,
+} from '../ui-kit';
 
 const BEST_KEY = 'dd-solo-minesweeper-best';
 
@@ -37,6 +47,14 @@ const NUM_COLORS = [
   'text-[var(--ink)]',
   'text-[var(--ink-dim)]',
 ];
+
+/* Map the two sweep difficulties onto the kit's easy/medium/hard scale. */
+function toKitDiff(d: Difficulty): KitDifficulty {
+  return d.id === 'rookie' ? 'easy' : 'medium';
+}
+function fromKitDiff(k: KitDifficulty): Difficulty {
+  return k === 'easy' ? DIFFICULTIES[0] : DIFFICULTIES[1];
+}
 
 export default function MinesweeperGame({ room }: GameProps) {
   const [diff, setDiff] = useState<Difficulty>(DIFFICULTIES[0]);
@@ -137,56 +155,47 @@ export default function MinesweeperGame({ room }: GameProps) {
 
   const cellSize = diff.cols > 9 ? 'h-6 w-6 text-[0.65rem]' : 'h-9 w-9 text-sm';
   const minesLeft = board ? diff.mines - countFlags(board) : diff.mines;
+  const bestForDiff = best[diff.id as keyof SweepBest];
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="gk-root gk-modal-scope mx-auto max-w-xl">
       <div className="mb-4 text-center">
-        <Typewriter text="Minesweeper — Bomb Squad" as="h2" className="text-xl" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+        <SectionTitle eyebrow="BOMB SQUAD" title="Minesweeper" />
+        <p className="mt-2 text-sm text-[var(--ink-dim)]">
           Left-click to sweep, right-click or long-press to flag. First click is always safe.
         </p>
       </div>
 
-      <div className="mb-4 flex flex-wrap justify-center gap-2">
-        {DIFFICULTIES.map((d) => (
-          <button
-            key={d.id}
-            onClick={() => reset(d)}
-            className={d.id === diff.id ? 'noir-btn !py-2' : 'noir-btn-ghost !py-2'}
-          >
-            {d.label}
-          </button>
-        ))}
+      <div className="mb-4">
+        <DifficultySelect
+          options={[
+            { value: 'easy', label: 'Rookie', hint: '9×9 · 10 mines' },
+            { value: 'medium', label: 'Sleuth', hint: '16×16 · 40 mines' },
+          ]}
+          value={toKitDiff(diff)}
+          onChange={(k) => reset(fromKitDiff(k))}
+        />
+      </div>
+
+      <div className="mb-3">
+        <ScoreHUD
+          leftLabel="FLAGS"
+          leftValue={minesLeft}
+          rightLabel="BEST"
+          rightValue={bestForDiff ?? 0}
+          record="none"
+        />
+      </div>
+      <div className="mb-4 flex items-center justify-center gap-3">
+        <TimerChip seconds={seconds} label="TIME" />
+        <DifficultyBadge difficulty={toKitDiff(diff)} label={diff.id === 'rookie' ? 'ROOKIE' : 'SLEUTH'} />
       </div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <GlassCard className="p-4">
-          <div className="mb-3 flex items-center justify-between font-type text-sm">
-            <span>
-              💣 <span className="text-[var(--amber-glow)]">{minesLeft}</span>
-            </span>
-            <span>
-              ⏱ <span className="text-[var(--amber-glow)]">{seconds}s</span>
-            </span>
-            <span className="text-xs text-[var(--ink-dim)]">
-              best: {best[diff.id as keyof SweepBest] !== undefined ? `${best[diff.id as keyof SweepBest]}s` : '—'}
-            </span>
+          <div className="mb-3 text-center font-type text-xs tracking-[0.14em] uppercase text-[var(--ink-dim)]">
+            Grid — {diff.rows}×{diff.cols} · minefield scan
           </div>
-
-          {status === 'won' && (
-            <div className="mb-3 rounded-xl border border-[var(--amber-glow)] bg-[rgba(232,163,61,0.1)] p-3 text-center">
-              <div className="type-heading text-lg text-[var(--amber-glow)]">
-                🎉 Field cleared in {seconds}s!
-              </div>
-              <p className="mt-1 text-sm text-[var(--ink-dim)]">+{XP_AWARDS.soloWin} XP filed.</p>
-            </div>
-          )}
-          {status === 'lost' && (
-            <div className="mb-3 rounded-xl border border-[var(--blood)] bg-[rgba(160,40,40,0.12)] p-3 text-center">
-              <div className="type-heading text-lg">💥 Detonated!</div>
-              <p className="mt-1 text-sm text-[var(--ink-dim)]">The minefield wins this round.</p>
-            </div>
-          )}
 
           <div className="flex justify-center overflow-x-auto">
             <div
@@ -220,6 +229,7 @@ export default function MinesweeperGame({ room }: GameProps) {
                     onPointerDown={() => onPointerDown(i)}
                     onPointerUp={onPointerUp}
                     onPointerLeave={onPointerUp}
+                    aria-label={`Cell ${i + 1}`}
                     className={`flex items-center justify-center rounded border font-bold select-none ${cellSize} ${
                       isOpen
                         ? i === exploded
@@ -237,13 +247,33 @@ export default function MinesweeperGame({ room }: GameProps) {
 
           {(status === 'won' || status === 'lost') && (
             <div className="mt-4 text-center">
-              <button onClick={() => reset(diff)} className="noir-btn">
+              <GameButton variant="ghost" size="sm" onClick={() => reset(diff)}>
                 ↺ Sweep again
-              </button>
+              </GameButton>
             </div>
           )}
         </GlassCard>
       </motion.div>
+
+      <ResultModal
+        open={status === 'won'}
+        eyebrow="BOMB SQUAD"
+        headline="Field Cleared"
+        tone="win"
+        stat={`CLEARED IN ${seconds}S · ${diff.label} · +${XP_AWARDS.soloWin} XP`}
+        primaryLabel="Sweep again"
+        onPrimary={() => reset(diff)}
+      />
+
+      <ResultModal
+        open={status === 'lost'}
+        eyebrow="BOMB SQUAD"
+        headline="Detonated"
+        tone="lose"
+        stat={`${diff.label} · THE MINEFIELD WINS THIS ROUND`}
+        primaryLabel="Sweep again"
+        onPrimary={() => reset(diff)}
+      />
     </div>
   );
 }

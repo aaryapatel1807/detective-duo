@@ -7,6 +7,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import '../ui-kit/kit.css';
+import {
+  GameButton,
+  ScoreHUD,
+  TurnBanner,
+  ResultModal,
+  GameCard,
+  SectionTitle,
+} from '../ui-kit';
 import type { GameProps } from '../types';
 import type { LiarsShared } from './types';
 import {
@@ -127,18 +136,22 @@ export default function LiarsDiceGame({ room }: GameProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 style={{ fontFamily: 'var(--font-type)' }} className="text-xl tracking-wide">
-          🎲 LIAR'S DICE
-        </h2>
-        <div className="text-sm opacity-80" style={{ fontFamily: 'var(--font-type)' }}>
-          ROUND {round} · {nameOf(me)} 🎲×{myDice.length} — 🎲×{peerDice.length} {peer ? nameOf(peer.id) : '—'}
-        </div>
-      </div>
+    <div className="gk-root space-y-4">
+      <SectionTitle
+        eyebrow={phase === 'lobby' ? `${START_DICE} DICE EACH · HIDDEN HANDS` : `ROUND ${round} · ${totalDice} DICE ON THE TABLE`}
+        title="🎲 Liar's Dice"
+      />
+      {phase !== 'lobby' && (
+        <ScoreHUD
+          leftLabel="YOUR DICE"
+          leftValue={myDice.length}
+          rightLabel="THEIR DICE"
+          rightValue={peerDice.length}
+        />
+      )}
 
       {!peer && (
-        <div className="glass-card p-4 text-sm" style={{ fontFamily: 'var(--font-type)' }}>
+        <div className="glass-card p-4 text-sm">
           ⏳ Waiting for your partner to join the room… (code{' '}
           <span className="font-bold">{room.roomCode ?? '—'}</span>)
         </div>
@@ -147,22 +160,30 @@ export default function LiarsDiceGame({ room }: GameProps) {
       <div className="grid gap-4 md:grid-cols-2">
         {/* My hand */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4">
-          <h3 style={{ fontFamily: 'var(--font-type)' }} className="mb-2 text-sm tracking-widest opacity-80">
-            YOUR HAND — {nameOf(me)}
+          <h3 className="mb-2 text-sm tracking-widest opacity-80">
+            YOUR HAND — {nameOf(me).toUpperCase()}
           </h3>
-          <div className="flex flex-wrap gap-2 text-4xl">
+          <div className="flex flex-wrap gap-2">
             {myDice.length === 0 && phase !== 'lobby' ? (
               <span className="text-sm opacity-60">No dice left.</span>
             ) : (
-              myDice.map((d, i) => <span key={i}>{dieGlyph(d)}</span>)
+              myDice.map((d, i) => (
+                <GameCard key={i} ariaLabel={`Die showing ${d}`}>
+                  <span style={{ fontSize: '2rem' }}>{dieGlyph(d)}</span>
+                </GameCard>
+              ))
             )}
           </div>
-          <h3 style={{ fontFamily: 'var(--font-type)' }} className="mb-2 mt-4 text-sm tracking-widest opacity-80">
+          <h3 className="mb-2 mt-4 text-sm tracking-widest opacity-80">
             {peer ? nameOf(peer.id).toUpperCase() + "'S HAND" : 'PARTNER'}
           </h3>
-          <div className="flex gap-2 text-4xl opacity-90">
+          <div className="flex flex-wrap gap-2 opacity-90">
             {peerDice.map((d, i) => (
-              <span key={i}>{phase === 'revealed' || phase === 'over' ? dieGlyph(d) : '🎴'}</span>
+              <GameCard key={i} ariaLabel={phase === 'revealed' || phase === 'over' ? `Die showing ${d}` : 'Hidden die'}>
+                <span style={{ fontSize: '2rem' }}>
+                  {phase === 'revealed' || phase === 'over' ? dieGlyph(d) : '🎴'}
+                </span>
+              </GameCard>
             ))}
             {peerDice.length === 0 && phase !== 'lobby' && (
               <span className="text-sm opacity-60">No dice left.</span>
@@ -171,35 +192,29 @@ export default function LiarsDiceGame({ room }: GameProps) {
         </motion.div>
 
         {/* Table */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card gk-modal-scope p-4">
           {phase === 'lobby' ? (
             <div className="flex flex-col items-center gap-3 py-8">
-              <p className="text-sm opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
+              <p className="text-sm opacity-70">
                 Five dice each. Bid bold, bluff bolder.
               </p>
-              <button className="noir-btn" onClick={startMatch} disabled={!peer}>
+              <GameButton onClick={startMatch} disabled={!peer}>
                 🎲 Roll the dice
-              </button>
-            </div>
-          ) : phase === 'over' ? (
-            <div className="flex flex-col items-center gap-3 py-8">
-              <div className="text-4xl">{matchWinner === me ? '🏆' : '🕯️'}</div>
-              <p className="text-sm" style={{ fontFamily: 'var(--font-type)' }}>
-                {matchWinner === me ? 'You take the table — the last die is yours.' : `${matchWinner ? nameOf(matchWinner) : '—'} takes the table.`}
-              </p>
-              <button className="noir-btn" onClick={startMatch}>🔁 New game</button>
-            </div>
-          ) : phase === 'revealed' ? (
-            <div className="flex flex-col items-center gap-3 py-6">
-              <p className="text-center text-sm" style={{ fontFamily: 'var(--font-type)' }}>{lastResult}</p>
-              <button className="noir-btn" onClick={nextRound}>➡️ Next round</button>
+              </GameButton>
             </div>
           ) : (
             <>
-              <h3 style={{ fontFamily: 'var(--font-type)' }} className="mb-2 text-sm tracking-widest opacity-80">
+              {phase === 'bidding' && (
+                <TurnBanner
+                  isYourTurn={myTurn}
+                  yourText="Your bid, detective"
+                  theirText={turn ? `${nameOf(turn)} is thinking…` : 'Waiting…'}
+                />
+              )}
+              <h3 className="mb-2 text-sm tracking-widest opacity-80">
                 CURRENT BID
               </h3>
-              <div className="mb-4 text-2xl" style={{ fontFamily: 'var(--font-type)' }}>
+              <div className="mb-4 text-2xl">
                 {bid ? (
                   <span>
                     {bid.qty} × {dieGlyph(bid.face)}{' '}
@@ -209,63 +224,77 @@ export default function LiarsDiceGame({ room }: GameProps) {
                   <span className="text-sm opacity-60">No bid yet — open the bidding.</span>
                 )}
               </div>
-              <p className="mb-3 text-xs opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
-                {myTurn ? 'Your move, detective.' : peer && turn ? `${nameOf(turn)} is thinking…` : '…'}
-              </p>
-              <div className="flex flex-wrap items-end gap-3">
-                <label className="text-xs" style={{ fontFamily: 'var(--font-type)' }}>
-                  QTY
-                  <input
-                    type="number"
-                    min={1}
-                    max={Math.max(1, totalDice)}
-                    value={qty}
-                    onChange={(e) => setQty(Math.max(1, Math.min(totalDice || 10, Number(e.target.value) || 1)))}
-                    className="noir-input ml-2 w-16"
-                    disabled={!myTurn}
-                  />
-                </label>
-                <label className="text-xs" style={{ fontFamily: 'var(--font-type)' }}>
-                  FACE
-                  <select
-                    value={face}
-                    onChange={(e) => setFace(Number(e.target.value))}
-                    className="noir-input ml-2"
-                    disabled={!myTurn}
-                  >
-                    {[1, 2, 3, 4, 5, 6].map((f) => (
-                      <option key={f} value={f}>{dieGlyph(f)} {f}'s</option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  className="noir-btn"
-                  onClick={raise}
-                  disabled={!myTurn || !isValidRaise(bid, qty, face)}
-                >
-                  ⬆️ Raise
-                </button>
-                <button
-                  className="noir-btn noir-btn-ghost"
-                  onClick={challenge}
-                  disabled={!myTurn || !bid || bid.by === me}
-                  title="Call the bluff — count every die showing the bid face"
-                >
-                  🕵️ Call bluff
-                </button>
-              </div>
-              {!isValidRaise(bid, qty, face) && myTurn && (
-                <p className="mt-2 text-xs text-amber-200/80" style={{ fontFamily: 'var(--font-type)' }}>
-                  Raise higher: more dice, or the same dice with a higher face.
-                </p>
+              {phase === 'revealed' && (
+                <div className="flex flex-col items-center gap-3 py-4">
+                  <p className="text-center text-sm">{lastResult}</p>
+                  <GameButton onClick={nextRound}>➡️ Next round</GameButton>
+                </div>
               )}
+              {phase === 'bidding' && (
+                <>
+                  <div className="flex flex-wrap items-end gap-3">
+                    <label className="text-xs">
+                      QTY
+                      <input
+                        type="number"
+                        min={1}
+                        max={Math.max(1, totalDice)}
+                        value={qty}
+                        onChange={(e) => setQty(Math.max(1, Math.min(totalDice || 10, Number(e.target.value) || 1)))}
+                        className="noir-input ml-2 w-16"
+                        disabled={!myTurn}
+                      />
+                    </label>
+                    <label className="text-xs">
+                      FACE
+                      <select
+                        value={face}
+                        onChange={(e) => setFace(Number(e.target.value))}
+                        className="noir-input ml-2"
+                        disabled={!myTurn}
+                      >
+                        {[1, 2, 3, 4, 5, 6].map((f) => (
+                          <option key={f} value={f}>{dieGlyph(f)} {f}'s</option>
+                        ))}
+                      </select>
+                    </label>
+                    <GameButton
+                      onClick={raise}
+                      disabled={!myTurn || !isValidRaise(bid, qty, face)}
+                    >
+                      ⬆️ Raise
+                    </GameButton>
+                    <GameButton
+                      variant="ghost"
+                      onClick={challenge}
+                      disabled={!myTurn || !bid || bid.by === me}
+                    >
+                      🕵️ Call bluff
+                    </GameButton>
+                  </div>
+                  {!isValidRaise(bid, qty, face) && myTurn && (
+                    <p className="mt-2 text-xs text-amber-200/80">
+                      Raise higher: more dice, or the same dice with a higher face.
+                    </p>
+                  )}
+                </>
+              )}
+              <ResultModal
+                open={phase === 'over'}
+                eyebrow="TABLE DECIDED"
+                headline={matchWinner === me ? 'You take the table' : 'Out of dice'}
+                tone={matchWinner === me ? 'win' : 'lose'}
+                stat={lastResult ? lastResult.toUpperCase().slice(0, 80) : undefined}
+                primaryLabel="🔁 New game"
+                onPrimary={startMatch}
+              />
             </>
           )}
         </motion.div>
       </div>
 
-      {phase !== 'lobby' && lastResult && phase !== 'revealed' && (
-        <p className="text-center text-xs opacity-70" style={{ fontFamily: 'var(--font-type)' }}>{lastResult}</p>
+      {phase !== 'lobby' && phase !== 'over' && lastResult && phase !== 'revealed' && (
+        <p className="text-center text-xs opacity-70">{lastResult}</p>
       )}
     </div>
   );

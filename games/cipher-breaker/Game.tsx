@@ -20,15 +20,16 @@ import { BREAKER_CIPHERS, getBreakerCipher } from './content';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
-import { Typewriter } from '../../components/Typewriter';
 import { ManilaFolder, Polaroid } from '../../components/props';
+import '../ui-kit/kit.css';
+import { GameButton, ScoreHUD, DifficultyBadge, SectionTitle } from '../ui-kit';
 
 const SLUG = 'cipher-breaker';
 
-const DIFFICULTY_STYLE: Record<string, string> = {
-  easy: 'text-[var(--amber-glow)]',
-  medium: 'text-[var(--brass)]',
-  hard: 'text-[var(--blood)]',
+const DIFFICULTY_LEVEL: Record<string, 'easy' | 'medium' | 'hard'> = {
+  easy: 'easy',
+  medium: 'medium',
+  hard: 'hard',
 };
 
 function playerName(room: GameProps['room'], pid: string | null | undefined): string {
@@ -97,16 +98,22 @@ export default function CipherBreakerGame({ room }: GameProps) {
   }, [answer]);
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="gk-root mx-auto max-w-2xl">
       <div className="mb-4 text-center">
-        <div className="eyebrow">Case file № 52 — Word & Code Duels</div>
-        <Typewriter as="h2" text="CIPHER BREAKER" className="type-heading mt-1 text-3xl" />
+        <SectionTitle eyebrow="Case file № 52 — Word & Code Duels" title="Cipher Breaker" />
         <p className="mt-1 text-sm text-[var(--ink-dim)]">
           Intercepted messages from the underworld. Decode them — each solved cipher plants an{' '}
           <span className="text-[var(--amber-glow)]">evidence token</span> for the Crime Mystery.
         </p>
-        <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[var(--brass)] bg-[rgba(232,163,61,0.1)] px-4 py-1 font-type text-sm">
-          🎞️ Evidence tokens: <span className="text-[var(--amber-glow)]">{evidence}</span>
+        <div className="mx-auto mt-3 max-w-sm">
+          <ScoreHUD
+            leftLabel="Cracked"
+            leftValue={solvedCount}
+            rightLabel="Evidence tokens"
+            rightValue={evidence}
+            leftSub={`${BREAKER_CIPHERS.length} files`}
+            record="none"
+          />
         </div>
       </div>
 
@@ -123,10 +130,9 @@ export default function CipherBreakerGame({ room }: GameProps) {
                   transition={{ delay: i * 0.05 }}
                 >
                   <ManilaFolder onClick={() => openCipher(c.id)} className="h-full">
-                    <div className="flex items-start justify-between">
-                      <div className={`eyebrow ${DIFFICULTY_STYLE[c.difficulty]}`}>
-                        {c.difficulty.toUpperCase()} · {c.type === 'caesar' ? 'Caesar' : 'Substitution'}
-                      </div>
+                    <div className="flex items-start justify-between gap-2">
+                      <DifficultyBadge difficulty={DIFFICULTY_LEVEL[c.difficulty] ?? 'medium'} />
+                      <span className="eyebrow">{c.type === 'caesar' ? 'Caesar' : 'Substitution'}</span>
                       {solver && <div className="text-lg">✅</div>}
                     </div>
                     <div className="type-heading mt-1 text-lg leading-snug">{c.title}</div>
@@ -147,22 +153,22 @@ export default function CipherBreakerGame({ room }: GameProps) {
           </div>
           {solvedCount > 0 && (
             <div className="mt-4 text-center">
-              <button onClick={reset} className="noir-btn-ghost text-xs">
+              <GameButton variant="ghost" size="sm" onClick={reset}>
                 Reset solved ciphers
-              </button>
+              </GameButton>
             </div>
           )}
         </>
       ) : (
         <GlassCard className="p-6">
-          <button onClick={() => setOpenId(null)} className="noir-btn-ghost text-xs">
+          <GameButton variant="ghost" size="sm" onClick={() => setOpenId(null)}>
             ← Back to intercepts
-          </button>
+          </GameButton>
           <div className="mt-3 text-center">
-            <div className="eyebrow">
-              {cipher.difficulty.toUpperCase()} · {cipher.type === 'caesar' ? 'Caesar cipher' : 'Substitution cipher'}
-            </div>
-            <Typewriter as="h3" text={cipher.title} className="type-heading mt-1 text-2xl" />
+            <SectionTitle
+              eyebrow={`${cipher.difficulty.toUpperCase()} · ${cipher.type === 'caesar' ? 'Caesar cipher' : 'Substitution cipher'}`}
+              title={cipher.title}
+            />
           </div>
 
           <Polaroid caption="Intercepted message" className="mx-auto mt-4 max-w-md p-4">
@@ -195,12 +201,12 @@ export default function CipherBreakerGame({ room }: GameProps) {
                 </div>
               )}
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                <button onClick={submit} disabled={!answer.trim()} className="noir-btn">
+                <GameButton variant="primary" onClick={submit} disabled={!answer.trim()}>
                   🔓 Submit decoding
-                </button>
-                <button onClick={() => { setShowHint(true); sounds.pinTap(); }} className="noir-btn-ghost">
+                </GameButton>
+                <GameButton variant="ghost" onClick={() => { setShowHint(true); sounds.pinTap(); }}>
                   💡 {showHint ? 'Hide hint' : 'Need a hint?'}
-                </button>
+                </GameButton>
               </div>
               {showHint && (
                 <div className="paper-strip mt-3 text-center text-sm">💡 {cipher.hint}</div>

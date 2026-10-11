@@ -7,6 +7,17 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import '../ui-kit/kit.css';
+import {
+  GameButton,
+  ScoreHUD,
+  TurnBanner,
+  ResultModal,
+  GameCard,
+  TimerChip,
+  ProgressBar,
+  SectionTitle,
+} from '../ui-kit';
 import type { GameProps } from '../types';
 import type { TriviaShared } from './types';
 import {
@@ -128,79 +139,75 @@ export default function TriviaBattleGame({ room }: GameProps) {
     });
   };
 
+  const total = deck.length || QUESTION_COUNT;
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 style={{ fontFamily: 'var(--font-type)' }} className="text-xl tracking-wide">
-          🧠 TRIVIA BATTLE
-        </h2>
-        <div className="text-sm opacity-80" style={{ fontFamily: 'var(--font-type)' }}>
-          Q {Math.min(idx + 1, deck.length || QUESTION_COUNT)}/{deck.length || QUESTION_COUNT} ·{' '}
-          {nameOf(me)} {scores[me] ?? 0} — {scores[peer?.id ?? ''] ?? 0} {nameOf(peer?.id ?? null)}
-        </div>
-      </div>
+    <div className="gk-root space-y-4">
+      <SectionTitle
+        eyebrow={`${QUESTION_COUNT} QUESTIONS · ALTERNATE ANSWERS`}
+        title="🧠 Trivia Battle"
+      />
+      <ScoreHUD
+        leftLabel="YOU"
+        leftValue={scores[me] ?? 0}
+        rightLabel="OPPONENT"
+        rightValue={scores[peer?.id ?? ''] ?? 0}
+      />
 
       {!peer && (
-        <div className="glass-card p-4 text-sm" style={{ fontFamily: 'var(--font-type)' }}>
+        <div className="glass-card p-4 text-sm">
           ⏳ Waiting for your partner… (code <span className="font-bold">{room.roomCode ?? '—'}</span>)
         </div>
       )}
 
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-5">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card gk-modal-scope p-5">
         {phase === 'lobby' && (
           <div className="flex flex-col items-center gap-3 py-8">
-            <p className="text-center text-sm opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
+            <p className="text-center text-sm opacity-70">
               {QUESTION_COUNT} questions — detective lore, forensics, and your own
               "about each other" cards from Settings. Answer fast, answer right.
             </p>
-            <button className="noir-btn" onClick={startMatch} disabled={!peer}>
+            <GameButton onClick={startMatch} disabled={!peer}>
               📁 Open the case
-            </button>
-          </div>
-        )}
-
-        {phase === 'over' && (
-          <div className="flex flex-col items-center gap-3 py-8">
-            <div className="text-4xl">{matchWinner === me ? '🏆' : matchWinner === null ? '🤝' : '🕯️'}</div>
-            <p className="text-center text-sm" style={{ fontFamily: 'var(--font-type)' }}>
-              {matchWinner === null
-                ? 'A dead-even interrogation — nobody breaks.'
-                : matchWinner === me
-                  ? 'Case closed — your recall is razor sharp.'
-                  : `${nameOf(matchWinner)} out-detectives you this time.`}
-            </p>
-            <button className="noir-btn" onClick={startMatch}>🔁 New battle</button>
+            </GameButton>
           </div>
         )}
 
         {(phase === 'question' || phase === 'reveal') && q && (
           <div className="mx-auto max-w-xl">
-            <div className="mb-1 flex items-center justify-between">
-              <span className="text-xs tracking-widest text-amber-200/80" style={{ fontFamily: 'var(--font-type)' }}>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs tracking-widest text-amber-200/80">
                 {q.category.toUpperCase()}
               </span>
-              {phase === 'question' && (
-                <span className={`text-sm ${left <= 4 ? 'text-red-300' : 'text-amber-200'}`} style={{ fontFamily: 'var(--font-type)' }}>
-                  ⏱ {left}s
-                </span>
-              )}
+              {phase === 'question' && <TimerChip seconds={left} label="TIME" />}
             </div>
-            <div className="mb-2 h-1 overflow-hidden rounded bg-white/10">
-              <div
-                className="h-full bg-amber-400 transition-all"
-                style={{ width: `${(left / QUESTION_SECONDS) * 100}%` }}
+            <div className="mb-4">
+              <ProgressBar label="QUESTION" value={Math.min(idx + 1, total)} max={total} />
+            </div>
+            {phase === 'question' && (
+              <TurnBanner
+                isYourTurn={isAnswerer}
+                yourText="Your answer"
+                theirText={`${nameOf(answerer)} is answering…`}
               />
-            </div>
-            <h3 className="mb-4 text-lg" style={{ fontFamily: 'var(--font-type)' }}>{q.question}</h3>
+            )}
+            <h3 className="mb-4 text-lg">{q.question}</h3>
 
             {phase === 'question' ? (
               isAnswerer ? (
                 q.kind === 'mc' && q.options ? (
                   <div className="grid gap-2">
                     {q.options.map((opt, i) => (
-                      <button key={i} onClick={() => submit(String(i))} className="noir-btn noir-btn-ghost text-left">
-                        <span className="mr-2 opacity-60">{'ABCD'[i]}.</span> {opt}
-                      </button>
+                      <GameCard
+                        key={i}
+                        onClick={() => submit(String(i))}
+                        ariaLabel={`Option ${'ABCD'[i]}: ${opt}`}
+                        className="w-full"
+                      >
+                        <span className="text-left">
+                          <span className="opacity-60">{'ABCD'[i]}.</span> {opt}
+                        </span>
+                      </GameCard>
                     ))}
                   </div>
                 ) : (
@@ -213,31 +220,48 @@ export default function TriviaBattleGame({ room }: GameProps) {
                       placeholder="Type your answer…"
                       maxLength={80}
                     />
-                    <button className="noir-btn" onClick={() => pick.trim() && submit(pick)}>
+                    <GameButton onClick={() => pick.trim() && submit(pick)}>
                       🕵️ Answer
-                    </button>
+                    </GameButton>
                   </div>
                 )
               ) : (
-                <p className="py-4 text-center text-sm opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
+                <p className="py-4 text-center text-sm opacity-70">
                   {nameOf(answerer)} is answering… no coaching from the gallery. 🤫
                 </p>
               )
             ) : (
               <div className="flex flex-col items-center gap-3 py-2">
                 <div className="text-3xl">{correct ? '✅' : '❌'}</div>
-                <p className="text-center text-sm" style={{ fontFamily: 'var(--font-type)' }}>
+                <p className="text-center text-sm">
                   {correct
                     ? `${nameOf(answerer)} nails it — +${earned} pts.`
                     : `The answer was "${q.answerText}".`}
                 </p>
-                <button className="noir-btn" onClick={nextQuestion}>
+                <GameButton onClick={nextQuestion}>
                   {idx + 1 >= deck.length ? '🏁 See results' : '➡️ Next question'}
-                </button>
+                </GameButton>
               </div>
             )}
           </div>
         )}
+
+        <ResultModal
+          open={phase === 'over'}
+          eyebrow="INTERROGATION COMPLETE"
+          headline={
+            matchWinner === null ? 'Dead heat' :
+            matchWinner === me ? 'Case closed' : 'Out-detected'
+          }
+          tone={matchWinner === null ? 'draw' : matchWinner === me ? 'win' : 'lose'}
+          stat={
+            matchWinner === null
+              ? `DEAD EVEN — ${scores[me] ?? 0} — ${scores[peer?.id ?? ''] ?? 0}`
+              : `FINAL — YOU ${scores[me] ?? 0} · OPPONENT ${scores[peer?.id ?? ''] ?? 0}`
+          }
+          primaryLabel="🔁 New battle"
+          onPrimary={startMatch}
+        />
       </motion.div>
     </div>
   );

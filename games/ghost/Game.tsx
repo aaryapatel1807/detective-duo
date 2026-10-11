@@ -21,8 +21,9 @@ import { WORDS_4, WORDS_5, WORDS_6 } from '../../lib/content/words';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
-import { Typewriter } from '../../components/Typewriter';
 import { ManilaFolder } from '../../components/props';
+import '../ui-kit/kit.css';
+import { GameButton, GameCard, TurnBanner, ScoreHUD, ResultModal, SectionTitle } from '../ui-kit';
 
 const SLUG = 'ghost';
 const BANK = [...WORDS_4, ...WORDS_5, ...WORDS_6];
@@ -152,10 +153,9 @@ export default function GhostGame({ room }: GameProps) {
   };
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="gk-root mx-auto max-w-xl">
       <div className="mb-4 text-center">
-        <div className="eyebrow">Case file № 31 — Word & Code Duels</div>
-        <Typewriter as="h2" text="GHOST" className="type-heading mt-1 text-3xl" />
+        <SectionTitle eyebrow="Case file № 31 — Word & Code Duels" title="Ghost" />
         <p className="mt-1 text-sm text-[var(--ink-dim)]">
           Add one letter per turn. Complete a word (4+ letters) and the round is yours to lose —
           or <em>challenge</em> a bluff instead of playing.
@@ -174,18 +174,19 @@ export default function GhostGame({ room }: GameProps) {
               Solo practice — you play both sides of the séance.
             </p>
           )}
-          <button onClick={startMatch} className="noir-btn mt-5">
+          <GameButton variant="primary" onClick={startMatch} className="mt-5">
             👻 Begin the séance
-          </button>
+          </GameButton>
         </ManilaFolder>
       )}
 
       {phase === 'play' && (
         <GlassCard className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="eyebrow">Round {round}</div>
-            <div className="eyebrow">{myTurn ? '🎯 Your move' : `⏳ ${playerName(room, turn)} is writing`}</div>
-          </div>
+          <TurnBanner
+            isYourTurn={myTurn}
+            yourText="🎯 Your move"
+            theirText={room.peer ? `⏳ ${playerName(room, turn)} is writing` : '⏳ Waiting'}
+          />
 
           {/* fragment display */}
           <div className="mt-5 flex min-h-[4rem] flex-wrap items-center justify-center gap-1.5">
@@ -208,15 +209,16 @@ export default function GhostGame({ room }: GameProps) {
           </div>
 
           {/* round losses */}
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            {ids.map((pid) => (
-              <div key={pid} className="glass-card !rounded-2xl p-2 text-center">
-                <div className="eyebrow">{playerName(room, pid)}</div>
-                <div className="font-type text-lg">
-                  {'👻'.repeat(roundLosses[pid] ?? 0) || '·'}
-                </div>
-              </div>
-            ))}
+          <div className="mx-auto mt-4 max-w-sm">
+            <ScoreHUD
+              leftLabel={playerName(room, ids[0]).toUpperCase()}
+              leftValue={roundLosses[ids[0]] ?? 0}
+              leftSub={`round ${round}`}
+              rightLabel={ids[1] ? playerName(room, ids[1]).toUpperCase() : 'rounds'}
+              rightValue={ids[1] ? (roundLosses[ids[1]] ?? 0) : GHOST_ROUNDS_TO_LOSE}
+              rightSub={ids[1] ? `round ${round}` : 'to lose'}
+              record="none"
+            />
           </div>
 
           {/* controls */}
@@ -224,17 +226,18 @@ export default function GhostGame({ room }: GameProps) {
             <div className="mt-5">
               <div className="grid grid-cols-7 gap-1.5 sm:grid-cols-9">
                 {LETTERS.map((L) => (
-                  <motion.div key={L} whileTap={{ scale: 0.9 }}>
-                    <button
-                      onClick={() => play(L)}
-                      className="w-full rounded-md border border-[var(--glass-border)] bg-[rgba(255,255,255,0.04)] py-1.5 font-type text-sm text-[var(--ink)] hover:border-[var(--brass)]"
-                    >
-                      {L}
-                    </button>
-                  </motion.div>
+                  <GameCard
+                    key={L}
+                    state="default"
+                    onClick={() => play(L)}
+                    ariaLabel={`Play letter ${L}`}
+                    className="!min-h-0 !min-w-0 !rounded-md !p-0 !py-1.5 !text-sm"
+                  >
+                    {L}
+                  </GameCard>
                 ))}
               </div>
-              <div className="mt-3 flex items-center justify-center gap-2">
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                 <input
                   value={letter}
                   onChange={(e) => setLetter(e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 1))}
@@ -243,17 +246,17 @@ export default function GhostGame({ room }: GameProps) {
                   maxLength={1}
                   className="noir-input w-12 text-center font-type text-lg"
                 />
-                <button onClick={() => letter && play(letter)} disabled={!letter} className="noir-btn">
+                <GameButton variant="primary" onClick={() => letter && play(letter)} disabled={!letter}>
                   ✍ Play letter
-                </button>
-                <button
+                </GameButton>
+                <GameButton
+                  variant="ghost"
                   onClick={challenge}
                   disabled={!fragment || !lastMover}
-                  className="noir-btn-ghost"
-                  title="Claim the previous play was a bluff"
+                  ariaLabel="Claim the previous play was a bluff"
                 >
                   ⚖ Challenge
-                </button>
+                </GameButton>
               </div>
             </div>
           ) : (
@@ -273,23 +276,30 @@ export default function GhostGame({ room }: GameProps) {
       )}
 
       {phase === 'over' && (
-        <ManilaFolder className="p-6 text-center">
-          <div className="type-heading text-2xl">
-            {winner === room.me.id ? '🏆 The ghost spares you!' : `👻 ${playerName(room, winner)} is haunted`}
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            {ids.map((pid) => (
-              <div key={pid} className="glass-card !rounded-2xl p-3">
-                <div className="eyebrow">{playerName(room, pid)}</div>
-                <div className="type-heading mt-1 text-3xl">{roundLosses[pid] ?? 0}</div>
-                <div className="text-xs text-[var(--ink-dim)]">rounds lost</div>
-              </div>
-            ))}
-          </div>
-          <button onClick={reset} className="noir-btn mt-5">
-            🔁 New séance
-          </button>
-        </ManilaFolder>
+        <div className="gk-modal-scope">
+          <ManilaFolder className="p-6 text-center">
+            <div className="mx-auto max-w-sm">
+              <ScoreHUD
+                leftLabel={playerName(room, ids[0]).toUpperCase()}
+                leftValue={roundLosses[ids[0]] ?? 0}
+                leftSub="rounds lost"
+                rightLabel={ids[1] ? playerName(room, ids[1]).toUpperCase() : 'rounds'}
+                rightValue={ids[1] ? (roundLosses[ids[1]] ?? 0) : GHOST_ROUNDS_TO_LOSE}
+                rightSub={ids[1] ? 'rounds lost' : 'to lose'}
+                record={winner === room.me.id ? 'left' : ids[1] && winner === ids[1] ? 'right' : 'none'}
+              />
+            </div>
+          </ManilaFolder>
+          <ResultModal
+            open
+            eyebrow="Séance closed"
+            headline={winner === room.me.id ? 'The ghost spares you' : `${playerName(room, winner)} is haunted`}
+            stat={`${roundLosses[winner ?? ''] ?? 0} rounds lost · ${GHOST_ROUNDS_TO_LOSE} ends the match`}
+            tone={winner === room.me.id ? 'win' : 'lose'}
+            primaryLabel="🔁 New séance"
+            onPrimary={reset}
+          />
+        </div>
       )}
     </div>
   );

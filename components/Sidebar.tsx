@@ -20,9 +20,9 @@ const NAV = [
 ];
 
 /**
- * Collapsible glass sidebar (NutriAI style): slides left, persists in
- * localStorage 'dd-sidebar-collapsed'. CASE HUB panel with status,
- * active cases, evidence collected, sync protocol — like the reference.
+ * Collapsible noir sidebar (desktop only, >= lg; bottom nav takes over on
+ * mobile). Dark navy frosted glass, gold active-link pill, JetBrains Mono
+ * labels. Collapsed state persists in localStorage 'dd-sidebar-collapsed'.
  */
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
@@ -54,10 +54,11 @@ export function Sidebar() {
           animate={{ x: 0, opacity: 1 }}
           onClick={toggle}
           data-sidebar-toggle
-          className="glass-card fixed left-3 top-1/2 z-40 grid h-16 w-10 -translate-y-1/2 place-items-center text-xl"
+          className="hub-sidebar-toggle hub-glass fixed left-3 top-1/2 z-40 h-16 w-12 -translate-y-1/2 text-xl"
           title="Open sidebar"
+          aria-label="Open sidebar"
         >
-          →
+          <span style={{ color: 'var(--hub-gold)' }}>→</span>
         </motion.button>
       )}
 
@@ -66,38 +67,46 @@ export function Sidebar() {
         initial={false}
         animate={{ x: collapsed ? '-105%' : '0%' }}
         transition={{ type: 'spring', stiffness: 260, damping: 30 }}
-        className="fixed bottom-4 left-4 top-4 z-40 flex w-[268px] flex-col gap-4 overflow-y-auto p-5 glass-card"
+        className="hub-sidebar hub-glass fixed bottom-4 left-4 top-4 z-40 w-[268px] gap-4 overflow-y-auto p-5"
         aria-hidden={collapsed}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-[var(--brass)] to-[var(--brass-deep)] text-2xl shadow-lg">
+            <div
+              className="grid h-11 w-11 flex-none place-items-center rounded-full text-2xl shadow-lg"
+              style={{
+                background: 'linear-gradient(135deg, var(--hub-gold) 0%, #8a5f1c 100%)',
+                boxShadow: '0 6px 18px rgba(217, 164, 65, 0.35)',
+              }}
+            >
               🛡️
             </div>
-            <span className="type-heading text-lg">Case Hub</span>
+            <div>
+              <div className="hub-display text-[1.05rem] font-bold tracking-[0.12em]" style={{ color: 'var(--hub-gold)' }}>
+                CASE HUB
+              </div>
+              <div className="hub-eyebrow mt-0.5">Noir Agency</div>
+            </div>
           </div>
           <button
             onClick={toggle}
-            className="grid h-8 w-8 place-items-center rounded-full border border-[var(--glass-border)] text-[var(--ink-dim)] hover:text-[var(--ink)]"
+            className="hub-icon-btn"
             title="Collapse sidebar"
+            aria-label="Collapse sidebar"
           >
             ←
           </button>
         </div>
 
-        <nav className="flex flex-col gap-1.5">
+        <nav className="flex flex-col gap-1.5" aria-label="Hub">
           {NAV.map((n) => {
             const active = pathname === n.href;
             return (
               <Link
                 key={n.href}
                 href={n.href}
-                className={cn(
-                  'flex items-center gap-3 rounded-2xl px-4 py-2.5 font-type text-[0.8rem] tracking-[0.14em] uppercase transition-colors',
-                  active
-                    ? 'bg-[rgba(232,163,61,0.16)] text-[var(--ink)] border border-[var(--amber-glow)]'
-                    : 'text-[var(--ink-dim)] hover:text-[var(--ink)] border border-transparent hover:border-[var(--glass-border)]',
-                )}
+                className={cn('hub-navlink', active && 'active')}
+                aria-current={active ? 'page' : undefined}
               >
                 <span className="text-lg">{n.icon}</span>
                 {n.label}
@@ -106,9 +115,9 @@ export function Sidebar() {
           })}
         </nav>
 
-        <div className="glass-card !rounded-2xl p-4">
-          <div className="eyebrow mb-1.5">Status</div>
-          <div className="font-type text-[0.8rem] tracking-[0.12em]">
+        <div className="hub-glass p-4" style={{ borderRadius: 18 }}>
+          <div className="hub-eyebrow mb-1.5">Status</div>
+          <div className="hub-mono text-[0.78rem] tracking-[0.1em]" style={{ color: 'var(--hub-ink)' }}>
             {roomCode ? (
               <>
                 ROOM {roomCode} · {peer ? '2 PLAYERS' : 'WAITING'}
@@ -116,13 +125,17 @@ export function Sidebar() {
             ) : (
               'OFFLINE · SOLO'
             )}{' '}
-            <span className={cn('inline-block h-2 w-2 rounded-full', connected ? 'bg-green-400' : 'bg-[var(--ink-faint)]')} />
+            <span
+              className="ml-1 inline-block h-2 w-2 rounded-full"
+              style={{ background: connected ? 'var(--hub-green)' : 'var(--hub-ink-dim)' }}
+              aria-hidden
+            />
           </div>
         </div>
 
-        <div className="glass-card !rounded-2xl p-4">
-          <div className="eyebrow mb-1.5">Sync Protocol</div>
-          <div className="font-type text-[0.8rem] tracking-[0.12em] text-[var(--ink-dim)]">
+        <div className="hub-glass p-4" style={{ borderRadius: 18 }}>
+          <div className="hub-eyebrow mb-1.5">Sync Protocol</div>
+          <div className="hub-mono text-[0.78rem] tracking-[0.1em]" style={{ color: 'var(--hub-ink-dim)' }}>
             {connected ? '🔒 SECURE · ENCRYPTED' : '📡 AWAITING UPLINK'}
           </div>
         </div>
@@ -131,7 +144,7 @@ export function Sidebar() {
           <SoundToggle />
           <ThemeToggle />
           {roomCode && (
-            <Link href={`/room/${roomCode}`} className="noir-btn text-center !text-[0.7rem]">
+            <Link href={`/room/${roomCode}`} className="hub-btn !text-[0.7rem]">
               → Room {roomCode}
             </Link>
           )}

@@ -20,8 +20,9 @@ import { WORDS_4, WORDS_5, WORDS_6, rollBoggle } from '../../lib/content/words';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
-import { Typewriter } from '../../components/Typewriter';
 import { ManilaFolder } from '../../components/props';
+import '../ui-kit/kit.css';
+import { GameButton, GameCard, ScoreHUD, TimerChip, ResultModal, SectionTitle } from '../ui-kit';
 
 const SLUG = 'word-hunt';
 const BANK = [...WORDS_4, ...WORDS_5, ...WORDS_6];
@@ -37,11 +38,6 @@ function playerName(room: GameProps['room'], pid: string | null | undefined): st
   if (!pid) return '—';
   if (pid === room.me.id) return 'You';
   return room.peer?.name ?? 'Partner';
-}
-
-function fmtClock(ms: number): string {
-  const s = Math.max(0, Math.ceil(ms / 1000));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
 export default function WordHuntGame({ room }: GameProps) {
@@ -135,10 +131,9 @@ export default function WordHuntGame({ room }: GameProps) {
   };
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="gk-root mx-auto max-w-xl">
       <div className="mb-4 text-center">
-        <div className="eyebrow">Case file № 44 — Word & Code Duels</div>
-        <Typewriter as="h2" text="WORD HUNT" className="type-heading mt-1 text-3xl" />
+        <SectionTitle eyebrow="Case file № 44 — Word & Code Duels" title="Word Hunt" />
         <p className="mt-1 text-sm text-[var(--ink-dim)]">
           One grid, {WORD_HUNT_SECONDS} seconds, both detectives hunting at once. Most points wins.
         </p>
@@ -156,19 +151,27 @@ export default function WordHuntGame({ room }: GameProps) {
               Solo practice — create a room from the hub to race live.
             </p>
           )}
-          <button onClick={startHunt} className="noir-btn mt-5">
+          <GameButton variant="primary" onClick={startHunt} className="mt-5">
             🎲 Roll the dice — start the clock
-          </button>
+          </GameButton>
         </ManilaFolder>
       )}
 
       {phase === 'play' && (
         <GlassCard className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="eyebrow">⏱ {fmtClock(timeLeft)} left</div>
-            <div className="eyebrow">
-              You: {myScore} pts · {room.peer ? `${playerName(room, room.peer.id)}: ${peerWords.length} words` : 'solo'}
-            </div>
+          <div className="flex items-center justify-center">
+            <TimerChip seconds={Math.max(0, Math.ceil(timeLeft / 1000))} label="⏱ Time left" />
+          </div>
+          <div className="mx-auto mt-2 max-w-sm">
+            <ScoreHUD
+              leftLabel="YOU"
+              leftValue={myScore}
+              leftSub={`${myWords.length} words`}
+              rightLabel={room.peer ? (room.peer.name ?? 'PARTNER').toUpperCase().slice(0, 12) : 'SOLO'}
+              rightValue={totalScore(peerWords)}
+              rightSub={room.peer ? `${peerWords.length} words` : 'race yourself'}
+              record="none"
+            />
           </div>
 
           {/* board */}
@@ -179,9 +182,10 @@ export default function WordHuntGame({ room }: GameProps) {
                 initial={{ scale: 0.6, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: i * 0.02 }}
-                className="flex aspect-square items-center justify-center rounded-lg border border-[var(--brass)] bg-[rgba(0,0,0,0.35)] font-type text-2xl text-[var(--amber-glow)]"
               >
-                {t === 'Q' ? 'Qu' : t}
+                <GameCard state="default" className="!aspect-square !rounded-lg !p-0 !text-2xl">
+                  {t === 'Q' ? 'Qu' : t}
+                </GameCard>
               </motion.div>
             ))}
           </div>
@@ -201,9 +205,9 @@ export default function WordHuntGame({ room }: GameProps) {
                   maxLength={8}
                   className="noir-input w-48 text-center font-type text-lg tracking-[0.2em]"
                 />
-                <button onClick={submit} className="noir-btn">
+                <GameButton variant="primary" onClick={submit}>
                   📌 Pin it
-                </button>
+                </GameButton>
               </div>
               {reject && (
                 <div className="mt-2 text-center text-xs text-[var(--blood)]">{reject}</div>
@@ -234,29 +238,41 @@ export default function WordHuntGame({ room }: GameProps) {
       )}
 
       {phase === 'over' && (
-        <ManilaFolder className="p-6 text-center">
-          <div className="type-heading text-2xl">
-            {winner === 'draw'
-              ? '🤝 Dead heat — a draw'
-              : winner === room.me.id
-                ? '🏆 Sharpest eyes on the force!'
-                : `🕵️ ${playerName(room, winner)} found more`}
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 text-left">
-            {ids.map((pid) => (
-              <div key={pid} className="glass-card !rounded-2xl p-3">
-                <div className="eyebrow">{playerName(room, pid)}</div>
-                <div className="type-heading mt-1 text-3xl">{totalScore(words[pid] ?? [])}</div>
-                <div className="mt-1 text-xs text-[var(--ink-dim)]">
-                  {(words[pid] ?? []).join(', ') || '—'}
-                </div>
-              </div>
-            ))}
-          </div>
-          <button onClick={reset} className="noir-btn mt-5">
-            🔁 New hunt
-          </button>
-        </ManilaFolder>
+        <div className="gk-modal-scope">
+          <ManilaFolder className="p-6 text-center">
+            <div className="mx-auto max-w-sm">
+              <ScoreHUD
+                leftLabel="YOU"
+                leftValue={totalScore(words[room.me.id] ?? [])}
+                leftSub={`${(words[room.me.id] ?? []).length} words`}
+                rightLabel={room.peer ? (room.peer.name ?? 'PARTNER').toUpperCase().slice(0, 12) : 'SOLO'}
+                rightValue={room.peer ? totalScore(words[room.peer.id] ?? []) : 0}
+                rightSub={room.peer ? `${(room.peer ? (words[room.peer.id] ?? []) : []).length} words` : 'race yourself'}
+                record={winner === room.me.id ? 'left' : winner === 'draw' ? 'none' : 'right'}
+              />
+            </div>
+            <div className="mt-5">
+              <GameButton variant="primary" onClick={reset}>
+                🔁 New hunt
+              </GameButton>
+            </div>
+          </ManilaFolder>
+          <ResultModal
+            open
+            eyebrow="Hunt over"
+            headline={
+              winner === 'draw'
+                ? 'Dead heat — a draw'
+                : winner === room.me.id
+                  ? 'Sharpest eyes on the force'
+                  : `${playerName(room, winner)} found more`
+            }
+            stat={`${totalScore(words[room.me.id] ?? [])} pts · ${(words[room.me.id] ?? []).length} words`}
+            tone={winner === 'draw' ? 'draw' : winner === room.me.id ? 'win' : 'lose'}
+            primaryLabel="🔁 New hunt"
+            onPrimary={reset}
+          />
+        </div>
       )}
     </div>
   );

@@ -8,7 +8,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { GameProps } from '../types';
 import { GlassCard } from '../../components/GlassCard';
-import { Typewriter } from '../../components/Typewriter';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { readJSON, writeJSON } from '../../lib/store';
 import { sounds } from '../../lib/sound';
@@ -23,6 +22,15 @@ import {
   type SpeedId,
   type Vec,
 } from './logic';
+import '../ui-kit/kit.css';
+import {
+  DifficultySelect,
+  GameButton,
+  ResultModal,
+  ScoreHUD,
+  SectionTitle,
+  type Difficulty as KitDifficulty,
+} from '../ui-kit';
 
 const HIGH_KEY = 'dd-solo-snake-high';
 const CELL = 20;
@@ -41,6 +49,23 @@ const DIRS: Record<string, Vec> = {
   A: { x: -1, y: 0 },
   D: { x: 1, y: 0 },
 };
+
+/* Map the three run speeds onto the kit's easy/medium/hard scale. */
+function toKitSpeed(s: SpeedId): KitDifficulty {
+  return s === 'slow' ? 'easy' : s === 'normal' ? 'medium' : 'hard';
+}
+function fromKitSpeed(k: KitDifficulty): SpeedId {
+  return k === 'easy' ? 'slow' : k === 'medium' ? 'normal' : 'fast';
+}
+
+const SPEED_OPTIONS = (Object.keys(SPEEDS) as SpeedId[]).map((spd) => {
+  const [name, pace] = SPEEDS[spd].label.split(' · ');
+  return {
+    value: toKitSpeed(spd),
+    label: name,
+    hint: (pace ?? '').toUpperCase(),
+  };
+});
 
 export default function SnakeGame({ room }: GameProps) {
   const [speed, setSpeed] = useState<SpeedId>('normal');
@@ -184,35 +209,31 @@ export default function SnakeGame({ room }: GameProps) {
   };
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="gk-root gk-modal-scope mx-auto max-w-md">
       <div className="mb-4 text-center">
-        <Typewriter text="Snake — The Getaway" as="h2" className="text-xl" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+        <SectionTitle eyebrow="THE GETAWAY" title="Snake" />
+        <p className="mt-2 text-sm text-[var(--ink-dim)]">
           Arrows, WASD, or swipe. Eat the red dossiers (+10). New record = +{XP_AWARDS.soloWin} XP.
         </p>
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-3">
-        <GlassCard className="p-3 text-center">
-          <div className="eyebrow">Score</div>
-          <div className="type-heading mt-1 text-3xl">{state.score}</div>
-        </GlassCard>
-        <GlassCard className="p-3 text-center">
-          <div className="eyebrow">High score</div>
-          <div className="type-heading mt-1 text-3xl text-[var(--amber-glow)]">{high}</div>
-        </GlassCard>
+      <div className="mb-4">
+        <ScoreHUD
+          leftLabel="SCORE"
+          leftValue={state.score}
+          rightLabel="HIGH"
+          rightValue={high}
+          record={state.score > high && state.score > 0 ? 'left' : 'none'}
+        />
       </div>
 
-      <div className="mb-3 flex flex-wrap justify-center gap-2">
-        {(Object.keys(SPEEDS) as SpeedId[]).map((spd) => (
-          <button
-            key={spd}
-            onClick={() => changeSpeed(spd)}
-            className={spd === speed ? 'noir-btn !py-2' : 'noir-btn-ghost !py-2'}
-          >
-            {SPEEDS[spd].label}
-          </button>
-        ))}
+      <div className="mb-4">
+        <DifficultySelect
+          options={SPEED_OPTIONS}
+          value={toKitSpeed(speed)}
+          onChange={(k) => changeSpeed(fromKitSpeed(k))}
+          label="RUN SPEED"
+        />
       </div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -230,32 +251,25 @@ export default function SnakeGame({ room }: GameProps) {
             />
           </div>
 
-          {state.dead && (
-            <div className="mt-3 text-center">
-              <div className="type-heading text-lg">
-                🚔 Busted! Final score {state.score}
-              </div>
-              {newRecord && (
-                <p className="mt-1 text-sm text-[var(--amber-glow)]">
-                  🏆 New record! +{XP_AWARDS.soloWin} XP filed.
-                </p>
-              )}
-              <div className="mt-3 flex justify-center gap-2">
-                <button onClick={() => restart()} className="noir-btn">
-                  ↺ Run again
-                </button>
-              </div>
-            </div>
-          )}
           {!state.dead && (
             <div className="mt-3 text-center">
-              <button onClick={() => setPaused((p) => !p)} className="noir-btn-ghost !py-2">
+              <GameButton variant="ghost" size="sm" onClick={() => setPaused((p) => !p)}>
                 {paused ? '▶ Resume' : '⏸ Pause'}
-              </button>
+              </GameButton>
             </div>
           )}
         </GlassCard>
       </motion.div>
+
+      <ResultModal
+        open={state.dead}
+        eyebrow="THE GETAWAY"
+        headline="Busted"
+        tone="lose"
+        stat={`FINAL SCORE ${state.score}${newRecord ? ` · NEW RECORD · +${XP_AWARDS.soloWin} XP` : ''}`}
+        primaryLabel="Run again"
+        onPrimary={restart}
+      />
     </div>
   );
 }
