@@ -9,6 +9,8 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './fugitive-hunt.css';
 import {
   GameButton,
   ScoreHUD,
@@ -25,11 +27,11 @@ import { sounds } from '../../lib/sound';
 
 const ROUNDS = 3;
 
-const BAND_STYLE: Record<string, string> = {
-  Burning: 'bg-red-500/30 border-red-400 text-red-100',
-  Hot: 'bg-orange-500/25 border-orange-400 text-orange-100',
-  Warm: 'bg-amber-500/20 border-amber-400/80 text-amber-100',
-  Cold: 'bg-sky-500/20 border-sky-400/70 text-sky-100',
+const BAND_CLASS: Record<string, string> = {
+  Burning: 'fh-block--burning',
+  Hot: 'fh-block--hot',
+  Warm: 'fh-block--warm',
+  Cold: 'fh-block--cold',
 };
 
 export default function FugitiveHuntGame({ room }: GameProps) {
@@ -210,38 +212,43 @@ export default function FugitiveHuntGame({ room }: GameProps) {
                   theirText={turnTexts().their}
                 />
               )}
-              <div
-                className="grid gap-1"
-                style={{ gridTemplateColumns: `repeat(${GRID}, minmax(0, 1fr))` }}
-              >
-                {Array.from({ length: GRID * GRID }, (_, node) => {
-                  const clue = clueByNode.get(node);
-                  const isHide = me === hider && hideNode === node;
-                  const isTarget = moveTargets.includes(node);
-                  const clickable = myTurn && !clue && (phase !== 'move' || isTarget);
-                  return (
-                    <button
-                      key={node}
-                      onClick={() => onCell(node)}
-                      disabled={!clickable}
-                      className={[
-                        'aspect-square min-h-[40px] rounded border text-sm transition-all',
-                        clue
-                          ? BAND_STYLE[clue.band]
-                          : isHide
-                            ? 'bg-red-500/40 border-red-300 text-white'
-                            : isTarget
-                              ? 'border-amber-300 bg-amber-400/20 animate-pulse'
-                              : 'border-white/10 bg-white/5 hover:border-amber-300/60 hover:bg-amber-300/10',
-                        clickable ? 'cursor-pointer' : 'cursor-default',
-                      ].join(' ')}
-                      title={clue ? `${clue.band} ${clue.dir}` : undefined}
-                      aria-label={clue ? `Searched: ${clue.band} ${clue.dir}` : `City block ${node + 1}`}
-                    >
-                      {clue ? clue.dir : isHide ? '●' : ''}
-                    </button>
-                  );
-                })}
+              <div className="fh-map">
+                <div className="fh-map__title">🗺️ City grid — round {round}</div>
+                <div
+                  className="grid gap-1.5"
+                  style={{ gridTemplateColumns: `repeat(${GRID}, minmax(0, 1fr))` }}
+                >
+                  {Array.from({ length: GRID * GRID }, (_, node) => {
+                    const clue = clueByNode.get(node);
+                    const isHide = me === hider && hideNode === node;
+                    const isTarget = moveTargets.includes(node);
+                    const clickable = myTurn && !clue && (phase !== 'move' || isTarget);
+                    const cls = [
+                      'fh-block',
+                      clue ? `fh-block--searched ${BAND_CLASS[clue.band] ?? ''}` : '',
+                      isHide ? 'fh-block--hideout' : '',
+                      isTarget ? 'fh-block--target' : '',
+                    ].join(' ');
+                    return (
+                      <button
+                        key={node}
+                        onClick={() => onCell(node)}
+                        disabled={!clickable}
+                        className={cls}
+                        title={clue ? `${clue.band} ${clue.dir}` : undefined}
+                        aria-label={clue ? `Station ${node + 1} searched: ${clue.band} ${clue.dir}` : `Station ${node + 1}`}
+                      >
+                        {clue ? (
+                          <span className="fh-block__dir" aria-hidden>{clue.dir}</span>
+                        ) : isHide ? (
+                          <span className="fh-block__dir" aria-hidden>🕵️</span>
+                        ) : (
+                          <span className="fh-block__num" aria-hidden>{node + 1}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
               {(phase === 'seek' || phase === 'move') && (
                 <div className="mt-3">
@@ -265,26 +272,26 @@ export default function FugitiveHuntGame({ room }: GameProps) {
           />
         </motion.div>
 
-        <div className="glass-card p-4">
-          <h3 className="mb-2 text-sm tracking-widest opacity-80">
-            📋 SEARCH LOG
+        <div className="fh-log">
+          <h3 className="fh-log__title">
+            📋 Search log
           </h3>
           {clues.length === 0 ? (
-            <p className="text-xs opacity-60">
+            <p className="text-xs text-[#8a8474]">
               No searches yet.
             </p>
           ) : (
-            <ul className="space-y-1 text-xs">
+            <ul className="text-xs">
               {[...clues].reverse().map((c) => (
-                <li key={c.turn} className="flex justify-between border-b border-white/5 pb-1">
-                  <span className="opacity-70">#{c.turn}</span>
+                <li key={c.turn} className="fh-log__row">
+                  <span className="text-[#8a8474]">#{c.turn}</span>
                   <span className="font-bold">{c.band}</span>
                   <span>{c.dir}</span>
                 </li>
               ))}
             </ul>
           )}
-          <div className="mt-3 border-t border-white/10 pt-2 text-xs opacity-70">
+          <div className="mt-3 border-t border-[#d8d2c0] pt-2 text-xs text-[#6b6355]">
             <p>🔴 Burning ≤ 2 blocks</p>
             <p>🟠 Hot ≤ 4 · 🟡 Warm ≤ 6</p>
             <p>🔵 Cold = far away</p>

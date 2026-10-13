@@ -9,6 +9,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './draw-guess.css';
 import {
   GameButton,
   ScoreHUD,
@@ -16,6 +18,7 @@ import {
   ResultModal,
   TimerChip,
   SectionTitle,
+  LetterTile,
 } from '../ui-kit';
 import type { GameProps } from '../types';
 import type { DrawShared, Stroke, StrokePoint } from './types';
@@ -33,7 +36,13 @@ import { sounds } from '../../lib/sound';
 
 const W = 600;
 const H = 400;
-const CHALK = ['#f5f0e6', '#f0b429', '#e5484d']; // chalk, amber, blood
+/* skribbl.io-style pencil palette */
+const CHALK = [
+  '#ffffff', '#c1c1c1', '#6b6b6b', '#000000',
+  '#ef130b', '#ff7100', '#ffe400', '#00cc00',
+  '#00b2ff', '#231fd3', '#a300ba', '#d37caa',
+  '#8a5a2b', '#5c3a1e',
+];
 const ACTION = 'draw-guess:stroke';
 
 function paintStroke(ctx: CanvasRenderingContext2D, s: Stroke) {
@@ -335,30 +344,46 @@ export default function DrawGuessGame({ room }: GameProps) {
         {(phase === 'drawing' || phase === 'roundEnd') && (
           <>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm">
+              <div className="text-sm">
                 {isDrawer ? (
-                  <>Draw: <span className="font-bold text-amber-200">{word}</span></>
+                  <p>Draw: <span className="font-bold text-amber-200">{word}</span></p>
                 ) : (
-                  <>Guess the sketch: <span className="tracking-[0.3em]">{wordMask}</span></>
+                  <div>
+                    <p className="mb-1">Guess the sketch:</p>
+                    <div className="dg-tiles" role="img" aria-label={`${wordMask.replace(/ /g, '').length} letters`}>
+                      {wordMask.split('').map((ch, i) =>
+                        ch === ' ' ? (
+                          <span key={i} className="dg-tiles__gap" aria-hidden />
+                        ) : ch === '_' ? (
+                          <LetterTile key={i} letter="" size="sm" ariaLabel="Hidden letter" />
+                        ) : (
+                          <LetterTile key={i} letter={ch} size="sm" />
+                        ),
+                      )}
+                    </div>
+                  </div>
                 )}
-              </p>
+              </div>
               <div className="flex items-center gap-2">
                 {phase === 'drawing' && <TimerChip seconds={left} label="TIME" />}
                 {isDrawer && phase === 'drawing' && (
                   <>
-                    {CHALK.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => setColor(c)}
-                        className={`h-9 w-9 rounded-full border-2 ${color === c ? 'border-amber-300' : 'border-white/20'}`}
-                        style={{ background: c }}
-                        title="chalk color"
-                        aria-label="chalk color"
-                      />
-                    ))}
-                    <GameButton variant="ghost" size="sm" className="ml-1" onClick={clearBoard}>
+                    <div className="dg-palette" role="group" aria-label="Pencil colors">
+                      {CHALK.map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => setColor(c)}
+                          className={`dg-chalk ${color === c ? 'dg-chalk--active' : ''}`}
+                          style={{ background: c }}
+                          title="pencil color"
+                          aria-label={`pencil color ${c}`}
+                          aria-pressed={color === c}
+                        />
+                      ))}
+                    </div>
+                    <button className="dg-eraser" onClick={clearBoard} aria-label="Clear the sketchpad">
                       🧹 Clear
-                    </GameButton>
+                    </button>
                   </>
                 )}
               </div>
@@ -371,17 +396,20 @@ export default function DrawGuessGame({ room }: GameProps) {
               />
             )}
 
-            <canvas
-              ref={canvasRef}
-              width={W}
-              height={H}
-              onPointerDown={onDown}
-              onPointerMove={onMove}
-              onPointerUp={onUp}
-              onPointerCancel={onUp}
-              className="w-full rounded-lg border border-white/10 bg-[#141210]"
-              style={{ touchAction: 'none', cursor: isDrawer && phase === 'drawing' ? 'crosshair' : 'default' }}
-            />
+            <div className="dg-clipboard">
+              <div className="dg-page">
+                <canvas
+                  ref={canvasRef}
+                  width={W}
+                  height={H}
+                  onPointerDown={onDown}
+                  onPointerMove={onMove}
+                  onPointerUp={onUp}
+                  onPointerCancel={onUp}
+                  style={{ touchAction: 'none', cursor: isDrawer && phase === 'drawing' ? 'crosshair' : 'default' }}
+                />
+              </div>
+            </div>
 
             {isGuesser && phase === 'drawing' && (
               <div className="mt-3 flex gap-2">
