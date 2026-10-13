@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
-import { Courier_Prime } from 'next/font/google';
+import { Courier_Prime, Cinzel, Inter, JetBrains_Mono, Caveat } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '../components/theme';
 import { Sidebar } from '../components/Sidebar';
+import { BottomNav } from '../components/BottomNav';
 import { AudioUnlocker } from '../components/AudioUnlocker';
 
 const courierPrime = Courier_Prime({
@@ -10,6 +11,39 @@ const courierPrime = Courier_Prime({
   subsets: ['latin'],
   variable: '--font-type',
   fallback: ['Courier New', 'monospace'],
+});
+
+// Hub redesign fonts: display / body / mono / handwritten, exposed as CSS vars.
+const hubDisplay = Cinzel({
+  weight: ['600', '700'],
+  subsets: ['latin'],
+  variable: '--hub-display',
+  fallback: ['Georgia', 'serif'],
+  display: 'swap',
+});
+
+const hubBody = Inter({
+  weight: ['400', '500', '600'],
+  subsets: ['latin'],
+  variable: '--hub-body',
+  fallback: ['system-ui', 'sans-serif'],
+  display: 'swap',
+});
+
+const hubMono = JetBrains_Mono({
+  weight: ['400', '600'],
+  subsets: ['latin'],
+  variable: '--hub-mono',
+  fallback: ['ui-monospace', 'monospace'],
+  display: 'swap',
+});
+
+const hubHand = Caveat({
+  weight: ['500', '600'],
+  subsets: ['latin'],
+  variable: '--hub-hand',
+  fallback: ['cursive'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -28,13 +62,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
-      <body className={`${courierPrime.variable} min-h-screen`}>
+      <body
+        className={`${courierPrime.variable} ${hubDisplay.variable} ${hubBody.variable} ${hubMono.variable} ${hubHand.variable} min-h-screen`}
+      >
         <ThemeProvider>
           <AudioUnlocker />
           <Sidebar />
-          <main className="min-h-screen px-4 py-6 transition-[margin] duration-300 md:pl-[300px] md:pr-8">
-            {children}
-          </main>
+          <BottomNav />
+          <main className="hub-main">{children}</main>
         </ThemeProvider>
       </body>
     </html>
