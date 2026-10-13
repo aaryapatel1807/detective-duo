@@ -27,6 +27,8 @@ import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './alibi.css';
 import { GameButton, ScoreHUD, TimerChip, ResultModal, SectionTitle } from '../ui-kit';
 
 export default function AlibiGame({ room }: GameProps) {
@@ -209,10 +211,11 @@ export default function AlibiGame({ room }: GameProps) {
       {/* ---- cross-examination ---- */}
       {phase === 'cross' && (
         <div className="space-y-4">
+          <CaseTimeline phase={phase} round={round} />
           {crimeCard}
-          <div className="rounded-2xl border border-[var(--amber-glow)] bg-[rgba(232,163,61,0.06)] p-5">
-            <div className="eyebrow">The suspect's alibi — on the record</div>
-            <p className="mt-2 text-sm leading-relaxed">“{alibi}”</p>
+          <div className="alibi-card">
+            <div className="alibi-card__label">The suspect's alibi — on the record</div>
+            <p className="alibi-card__text">“{alibi}”</p>
           </div>
 
           {timedQ && remaining > 0 && (
@@ -264,6 +267,7 @@ export default function AlibiGame({ room }: GameProps) {
       {/* ---- judgment ---- */}
       {phase === 'judgment' && (
         <div className="space-y-4">
+          <CaseTimeline phase={phase} round={round} />
           {crimeCard}
           <GlassCard className="p-8 text-center">
             <div className="type-heading text-xl">The interrogator deliberates…</div>
@@ -288,7 +292,10 @@ export default function AlibiGame({ room }: GameProps) {
         <div className="gk-modal-scope">
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
             <GlassCard className="p-8 text-center">
-              <p className="mt-2 text-sm">
+              <div className={`alibi-stamp ${verdict === 'busted' ? 'alibi-stamp--busted' : 'alibi-stamp--clean'}`}>
+                {verdict === 'busted' ? 'Busted' : 'Clean'}
+              </div>
+              <p className="mt-4 text-sm">
                 {verdict === 'busted'
                   ? 'The alibi cracked under pressure. Point to the interrogator.'
                   : 'The story held. Point to the suspect.'}
@@ -346,6 +353,32 @@ export default function AlibiGame({ room }: GameProps) {
           />
         </div>
       )}
+    </div>
+  );
+}
+
+/* The pinned string board — where the case stands, at a glance. */
+function CaseTimeline({ phase, round }: { phase: string; round: number }) {
+  const steps = [
+    { id: 'alibiwriting', label: `Round ${round}: crime report filed` },
+    { id: 'cross', label: 'Alibi on the record' },
+    { id: 'judgment', label: 'Cross-examination' },
+    { id: 'verdict', label: 'Verdict delivered' },
+  ];
+  const order = ['alibiwriting', 'cross', 'judgment', 'roundEnd', 'over'];
+  const nowIdx = Math.max(0, order.indexOf(phase));
+  return (
+    <div className="stringboard" aria-label="Case timeline">
+      <div className="stringboard__rail">
+        {steps.map((s, i) => {
+          const state = i < nowIdx ? 'done' : i === Math.min(nowIdx, steps.length - 1) ? 'now' : 'todo';
+          return (
+            <div key={s.id} className={`stringboard__pin stringboard__pin--${state}`}>
+              <span className="stringboard__note">{s.label}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
