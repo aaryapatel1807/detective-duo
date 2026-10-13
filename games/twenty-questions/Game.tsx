@@ -24,6 +24,8 @@ import {
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
+import '../ui-kit/kit.css';
+import { GameButton, ProgressBar, ResultModal, SectionTitle } from '../ui-kit';
 
 export default function TwentyQuestionsGame({ room }: GameProps) {
   const gs: TwentyShared = room.shared?.games?.['twenty-questions'] ?? {};
@@ -149,14 +151,20 @@ export default function TwentyQuestionsGame({ room }: GameProps) {
   const left = questionsLeft(used);
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="gk-root mx-auto max-w-2xl">
       <div className="mb-5 text-center">
-        <div className="eyebrow">Interrogation room · {MAX_QUESTIONS} questions max</div>
-        <h2 className="type-heading mt-1 text-2xl">Twenty Questions</h2>
+        <SectionTitle eyebrow={`Interrogation room · ${MAX_QUESTIONS} questions max`} title="Twenty Questions" />
         {phase === 'play' && (
-          <div className="mt-2 text-xs text-[var(--ink-dim)]">
-            Category: <b className="text-[var(--amber-glow)] capitalize">{category}</b>
-            {' · '} Questions left: <b className={left <= 5 ? 'text-[var(--blood-bright)]' : 'text-[var(--amber-glow)]'}>{left}</b>
+          <div className="mx-auto mt-3 max-w-md">
+            <ProgressBar
+              label="Questions used"
+              value={used}
+              max={MAX_QUESTIONS}
+            />
+            <div className="mt-2 text-xs text-[var(--ink-dim)]">
+              Category: <b className="text-[var(--amber-glow)] capitalize">{category}</b>
+              {' · '} Questions left: <b className={left <= 5 ? 'text-[var(--blood-bright)]' : 'text-[var(--amber-glow)]'}>{left}</b>
+            </div>
           </div>
         )}
       </div>
@@ -186,18 +194,18 @@ export default function TwentyQuestionsGame({ room }: GameProps) {
                 className="noir-input mt-3 w-full"
                 maxLength={60}
               />
-              <button onClick={startAsThinker} className="noir-btn mt-3 w-full" disabled={!validSecret(secret)}>
+              <GameButton variant="primary" onClick={startAsThinker} className="mt-3 w-full" disabled={!validSecret(secret)}>
                 🔒 Lock it in
-              </button>
+              </GameButton>
             </div>
             <div className="manila-folder p-5">
               <div className="type-heading text-lg">🔍 The Guesser</div>
               <p className="mt-1 text-xs text-[var(--ink-dim)]">
                 Your partner thinks of something. You get {MAX_QUESTIONS} yes/no questions to name it.
               </p>
-              <button onClick={joinAsGuesser} className="noir-btn mt-6 w-full" disabled={!room.peer}>
+              <GameButton variant="primary" onClick={joinAsGuesser} className="mt-6 w-full" disabled={!room.peer}>
                 I'll do the asking
-              </button>
+              </GameButton>
               {!room.peer && (
                 <p className="mt-3 text-xs italic text-[var(--ink-faint)]">Waiting for your partner…</p>
               )}
@@ -265,14 +273,14 @@ export default function TwentyQuestionsGame({ room }: GameProps) {
                   maxLength={200}
                   disabled={isOutOfQuestions(used)}
                 />
-                <button onClick={ask} className="noir-btn" disabled={!validQuestion(question) || isOutOfQuestions(used)}>
+                <GameButton variant="primary" onClick={ask} disabled={!validQuestion(question) || isOutOfQuestions(used)}>
                   Ask ❓
-                </button>
+                </GameButton>
               </div>
               {!showGuessBox ? (
-                <button onClick={() => setShowGuessBox(true)} className="noir-btn-ghost mt-4">
+                <GameButton variant="ghost" onClick={() => setShowGuessBox(true)} className="mt-4">
                   🎯 Make my final guess
-                </button>
+                </GameButton>
               ) : (
                 <div className="mt-4 flex gap-2">
                   <input
@@ -283,8 +291,8 @@ export default function TwentyQuestionsGame({ room }: GameProps) {
                     className="noir-input flex-1"
                     maxLength={200}
                   />
-                  <button onClick={sendGuess} className="noir-btn" disabled={!validQuestion(finalGuess)}>Guess!</button>
-                  <button onClick={() => setShowGuessBox(false)} className="noir-btn-ghost">Cancel</button>
+                  <GameButton variant="primary" onClick={sendGuess} disabled={!validQuestion(finalGuess)}>Guess!</GameButton>
+                  <GameButton variant="ghost" onClick={() => setShowGuessBox(false)}>Cancel</GameButton>
                 </div>
               )}
               <p className="mt-2 text-xs text-[var(--ink-faint)]">One shot — a wrong guess costs nothing, but the clock keeps ticking.</p>
@@ -295,27 +303,36 @@ export default function TwentyQuestionsGame({ room }: GameProps) {
 
       {/* ---- over ---- */}
       {(phase === 'won' || phase === 'lost') && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <GlassCard className="p-8 text-center">
-            <div className="wax-seal mx-auto mb-3" />
-            <div className="type-heading text-xl text-[var(--amber-glow)]">
-              {phase === 'won' ? '🎉 NAILED IT!' : '⏰ OUT OF QUESTIONS'}
-            </div>
-            <p className="mt-2 text-sm text-[var(--ink-dim)]">
-              {phase === 'won'
-                ? `${winner === room.me.id ? 'You named' : 'Your partner named'} it in ${used} question${used === 1 ? '' : 's'}.`
-                : `The ${MAX_QUESTIONS} questions ran dry. The secret was: “${isThinker ? secret : 'revealed to the thinker only… nice try' }”.`}
-            </p>
-            {phase === 'lost' && isThinker && (
-              <p className="mt-1 text-xs text-[var(--ink-faint)]">The secret stays sealed — unless you choose to tell.</p>
-            )}
-            <p className="mt-3 text-sm">
-              Winner: <b className="text-[var(--amber-glow)]">{winner === room.me.id ? 'YOU' : room.peer?.name ?? 'Partner'}</b>
-              {' · '} +{XP_AWARDS.duoWin} XP
-            </p>
-            <button onClick={reset} className="noir-btn mt-5">🔄 New round</button>
-          </GlassCard>
-        </motion.div>
+        <div className="gk-modal-scope">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <GlassCard className="p-8 text-center">
+              <p className="mt-2 text-sm text-[var(--ink-dim)]">
+                {phase === 'won'
+                  ? `${winner === room.me.id ? 'You named' : 'Your partner named'} it in ${used} question${used === 1 ? '' : 's'}.`
+                  : `The ${MAX_QUESTIONS} questions ran dry. The secret was: “${isThinker ? secret : 'revealed to the thinker only… nice try' }”.`}
+              </p>
+              {phase === 'lost' && isThinker && (
+                <p className="mt-1 text-xs text-[var(--ink-faint)]">The secret stays sealed — unless you choose to tell.</p>
+              )}
+              <p className="mt-3 text-sm">
+                Winner: <b className="text-[var(--amber-glow)]">{winner === room.me.id ? 'YOU' : room.peer?.name ?? 'Partner'}</b>
+                {' · '} +{XP_AWARDS.duoWin} XP
+              </p>
+              <div className="mt-5">
+                <GameButton variant="primary" onClick={reset}>🔄 New round</GameButton>
+              </div>
+            </GlassCard>
+          </motion.div>
+          <ResultModal
+            open
+            eyebrow="Interrogation over"
+            headline={phase === 'won' ? 'NAILED IT!' : 'OUT OF QUESTIONS'}
+            stat={`${used}/${MAX_QUESTIONS} questions used`}
+            tone={phase === 'won' ? 'win' : 'lose'}
+            primaryLabel="🔄 New round"
+            onPrimary={reset}
+          />
+        </div>
       )}
     </div>
   );

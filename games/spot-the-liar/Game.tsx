@@ -18,6 +18,8 @@ import ChatBox from './ChatBox';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
+import '../ui-kit/kit.css';
+import { GameButton, ScoreHUD, ResultModal, SectionTitle } from '../ui-kit';
 
 export default function SpotTheLiarGame({ room }: GameProps) {
   const gs: SpotTheLiarShared = room.shared?.games?.['spot-the-liar'] ?? {};
@@ -135,15 +137,20 @@ export default function SpotTheLiarGame({ room }: GameProps) {
     `${id === room.me.id ? 'You' : room.peer?.name ?? 'Partner'}: ${scores[id] ?? 0}`;
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="gk-root mx-auto max-w-2xl">
       <div className="mb-5 text-center">
-        <div className="eyebrow">Interrogation · {TOTAL_ROUNDS} rounds</div>
-        <h2 className="type-heading mt-1 text-2xl">Spot the Liar</h2>
+        <SectionTitle eyebrow={`Interrogation · ${TOTAL_ROUNDS} rounds`} title="Spot the Liar" />
         {round > 0 && phase !== 'over' && (
-          <div className="mt-2 text-xs text-[var(--ink-dim)]">
-            Round <b className="text-[var(--amber-glow)]">{round}/{TOTAL_ROUNDS}</b>
-            {' · '} {scoreLine(room.me.id)} — {peerId ? scoreLine(peerId) : 'Desk: 0'}
-            {' · '} Liar: <b>{isLiar ? 'YOU' : room.peer?.name ?? '—'}</b>
+          <div className="mx-auto mt-3 max-w-sm">
+            <ScoreHUD
+              leftLabel="YOU"
+              leftValue={scores[room.me.id] ?? 0}
+              leftSub={isLiar ? 'liar' : 'interrogator'}
+              rightLabel={peerId ? (room.peer?.name ?? 'PARTNER').toUpperCase().slice(0, 12) : 'DESK'}
+              rightValue={peerId ? (scores[peerId] ?? 0) : 0}
+              rightSub={isLiar ? 'interrogator' : 'liar'}
+              record="none"
+            />
           </div>
         )}
       </div>
@@ -156,9 +163,9 @@ export default function SpotTheLiarGame({ room }: GameProps) {
             The other cross-examines over the wire, then calls the lie. Correct call scores for the
             interrogator; a miss scores for the liar. Best of {TOTAL_ROUNDS} rounds takes the case.
           </p>
-          <button onClick={startMatch} className="noir-btn mt-6" disabled={!peerId}>
+          <GameButton variant="primary" onClick={startMatch} className="mt-6" disabled={!peerId}>
             🎲 Draw a prompt & start
-          </button>
+          </GameButton>
           {!peerId && (
             <p className="mt-3 text-xs italic text-[var(--ink-faint)]">Waiting for your partner to join…</p>
           )}
@@ -196,9 +203,9 @@ export default function SpotTheLiarGame({ room }: GameProps) {
                   </button>
                 </div>
               ))}
-              <button onClick={submitStatements} className="noir-btn mt-2 w-full" disabled={!validStatements(drafts)}>
+              <GameButton variant="primary" onClick={submitStatements} className="mt-2 w-full" disabled={!validStatements(drafts)}>
                 📨 Submit to the interrogator
-              </button>
+              </GameButton>
             </GlassCard>
           ) : (
             <GlassCard className="p-8 text-center">
@@ -230,15 +237,15 @@ export default function SpotTheLiarGame({ room }: GameProps) {
           {isInterrogator && (
             <GlassCard className="p-5 text-center">
               <div className="type-heading mb-3 text-lg">Call the lie, interrogator</div>
-              <div className="flex justify-center gap-3">
+              <div className="flex flex-wrap justify-center gap-3">
                 {[0, 1, 2].map((i) => (
-                  <button
+                  <GameButton
                     key={i}
+                    variant={callIndex === i ? 'danger' : 'primary'}
                     onClick={() => callIndex === i ? callTheLie(i) : setCallIndex(i)}
-                    className={`noir-btn ${callIndex === i ? '!border-[var(--blood-bright)]' : ''}`}
                   >
                     {callIndex === i ? '⚖️ Confirm: #' + (i + 1) + ' is the lie' : 'Statement #' + (i + 1)}
-                  </button>
+                  </GameButton>
                 ))}
               </div>
               <p className="mt-2 text-xs text-[var(--ink-faint)]">Tap twice to lock in your call. No take-backs.</p>
@@ -254,48 +261,70 @@ export default function SpotTheLiarGame({ room }: GameProps) {
 
       {/* ---- verdict ---- */}
       {phase === 'called' && lastVerdict && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <GlassCard className="p-6 text-center">
-            <div className="wax-seal mx-auto mb-3" />
-            <div className="type-heading text-xl text-[var(--amber-glow)]">
-              {lastVerdict.correct ? '🎯 LIE EXPOSED!' : '😈 THE LIAR WALKS FREE'}
-            </div>
-            <p className="mt-3 text-sm text-[var(--ink-dim)]">
-              The lie was statement <b className="text-[var(--blood-bright)]">#{lastVerdict.lieIndex + 1}</b>:
-              “{statements[lastVerdict.lieIndex]}”
-            </p>
-            <p className="mt-2 text-sm">
-              {lastVerdict.correct ? 'Point to the interrogator.' : 'Point to the liar.'}
-              {' · '} {scoreLine(room.me.id)} — {peerId ? scoreLine(peerId) : ''}
-            </p>
-            <button onClick={nextRound} className="noir-btn mt-5">
-              {isLastRound(round) ? '🏁 Final verdict' : '➡️ Next round'}
-            </button>
-          </GlassCard>
-        </motion.div>
+        <div className="gk-modal-scope">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <GlassCard className="p-6 text-center">
+              <p className="mt-3 text-sm text-[var(--ink-dim)]">
+                The lie was statement <b className="text-[var(--blood-bright)]">#{lastVerdict.lieIndex + 1}</b>:
+                “{statements[lastVerdict.lieIndex]}”
+              </p>
+              <p className="mt-2 text-sm">
+                {lastVerdict.correct ? 'Point to the interrogator.' : 'Point to the liar.'}
+                {' · '} {scoreLine(room.me.id)} — {peerId ? scoreLine(peerId) : ''}
+              </p>
+              <div className="mt-5">
+                <GameButton variant="primary" onClick={nextRound}>
+                  {isLastRound(round) ? '🏁 Final verdict' : '➡️ Next round'}
+                </GameButton>
+              </div>
+            </GlassCard>
+          </motion.div>
+          <ResultModal
+            open
+            eyebrow={`Round ${round} verdict`}
+            headline={lastVerdict.correct ? 'LIE EXPOSED!' : 'THE LIAR WALKS FREE'}
+            stat={`The lie was statement #${lastVerdict.lieIndex + 1}`}
+            tone={lastVerdict.correct ? 'win' : 'lose'}
+            primaryLabel={isLastRound(round) ? '🏁 Final verdict' : '➡️ Next round'}
+            onPrimary={nextRound}
+          />
+        </div>
       )}
 
       {/* ---- match over ---- */}
       {phase === 'over' && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <GlassCard className="p-8 text-center">
-            <div className="wax-seal mx-auto mb-3" />
-            <div className="type-heading text-xl text-[var(--amber-glow)]">📁 CASE CLOSED</div>
-            <p className="mt-2 text-sm text-[var(--ink-dim)]">
-              {scoreLine(room.me.id)} — {peerId ? scoreLine(peerId) : ''}
-            </p>
-            <p className="mt-3 text-lg">
-              Winner: <b className="text-[var(--amber-glow)]">
-                {winner === null ? 'A perfect tie — suspicious.' : winner === room.me.id ? 'YOU, sharp-eyed sleuth' : room.peer?.name ?? 'Partner'}
-              </b>
-              {' · '} +{XP_AWARDS.duoWin} XP
-            </p>
-            <div className="mt-5 flex justify-center gap-3">
-              <button onClick={startMatch} className="noir-btn">🔄 Rematch</button>
-              <button onClick={reset} className="noir-btn-ghost">Lobby</button>
-            </div>
-          </GlassCard>
-        </motion.div>
+        <div className="gk-modal-scope">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <GlassCard className="p-8 text-center">
+              <div className="wax-seal mx-auto mb-3" />
+              <div className="type-heading text-xl text-[var(--amber-glow)]">📁 CASE CLOSED</div>
+              <p className="mt-2 text-sm text-[var(--ink-dim)]">
+                {scoreLine(room.me.id)} — {peerId ? scoreLine(peerId) : ''}
+              </p>
+              <p className="mt-3 text-lg">
+                Winner: <b className="text-[var(--amber-glow)]">
+                  {winner === null ? 'A perfect tie — suspicious.' : winner === room.me.id ? 'YOU, sharp-eyed sleuth' : room.peer?.name ?? 'Partner'}
+                </b>
+                {' · '} +{XP_AWARDS.duoWin} XP
+              </p>
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <GameButton variant="primary" onClick={startMatch}>🔄 Rematch</GameButton>
+                <GameButton variant="ghost" onClick={reset}>Lobby</GameButton>
+              </div>
+            </GlassCard>
+          </motion.div>
+          <ResultModal
+            open
+            eyebrow="Case closed"
+            headline={winner === null ? 'A perfect tie' : winner === room.me.id ? 'YOU, sharp-eyed sleuth' : `${room.peer?.name ?? 'Partner'} wins`}
+            stat={`${scoreLine(room.me.id)} — ${peerId ? scoreLine(peerId) : ''}`}
+            tone={winner === null ? 'draw' : winner === room.me.id ? 'win' : 'lose'}
+            primaryLabel="🔄 Rematch"
+            onPrimary={startMatch}
+            secondaryLabel="Lobby"
+            onSecondary={reset}
+          />
+        </div>
       )}
     </div>
   );

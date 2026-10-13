@@ -7,6 +7,14 @@
 
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import '../ui-kit/kit.css';
+import {
+  GameButton,
+  ScoreHUD,
+  ResultModal,
+  GameCard,
+  SectionTitle,
+} from '../ui-kit';
 import type { GameProps } from '../types';
 import type { WYRShared } from './types';
 import { MATCH_XP, MISMATCH_XP, buildDeck, deckSize, isMatch } from './logic';
@@ -82,70 +90,58 @@ export default function WouldYouRatherGame({ room }: GameProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 style={{ fontFamily: 'var(--font-type)' }} className="text-xl tracking-wide">
-          ⚖️ WOULD YOU RATHER
-        </h2>
-        <div className="text-sm opacity-80" style={{ fontFamily: 'var(--font-type)' }}>
-          MINDS MATCHED: {matches}/{rounds}
-        </div>
-      </div>
+    <div className="gk-root space-y-4">
+      <SectionTitle
+        eyebrow={pair && !deckDone ? `QUESTION ${idx + 1} — VOTE IN SECRET` : 'TWO ENVELOPES · ONE SHARED MIND'}
+        title="⚖️ Would You Rather"
+      />
+      <ScoreHUD
+        leftLabel="MINDS MATCHED"
+        leftValue={matches}
+        rightLabel="QUESTIONS ASKED"
+        rightValue={rounds}
+      />
 
       {!peer && (
-        <div className="glass-card p-4 text-sm" style={{ fontFamily: 'var(--font-type)' }}>
+        <div className="glass-card p-4 text-sm">
           ⏳ Waiting for your partner… (code <span className="font-bold">{room.roomCode ?? '—'}</span>)
         </div>
       )}
 
       <div className="mx-auto max-w-xl">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card gk-modal-scope p-6">
           {deck.length === 0 && !deckDone && (
             <div className="flex flex-col items-center gap-3 py-8">
-              <p className="text-center text-sm opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
+              <p className="text-center text-sm opacity-70">
                 Two sealed envelopes. One shared mind. Vote without peeking.
               </p>
-              <button className="noir-btn" onClick={startDeck} disabled={!peer}>
+              <GameButton onClick={startDeck} disabled={!peer}>
                 ⚖️ Open the envelopes
-              </button>
-            </div>
-          )}
-
-          {deckDone && (
-            <div className="flex flex-col items-center gap-3 py-8">
-              <div className="text-4xl">💌</div>
-              <p className="text-center text-sm" style={{ fontFamily: 'var(--font-type)' }}>
-                {matches} of {rounds} minds matched — {matches >= rounds / 2 ? 'practically telepathic.' : 'the mystery deepens.'}
-              </p>
-              <button className="noir-btn" onClick={startDeck}>🔁 New round of envelopes</button>
+              </GameButton>
             </div>
           )}
 
           {!deckDone && pair && phase === 'voting' && (
             <div className="flex flex-col gap-3">
-              <p className="text-center text-xs tracking-[0.3em] opacity-60" style={{ fontFamily: 'var(--font-type)' }}>
-                QUESTION {idx + 1} — VOTE IN SECRET
-              </p>
               {([0, 1] as const).map((i) => {
                 const chosen = myVote === i;
                 return (
-                  <button
+                  <GameCard
                     key={i}
                     onClick={() => vote(i)}
                     disabled={myVote !== undefined}
-                    className={[
-                      'manila-folder p-5 text-left text-base transition-all',
-                      chosen ? 'ring-2 ring-amber-300' : myVote !== undefined ? 'opacity-50' : 'hover:ring-1 hover:ring-amber-300/60',
-                    ].join(' ')}
-                    style={{ fontFamily: 'var(--font-type)' }}
+                    state={chosen ? 'active' : myVote !== undefined ? 'absent' : 'default'}
+                    ariaLabel={`Vote for ${i === 0 ? 'A' : 'B'}`}
+                    className="w-full"
                   >
-                    <span className="mr-2 opacity-60">{i === 0 ? '🅰️' : '🅱️'}</span>
-                    {pair[i]}
-                    {chosen && <span className="ml-2 text-sm">🔒 sealed</span>}
-                  </button>
+                    <span className="text-left">
+                      <span className="opacity-60">{i === 0 ? '🅰️' : '🅱️'}</span> {pair[i]}
+                      {chosen && <span className="ml-2 text-sm">🔒 sealed</span>}
+                    </span>
+                  </GameCard>
                 );
               })}
-              <p className="text-center text-xs opacity-60" style={{ fontFamily: 'var(--font-type)' }}>
+              <p className="text-center text-xs opacity-60">
                 {myVote !== undefined
                   ? peer && votes[peer.id] !== undefined
                     ? 'Both votes are in…'
@@ -164,26 +160,45 @@ export default function WouldYouRatherGame({ room }: GameProps) {
               <div className="text-4xl">{matched ? '💞' : '🎭'}</div>
               <div className="grid w-full gap-3 md:grid-cols-2">
                 {([me, peer.id] as const).map((pid) => (
-                  <div key={pid} className="manila-folder p-4">
-                    <p className="text-xs tracking-widest opacity-60" style={{ fontFamily: 'var(--font-type)' }}>
-                      {nameOf(pid).toUpperCase()}
-                    </p>
-                    <p className="mt-1 text-sm" style={{ fontFamily: 'var(--font-type)' }}>
-                      {pair[votes[pid] ?? 0]}
-                    </p>
-                  </div>
+                  <GameCard key={pid} state={matched ? 'correct' : 'absent'}>
+                    <span>
+                      <span className="block text-xs tracking-widest opacity-60">
+                        {nameOf(pid).toUpperCase()}
+                      </span>
+                      <span className="mt-1 block text-sm">{pair[votes[pid] ?? 0]}</span>
+                    </span>
+                  </GameCard>
                 ))}
               </div>
-              <p className="text-center text-sm" style={{ fontFamily: 'var(--font-type)' }}>
+              <p className="text-center text-sm">
                 {matched
                   ? `Same mind — +${MATCH_XP} XP each, co-op win sealed. 💌`
                   : `Different wavelengths — +${MISMATCH_XP} XP each for honesty.`}
               </p>
-              <button className="noir-btn" onClick={next}>
+              <GameButton onClick={next}>
                 {idx + 1 >= deck.length ? '🏁 See results' : '➡️ Next question'}
-              </button>
+              </GameButton>
             </motion.div>
           )}
+
+          {deckDone && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <div className="text-4xl">💌</div>
+              <p className="text-center text-sm">
+                {matches} of {rounds} minds matched — {matches >= rounds / 2 ? 'practically telepathic.' : 'the mystery deepens.'}
+              </p>
+            </div>
+          )}
+
+          <ResultModal
+            open={deckDone}
+            eyebrow="ENVELOPES SPENT"
+            headline={matches >= rounds / 2 ? 'Practically telepathic' : 'The mystery deepens'}
+            tone={matches >= rounds / 2 ? 'win' : 'draw'}
+            stat={`${matches} OF ${rounds} MINDS MATCHED`}
+            primaryLabel="🔁 New round of envelopes"
+            onPrimary={startDeck}
+          />
         </motion.div>
       </div>
     </div>

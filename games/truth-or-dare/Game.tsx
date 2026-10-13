@@ -8,6 +8,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import '../ui-kit/kit.css';
+import {
+  GameButton,
+  ScoreHUD,
+  TurnBanner,
+  ResultModal,
+  SectionTitle,
+} from '../ui-kit';
 import type { GameProps } from '../types';
 import type { ToDShared } from './types';
 import { CARD_XP, buildDeck } from './logic';
@@ -87,42 +95,42 @@ export default function TruthOrDareGame({ room }: GameProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 style={{ fontFamily: 'var(--font-type)' }} className="text-xl tracking-wide">
-          🃏 TRUTH OR DARE
-        </h2>
-        <div className="text-sm opacity-80" style={{ fontFamily: 'var(--font-type)' }}>
-          CARDS COMPLETED: {doneCount} · TURN: {nameOf(turn).toUpperCase()}
-        </div>
-      </div>
+    <div className="gk-root space-y-4">
+      <SectionTitle
+        eyebrow="CO-OP CARD TABLE"
+        title="🃏 Truth or Dare"
+      />
+      <ScoreHUD
+        leftLabel="COMPLETED"
+        leftValue={doneCount}
+        rightLabel="IN DECK"
+        rightValue={deck.length > 0 ? Math.max(0, deck.length - idx) : 0}
+      />
 
       {!peer && (
-        <div className="glass-card p-4 text-sm" style={{ fontFamily: 'var(--font-type)' }}>
+        <div className="glass-card p-4 text-sm">
           ⏳ Waiting for your partner… (code <span className="font-bold">{room.roomCode ?? '—'}</span>)
         </div>
       )}
 
       <div className="mx-auto max-w-md">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6">
-          {deck.length === 0 && (
-            <div className="flex flex-col items-center gap-3 py-8">
-              <p className="text-center text-sm opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
-                A fresh deck of sealed cards, straight from the precinct's back room.
-              </p>
-              <button className="noir-btn" onClick={startDeck} disabled={!peer}>
-                🃏 Shuffle the deck
-              </button>
-            </div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card gk-modal-scope p-6">
+          {deck.length > 0 && !deckDone && (
+            <TurnBanner
+              isYourTurn={myTurn}
+              yourText="Your draw, detective"
+              theirText={`${nameOf(turn)} draws…`}
+            />
           )}
 
-          {deck.length > 0 && deckDone && (
+          {deck.length === 0 && (
             <div className="flex flex-col items-center gap-3 py-8">
-              <div className="text-4xl">🕯️</div>
-              <p className="text-center text-sm" style={{ fontFamily: 'var(--font-type)' }}>
-                The deck is spent — {doneCount} cards completed, detectives.
+              <p className="text-center text-sm opacity-70">
+                A fresh deck of sealed cards, straight from the precinct's back room.
               </p>
-              <button className="noir-btn" onClick={startDeck}>🔁 Shuffle again</button>
+              <GameButton onClick={startDeck} disabled={!peer}>
+                🃏 Shuffle the deck
+              </GameButton>
             </div>
           )}
 
@@ -135,12 +143,12 @@ export default function TruthOrDareGame({ room }: GameProps) {
               >
                 <span className="text-5xl">🂠</span>
               </motion.div>
-              <p className="text-center text-sm opacity-80" style={{ fontFamily: 'var(--font-type)' }}>
+              <p className="text-center text-sm opacity-80">
                 {myTurn ? 'Your draw, detective.' : `${nameOf(turn)} draws the next card…`}
               </p>
-              <button className="noir-btn" onClick={spin} disabled={!myTurn || spinning}>
+              <GameButton onClick={spin} disabled={!myTurn || spinning}>
                 {spinning ? 'Shuffling…' : '🃏 Draw a card'}
-              </button>
+              </GameButton>
             </div>
           )}
 
@@ -152,36 +160,55 @@ export default function TruthOrDareGame({ room }: GameProps) {
               className="flex flex-col items-center gap-4 py-4"
             >
               <div className="manila-folder w-full p-6 text-center">
-                <p className="text-xs tracking-[0.3em] opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
+                <p className="text-xs tracking-[0.3em] opacity-70">
                   {card.type === 'truth' ? '🤫 TRUTH' : '🔥 DARE'}
                 </p>
-                <p className="mt-3 text-lg" style={{ fontFamily: 'var(--font-type)' }}>
+                <p className="mt-3 text-lg">
                   {card.text}
                 </p>
-                <p className="mt-3 text-xs opacity-60" style={{ fontFamily: 'var(--font-type)' }}>
+                <p className="mt-3 text-xs opacity-60">
                   For: {nameOf(turn)}
                 </p>
               </div>
               {myTurn ? (
-                <div className="flex gap-2">
-                  <button className="noir-btn" onClick={markDone}>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <GameButton onClick={markDone}>
                     ✅ Done (+{CARD_XP} XP both)
-                  </button>
-                  <button className="noir-btn noir-btn-ghost" onClick={skip}>
+                  </GameButton>
+                  <GameButton variant="ghost" onClick={skip}>
                     Skip
-                  </button>
+                  </GameButton>
                 </div>
               ) : (
-                <p className="text-sm opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
+                <p className="text-sm opacity-70">
                   Waiting on {nameOf(turn)}…
                 </p>
               )}
             </motion.div>
           )}
+
+          {deck.length > 0 && deckDone && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <div className="text-4xl">🕯️</div>
+              <p className="text-center text-sm">
+                The deck is spent — {doneCount} cards completed, detectives.
+              </p>
+            </div>
+          )}
+
+          <ResultModal
+            open={deckDone}
+            eyebrow="DECK SPENT"
+            headline="Cards completed"
+            tone="win"
+            stat={`${doneCount} CARDS SEALED · CO-OP XP BANKED`}
+            primaryLabel="🔁 Shuffle again"
+            onPrimary={startDeck}
+          />
         </motion.div>
       </div>
 
-      <p className="text-center text-xs opacity-60" style={{ fontFamily: 'var(--font-type)' }}>
+      <p className="text-center text-xs opacity-60">
         Every completed card earns both detectives {CARD_XP} XP and seals a co-op win. 💌
       </p>
     </div>

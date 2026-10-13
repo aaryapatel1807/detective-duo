@@ -26,6 +26,12 @@ export interface GameMeta {
   /** emoji shown on the pin card */
   icon: string;
   blurb: string;
+  /** noir hub rarity: easy=green, medium=gold, hard=red (default 'medium') */
+  difficulty?: 'easy' | 'medium' | 'hard';
+  /** optional CSS hook for the noir card cover (e.g. 'fingerprint', 'skyline') */
+  cover?: string;
+  /** one-line noir tagline shown on the hub card */
+  tagline?: string;
 }
 
 export interface GameProps {
