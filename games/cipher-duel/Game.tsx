@@ -17,8 +17,9 @@ import {
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
-import { Typewriter } from '../../components/Typewriter';
 import { ManilaFolder } from '../../components/props';
+import '../ui-kit/kit.css';
+import { GameButton, TurnBanner, ResultModal, SectionTitle } from '../ui-kit';
 
 const SLUG = 'cipher-duel';
 
@@ -103,10 +104,9 @@ export default function CipherDuelGame({ room }: GameProps) {
   };
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="gk-root mx-auto max-w-xl">
       <div className="mb-4 text-center">
-        <div className="eyebrow">Case file № 23 — Word & Code Duels</div>
-        <Typewriter as="h2" text="CIPHER DUEL" className="type-heading mt-1 text-3xl" />
+        <SectionTitle eyebrow="Case file № 23 — Word & Code Duels" title="Cipher Duel" />
         <p className="mt-1 text-sm text-[var(--ink-dim)]">
           Bulls &amp; Cows: seal a 4-digit safe code, then crack your partner&rsquo;s with
           alternating guesses. 🐂 bull = right digit, right place · 🐄 cow = right digit, wrong place.
@@ -145,9 +145,9 @@ export default function CipherDuelGame({ room }: GameProps) {
                 maxLength={4}
                 className="noir-input w-32 text-center font-type text-xl tracking-[0.3em]"
               />
-              <button onClick={sealCode} disabled={!isValidCode(codeInput)} className="noir-btn">
+              <GameButton variant="primary" onClick={sealCode} disabled={!isValidCode(codeInput)}>
                 🔏 Seal it
-              </button>
+              </GameButton>
             </div>
           )}
         </ManilaFolder>
@@ -155,9 +155,13 @@ export default function CipherDuelGame({ room }: GameProps) {
 
       {phase === 'play' && (
         <GlassCard className="p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col items-center gap-2">
             <div className="eyebrow">Cracking: {playerName(room, opponentId)}&rsquo;s safe</div>
-            <div className="eyebrow">{myTurn ? '🎯 Your move' : '⏳ Partner is guessing'}</div>
+            <TurnBanner
+              isYourTurn={myTurn}
+              yourText="🎯 Your move"
+              theirText={room.peer ? `⏳ ${playerName(room, opponentId)} is guessing` : '⏳ Waiting'}
+            />
           </div>
 
           <div className="mt-4 space-y-1.5">
@@ -195,13 +199,13 @@ export default function CipherDuelGame({ room }: GameProps) {
               disabled={!myTurn}
               className="noir-input w-32 text-center font-type text-xl tracking-[0.3em]"
             />
-            <button
+            <GameButton
+              variant="primary"
               onClick={submitGuess}
               disabled={!myTurn || !isValidCode(guessInput)}
-              className="noir-btn"
             >
               🔓 Crack
-            </button>
+            </GameButton>
           </div>
           {room.peer && (
             <div className="mt-3 text-center text-xs text-[var(--ink-dim)]">
@@ -212,32 +216,42 @@ export default function CipherDuelGame({ room }: GameProps) {
       )}
 
       {phase === 'over' && (
-        <ManilaFolder className="p-6 text-center">
-          <div className="type-heading text-2xl">
-            {winner === room.me.id ? '🏆 Safe cracked — you win!' : `🕵️ ${playerName(room, winner)} cracked it first`}
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 text-left">
-            {ids.map((pid) => {
-              const other: string | null = pid === room.me.id ? opponentId : room.me.id;
-              const pg = guesses[pid] ?? [];
-              const crackedCode = other ? codes[other] ?? '????' : '—';
-              return (
-                <div key={pid} className="glass-card !rounded-2xl p-3">
-                  <div className="eyebrow">{playerName(room, pid)} cracked</div>
-                  <div className="type-heading mt-1 text-2xl tracking-[0.2em]">
-                    {crackedCode}
+        <div className="gk-modal-scope">
+          <ManilaFolder className="p-6 text-center">
+            <div className="grid grid-cols-2 gap-3 text-left">
+              {ids.map((pid) => {
+                const other: string | null = pid === room.me.id ? opponentId : room.me.id;
+                const pg = guesses[pid] ?? [];
+                const crackedCode = other ? codes[other] ?? '????' : '—';
+                return (
+                  <div key={pid} className="glass-card !rounded-2xl p-3">
+                    <div className="eyebrow">{playerName(room, pid)} cracked</div>
+                    <div className="type-heading mt-1 text-2xl tracking-[0.2em]">
+                      {crackedCode}
+                    </div>
+                    <div className="text-xs text-[var(--ink-dim)]">
+                      in {pg.length} {pg.length === 1 ? 'guess' : 'guesses'}
+                    </div>
                   </div>
-                  <div className="text-xs text-[var(--ink-dim)]">
-                    in {pg.length} {pg.length === 1 ? 'guess' : 'guesses'}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <button onClick={reset} className="noir-btn mt-5">
-            🔁 New duel
-          </button>
-        </ManilaFolder>
+                );
+              })}
+            </div>
+            <div className="mt-5">
+              <GameButton variant="primary" onClick={reset}>
+                🔁 New duel
+              </GameButton>
+            </div>
+          </ManilaFolder>
+          <ResultModal
+            open
+            eyebrow="Case closed"
+            headline={winner === room.me.id ? 'You cracked it' : `${playerName(room, winner)} cracked it`}
+            stat={`Won in ${(winner && guesses[winner]?.length) ?? 0} guesses`}
+            tone={winner === room.me.id ? 'win' : 'lose'}
+            primaryLabel="🔁 New duel"
+            onPrimary={reset}
+          />
+        </div>
       )}
     </div>
   );

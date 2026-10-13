@@ -26,8 +26,9 @@ import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { recordCoopWin } from '../../lib/lovenotes';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
-import { Typewriter } from '../../components/Typewriter';
 import { ManilaFolder } from '../../components/props';
+import '../ui-kit/kit.css';
+import { GameButton, TurnBanner, ScoreHUD, ResultModal, SectionTitle } from '../ui-kit';
 
 const SLUG = 'codenames-duet';
 const POOL = [...WORDS_4, ...WORDS_5, ...WORDS_6];
@@ -199,10 +200,9 @@ export default function CodenamesDuetGame({ room }: GameProps) {
   };
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="gk-root mx-auto max-w-2xl">
       <div className="mb-4 text-center">
-        <div className="eyebrow">Case file № 68 — Word & Code Duels</div>
-        <Typewriter as="h2" text="CODENAMES DUET" className="type-heading mt-1 text-3xl" />
+        <SectionTitle eyebrow="Case file № 68 — Word & Code Duels" title="Codenames Duet" />
         <p className="mt-1 text-sm text-[var(--ink-dim)]">
           Co-op: find all {DUET_AGENTS} agents, dodge {DUET_ASSASSINS} assassins. Clue-giver
           alternates each turn — {DUET_MAX_TURNS} turns before the trail goes cold.
@@ -221,20 +221,29 @@ export default function CodenamesDuetGame({ room }: GameProps) {
               Solo practice — you play both the informant and the detective.
             </p>
           )}
-          <button onClick={startBoard} className="noir-btn mt-5">
+          <GameButton variant="primary" onClick={startBoard} className="mt-5">
             🗂 Assemble the board
-          </button>
+          </GameButton>
         </ManilaFolder>
       )}
 
       {phase === 'play' && (
         <GlassCard className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="eyebrow">Turn {turn} / {maxTurns}</div>
-            <div className="eyebrow">🕵️ Agents: {found} / {DUET_AGENTS}</div>
-            <div className="eyebrow">
-              {iAmGiver ? '💡 You give the clue' : `🎯 ${playerName(room, clueGiver)} clues — you guess`}
-            </div>
+          <ScoreHUD
+            leftLabel="🕵️ Agents"
+            leftValue={found}
+            leftSub={`of ${DUET_AGENTS}`}
+            rightLabel="Turn"
+            rightValue={turn}
+            rightSub={`of ${maxTurns}`}
+            record="none"
+          />
+          <div className="mt-2">
+            <TurnBanner
+              isYourTurn={iAmGiver}
+              yourText="💡 You give the clue"
+              theirText={`🎯 ${playerName(room, clueGiver)} clues — you guess`}
+            />
           </div>
 
           {/* clue banner */}
@@ -306,9 +315,9 @@ export default function CodenamesDuetGame({ room }: GameProps) {
                   inputMode="numeric"
                   className="noir-input w-14 text-center font-type"
                 />
-                <button onClick={giveClue} className="noir-btn">
+                <GameButton variant="primary" onClick={giveClue}>
                   💡 Give clue
-                </button>
+                </GameButton>
               </div>
               {clueError && <div className="mt-1 text-center text-xs text-[var(--blood)]">{clueError}</div>}
               <div className="mt-1 text-center text-xs text-[var(--ink-faint)]">
@@ -318,9 +327,9 @@ export default function CodenamesDuetGame({ room }: GameProps) {
           )}
           {!iAmGiver && clue && guessesLeft > 0 && (
             <div className="mt-3 text-center">
-              <button onClick={passTurn} className="noir-btn-ghost text-xs">
+              <GameButton variant="ghost" size="sm" onClick={passTurn}>
                 ⏭ End turn early
-              </button>
+              </GameButton>
             </div>
           )}
 
@@ -334,18 +343,23 @@ export default function CodenamesDuetGame({ room }: GameProps) {
       )}
 
       {phase === 'over' && (
-        <ManilaFolder className="p-6 text-center">
-          <div className="type-heading text-2xl">
-            {result === 'win' ? '🏆 Case closed — all agents safe!' : '🥀 Case blown'}
-          </div>
-          {result === 'lose' && <p className="mt-2 text-sm text-[var(--ink-dim)]">{loseReason}</p>}
-          <div className="mt-3 text-sm text-[var(--ink-dim)]">
-            Agents found: {found} / {DUET_AGENTS} · turns used: {Math.min(turn, maxTurns)} / {maxTurns}
-          </div>
-          <button onClick={reset} className="noir-btn mt-5">
-            🔁 New operation
-          </button>
-        </ManilaFolder>
+        <div className="gk-modal-scope">
+          <ManilaFolder className="p-6 text-center">
+            {result === 'lose' && <p className="mt-2 text-sm text-[var(--ink-dim)]">{loseReason}</p>}
+            <div className="mt-3 text-sm text-[var(--ink-dim)]">
+              Agents found: {found} / {DUET_AGENTS} · turns used: {Math.min(turn, maxTurns)} / {maxTurns}
+            </div>
+          </ManilaFolder>
+          <ResultModal
+            open
+            eyebrow="Operation over"
+            headline={result === 'win' ? 'All agents safe' : 'Case blown'}
+            stat={`Agents ${found}/${DUET_AGENTS} · Turns ${Math.min(turn, maxTurns)}/${maxTurns}`}
+            tone={result === 'win' ? 'win' : 'lose'}
+            primaryLabel="🔁 New operation"
+            onPrimary={reset}
+          />
+        </div>
       )}
     </div>
   );
