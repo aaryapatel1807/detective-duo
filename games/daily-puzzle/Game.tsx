@@ -22,7 +22,9 @@ import {
 } from './logic';
 import type { DailyStreak } from './types';
 import '../ui-kit/kit.css';
-import { GameCard, ProgressBar, SectionTitle, TimerChip } from '../ui-kit';
+import '../ui-kit/realism.css';
+import './daily-puzzle.css';
+import { ProgressBar, TimerChip } from '../ui-kit';
 
 const STREAK_KEY = 'dd-daily-streak';
 const DONE_KEY = 'dd-daily-done';
@@ -111,13 +113,6 @@ export default function DailyPuzzleGame({ room }: GameProps) {
 
   return (
     <div className="gk-root mx-auto max-w-md">
-      <div className="mb-4 text-center">
-        <SectionTitle eyebrow={`DAILY FILE · ${today}`} title="Daily Puzzle" />
-        <p className="mt-2 text-sm text-[var(--ink-dim)]">
-          Find the {puzzle.words.length} hidden words. Tap a start cell, then an end cell.
-        </p>
-      </div>
-
       <div className="mb-4 flex items-center justify-center gap-3">
         <span className="font-type text-xs tracking-[0.18em] uppercase text-[var(--ink-dim)]">
           🔥 streak {streak.streak}
@@ -126,7 +121,15 @@ export default function DailyPuzzleGame({ room }: GameProps) {
       </div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <GlassCard className="p-4">
+        <div className="dp-page">
+          <div className="dp-masthead">
+            <div className="dp-masthead__brand">The Daily Dossier</div>
+            <div className="dp-masthead__date">{today} · Puzzle page</div>
+            <div className="dp-masthead__rule">
+              Find the {puzzle.words.length} hidden words — tap a start cell, then an end cell.
+            </div>
+          </div>
+
           <div className="mb-4">
             <ProgressBar
               label="WORDS ON FILE"
@@ -136,40 +139,35 @@ export default function DailyPuzzleGame({ room }: GameProps) {
             />
           </div>
 
-          <div className="grid grid-cols-5 gap-1.5 select-none">
+          <div className="dp-grid" role="grid" aria-label="Word search grid">
             {puzzle.letters.map((ch, i) => {
               const isFound = foundCells.has(i);
               const isAnchor = anchor === i;
-              const state = isFound ? 'correct' : isAnchor ? 'active' : 'default';
               return (
-                <GameCard
+                <button
                   key={i}
-                  state={state}
+                  type="button"
                   onClick={() => tapCell(i)}
-                  ariaLabel={`Cell ${i + 1}, letter ${ch}`}
-                  className="aspect-square !text-xl"
+                  aria-label={`Cell ${i + 1}, letter ${ch}`}
+                  className={`dp-cell ${isFound ? 'dp-cell--found' : isAnchor ? 'dp-cell--anchor' : ''}`}
                 >
                   {ch}
-                </GameCard>
+                </button>
               );
             })}
           </div>
 
           {flash && !allFound && (
-            <p className="mt-2 text-center text-sm text-[var(--blood-bright)]">{flash}</p>
+            <p className="dp-flash">{flash}</p>
           )}
 
           <div className="mt-4">
-            <div className="eyebrow mb-2">Words on file ({found.length}/{puzzle.words.length})</div>
-            <div className="flex flex-wrap gap-2">
+            <div className="dp-masthead__date mb-2">Words on file ({found.length}/{puzzle.words.length})</div>
+            <div className="dp-words">
               {puzzle.words.map((w) => (
                 <span
                   key={w.word}
-                  className={`rounded-full border px-3 py-1 font-type text-xs tracking-[0.12em] ${
-                    found.includes(w.word)
-                      ? 'border-[var(--amber-glow)] text-[var(--amber-glow)] line-through'
-                      : 'border-[var(--glass-border)] text-[var(--ink-dim)]'
-                  }`}
+                  className={`dp-word ${found.includes(w.word) ? 'dp-word--found' : ''}`}
                 >
                   {w.word}
                 </span>
@@ -178,16 +176,16 @@ export default function DailyPuzzleGame({ room }: GameProps) {
           </div>
 
           {allFound && (
-            <div className="mt-4 rounded-xl border border-[var(--amber-glow)] bg-[rgba(232,163,61,0.1)] p-4 text-center">
-              <div className="type-heading text-lg text-[var(--amber-glow)]">
+            <div className="dp-complete">
+              <div className="dp-complete__head">
                 🎉 Case closed — streak at {streak.streak}!
               </div>
-              <p className="mt-1 text-sm text-[var(--ink-dim)]">
+              <p className="dp-complete__sub">
                 +{XP_AWARDS.soloWin} XP filed. Fresh puzzle in {formatCountdown(msUntilMidnight(new Date(now)))}.
               </p>
             </div>
           )}
-        </GlassCard>
+        </div>
       </motion.div>
     </div>
   );

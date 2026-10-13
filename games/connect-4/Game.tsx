@@ -7,6 +7,8 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './game.css';
 import {
   GameButton,
   ScoreHUD,
@@ -138,24 +140,29 @@ export default function Connect4Game({ room }: GameProps) {
                   theirText={`${nameOf(turn)} is dropping…`}
                 />
               )}
-              <div className="grid gap-1 rounded-xl bg-[#1a1410]/80 p-2" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}>
+              <div className="c4-frame grid gap-1.5" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}>
                 {Array.from({ length: COLS }, (_, c) => (
                   <GameCard
                     key={c}
                     onClick={() => playCol(c)}
                     disabled={!playable}
                     ariaLabel={`Drop in column ${c + 1}`}
+                    className="c4-colbtn"
                   >
                     ⬇️
                   </GameCard>
                 ))}
                 {board.map((row, r) =>
                   row.map((cell, c) => (
-                    <div
-                      key={`${r}-${c}`}
-                      className="flex aspect-square items-center justify-center rounded-full border border-white/10 bg-black/40 text-2xl"
-                    >
-                      {cell ? GLYPH[cell] : ''}
+                    <div key={`${r}-${c}`} className="c4-slot">
+                      {cell ? (
+                        <span
+                          key={`${r}-${c}-${cell}`}
+                          role="img"
+                          aria-label={cell === 'a' ? 'Red disc' : 'Gold disc'}
+                          className={`c4-disc ${cell === 'a' ? 'c4-disc--red' : 'c4-disc--gold'}`}
+                        />
+                      ) : null}
                     </div>
                   )),
                 )}

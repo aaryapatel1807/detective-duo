@@ -12,7 +12,6 @@ import type { HangmanShared } from './types';
 import {
   applyLetterGuess,
   isRoundOver,
-  isWordComplete,
   HANGMAN_MAX_STRIKES,
   HANGMAN_ROUNDS,
   ROUND_LENGTHS,
@@ -22,13 +21,41 @@ import {
 import { randomWord } from '../../lib/content/words';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
-import { GlassCard } from '../../components/GlassCard';
 import { ManilaFolder } from '../../components/props';
 import '../ui-kit/kit.css';
-import { GameButton, GameCard, TurnBanner, ScoreHUD, ResultModal, SectionTitle } from '../ui-kit';
+import './hangman-duel.css';
+import { GameButton, TurnBanner, ScoreHUD, ResultModal, SectionTitle } from '../ui-kit';
 
 const SLUG = 'hangman-duel';
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+/* Classic clean gallows. Body parts draw themselves in as strikes land
+ * (framer-motion pathLength). Order: head, body, arms, legs. */
+function Gallows({ strikes }: { strikes: number }) {
+  const draw = { initial: { pathLength: 0 }, animate: { pathLength: 1 }, transition: { duration: 0.4 } };
+  const parts = [
+    <motion.circle key="head" className="hm-head" cx={92} cy={44} r={13} {...draw} />,
+    <motion.line key="body" className="hm-part" x1={92} y1={57} x2={92} y2={98} {...draw} />,
+    <motion.line key="armL" className="hm-part" x1={92} y1={68} x2={77} y2={84} {...draw} />,
+    <motion.line key="armR" className="hm-part" x1={92} y1={68} x2={107} y2={84} {...draw} />,
+    <motion.line key="legL" className="hm-part" x1={92} y1={98} x2={79} y2={122} {...draw} />,
+    <motion.line key="legR" className="hm-part" x1={92} y1={98} x2={105} y2={122} {...draw} />,
+  ];
+  return (
+    <svg
+      className="hm-gallows"
+      viewBox="0 0 124 140"
+      role="img"
+      aria-label={`Gallows, ${strikes} of ${HANGMAN_MAX_STRIKES} parts drawn`}
+    >
+      <line className="hm-wood" x1={12} y1={132} x2={74} y2={132} />
+      <line className="hm-wood" x1={32} y1={132} x2={32} y2={12} />
+      <line className="hm-wood" x1={32} y1={12} x2={92} y2={12} />
+      <line className="hm-rope" x1={92} y1={12} x2={92} y2={31} />
+      {parts.slice(0, Math.max(0, Math.min(strikes, parts.length)))}
+    </svg>
+  );
+}
 
 function playerName(room: GameProps['room'], pid: string | null | undefined): string {
   if (!pid) return '—';
@@ -157,7 +184,7 @@ export default function HangmanDuelGame({ room }: GameProps) {
     <div className="gk-root mx-auto max-w-2xl">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="Case file № 07 — Word & Code Duels" title="Hangman Duel" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+        <p className="mt-1 text-sm text-[var(--gk-ink-dim)]">
           One secret word. Alternate letter guesses. Fewest strikes over {HANGMAN_ROUNDS}{' '}
           rounds closes the case.
         </p>
@@ -182,57 +209,63 @@ export default function HangmanDuelGame({ room }: GameProps) {
       )}
 
       {phase === 'play' && (
-        <GlassCard className="p-6">
+        <div>
           <TurnBanner
             isYourTurn={myTurn}
             yourText="🎯 Your move"
             theirText={room.peer ? `⏳ ${playerName(room, turn)} is guessing` : '⏳ Waiting'}
           />
-          <div className="mx-auto mt-2 max-w-sm">
-            <ScoreHUD
-              leftLabel={playerName(room, ids[0]).toUpperCase()}
-              leftValue={roundStrikes[ids[0]] ?? 0}
-              leftSub={`round ${roundStrikes[ids[0]] ?? 0}/${HANGMAN_MAX_STRIKES} · total ${totalStrikes[ids[0]] ?? 0}`}
-              rightLabel={ids[1] ? playerName(room, ids[1]).toUpperCase() : `ROUND ${round + 1}/${HANGMAN_ROUNDS}`}
-              rightValue={ids[1] ? (roundStrikes[ids[1]] ?? 0) : round + 1}
-              rightSub={ids[1] ? `round ${roundStrikes[ids[1]] ?? 0}/${HANGMAN_MAX_STRIKES} · total ${totalStrikes[ids[1]] ?? 0}` : undefined}
-              record="none"
-            />
+
+          {/* shared word blanks on worksheet paper */}
+          <div className="hm-wordpaper mt-4">
+            <div className="hm-blanks" role="group" aria-label="Secret word">
+              {word.split('').map((ch, i) => {
+                const shown = guessed.includes(ch);
+                return (
+                  <div
+                    key={i}
+                    className="hm-blank"
+                    aria-label={shown ? `Letter ${ch}` : 'Hidden letter'}
+                  >
+                    {shown ? ch : ''}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          {/* masked word */}
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
-            {word.split('').map((ch, i) => {
-              const shown = guessed.includes(ch);
+          {/* one worksheet gallows per duelist */}
+          <div className="hm-duel">
+            {ids.map((pid) => {
+              const s = roundStrikes[pid] ?? 0;
               return (
-                <motion.div
-                  key={i}
-                  initial={{ rotateX: 90 }}
-                  animate={{ rotateX: shown ? 0 : 90 }}
-                  className="flex h-12 w-10 items-center justify-center border-b-2 border-[var(--brass)] bg-[rgba(0,0,0,0.25)] font-type text-2xl text-[var(--amber-glow)]"
-                >
-                  {shown ? ch : ''}
-                </motion.div>
+                <div key={pid} className="hm-paper">
+                  <div className="hm-name">{playerName(room, pid)}</div>
+                  <Gallows strikes={s} />
+                  <div className={`hm-strikes${s >= HANGMAN_MAX_STRIKES - 1 ? ' hm-strikes--danger' : ''}`}>
+                    Strikes {s}/{HANGMAN_MAX_STRIKES}
+                  </div>
+                </div>
               );
             })}
           </div>
 
-          {/* letter board */}
-          <div className="mt-5 grid grid-cols-7 gap-1.5 sm:grid-cols-9">
+          {/* alphabet */}
+          <div className="hm-keys" role="group" aria-label="Letter keys">
             {LETTERS.map((L) => {
               const used = guessed.includes(L);
               const hit = used && word.includes(L);
               return (
-                <GameCard
+                <button
                   key={L}
-                  state={used ? (hit ? 'correct' : 'absent') : 'default'}
+                  type="button"
                   onClick={() => guess(L)}
                   disabled={!myTurn || used}
-                  ariaLabel={`Guess letter ${L}`}
-                  className="!min-h-0 !min-w-0 !rounded-md !p-0 !py-1.5 !text-sm"
+                  aria-label={`Guess letter ${L}`}
+                  className={`hm-key${used ? (hit ? ' hm-key--hit' : ' hm-key--miss') : ''}`}
                 >
                   {L}
-                </GameCard>
+                </button>
               );
             })}
           </div>
@@ -248,7 +281,7 @@ export default function HangmanDuelGame({ room }: GameProps) {
               ))}
             </div>
           )}
-        </GlassCard>
+        </div>
       )}
 
       {phase === 'over' && (

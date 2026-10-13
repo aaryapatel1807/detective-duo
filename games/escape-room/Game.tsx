@@ -9,6 +9,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './escape-room.css';
 import { GameButton, ResultModal, TimerChip, SectionTitle } from '../ui-kit';
 import type { GameProps } from '../types';
 import type { RoomApi } from '../../lib/realtime/useRoom';
@@ -240,17 +242,14 @@ function RoomScene({
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           onClick={() => onSelect(h)}
-          className={`absolute flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 text-2xl transition ${
-            selectedId === h.id
-              ? 'border-[var(--amber-glow)] bg-[rgba(232,163,61,0.25)] shadow-[0_0_20px_rgba(232,163,61,0.5)]'
-              : 'border-[var(--brass)] bg-[rgba(20,14,8,0.85)] hover:border-[var(--amber-glow)] hover:shadow-[0_0_16px_rgba(232,163,61,0.4)]'
-          }`}
+          className={`er-hotspot absolute -translate-x-1/2 -translate-y-1/2 ${selectedId === h.id ? 'er-hotspot--selected' : ''}`}
           style={{ left: `${h.pos.x}%`, top: `${h.pos.y}%` }}
           title={h.name}
+          aria-label={`Examine ${h.name}`}
         >
-          {h.icon}
+          <span aria-hidden>{h.icon}</span>
           {h.lock && !unlocked[h.id] && (
-            <span className="absolute -bottom-1 -right-1 rounded-full bg-[var(--blood)] px-1 text-[0.6rem]">
+            <span className="er-hotspot__lock" aria-hidden>
               🔒
             </span>
           )}
@@ -277,14 +276,14 @@ function InventoryBar({ items }: { items: { id: string; name: string; icon: stri
           Empty pockets. Examine the room — anything you take appears here for both detectives.
         </p>
       ) : (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           {items.map((it) => (
-            <span
-              key={it.id}
-              className="flex items-center gap-2 rounded-xl border border-[var(--brass)] bg-[rgba(201,162,39,0.12)] px-3 py-1.5 text-sm"
-              title={it.name}
-            >
-              <span className="text-lg">{it.icon}</span> {it.name}
+            <span key={it.id} className="er-item" title={it.name}>
+              <span className="er-item__icon" aria-hidden>{it.icon}</span>
+              <span>
+                <span className="er-item__name">{it.name}</span>
+                <span className="er-item__tag">Evidence</span>
+              </span>
             </span>
           ))}
         </div>

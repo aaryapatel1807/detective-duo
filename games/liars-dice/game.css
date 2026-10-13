@@ -1,0 +1,58 @@
+/* ============================================================
+ * LIAR'S DICE — realism pass: noir felt table, ivory/noir dice.
+ * Uses the shared <Die noir> component from ../ui-kit.
+ * Unlayered custom CSS. Mobile-first. Hex fallbacks throughout.
+ * ============================================================ */
+
+/* The table — noir felt with a brass rail. */
+.ld-panel {
+  border-radius: 18px;
+  padding: 16px;
+  border: 1px solid #2a2118;
+  box-shadow:
+    inset 0 2px 12px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Dice rest on the felt with a soft contact shadow. */
+.ld-dice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 2px;
+}
+.ld-dice .gk-die {
+  filter: drop-shadow(0 5px 6px rgba(0, 0, 0, 0.5));
+}
+
+/* A hidden die reads as a turned-over cup die. */
+.ld-hidden {
+  opacity: 0.92;
+}
+
+/* The current bid — an ivory plaque on the felt. */
+.ld-bid {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 8px 14px;
+  background: linear-gradient(165deg, #fbf7ea 0%, #ece2c8 100%);
+  border: 1px solid #b7a67e;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -2px 4px rgba(120, 90, 40, 0.2),
+    0 4px 10px rgba(0, 0, 0, 0.35);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #3a2c12;
+}
+/* Hand labels stay readable on the green felt. */
+.ld-panel h3 { color: #e9e4d0; }
+
+@media (min-width: 640px) {
+  .ld-panel { padding: 20px; }
+  .ld-dice { gap: 12px; }
+}

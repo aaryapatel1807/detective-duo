@@ -16,7 +16,9 @@ import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
 import '../ui-kit/kit.css';
-import { GameButton, ResultModal, SectionTitle } from '../ui-kit';
+import '../ui-kit/realism.css';
+import './black-stories.css';
+import { GameButton, ResultModal, SectionTitle, PlayingCard } from '../ui-kit';
 
 const ANSWER_LABEL: Record<Answer, string> = { yes: 'YES', no: 'NO', irrelevant: 'IRRELEVANT' };
 
@@ -157,17 +159,18 @@ export default function BlackStoriesGame({ room }: GameProps) {
           {isHost ? (
             <>
               <div className="type-heading mb-4 text-center text-lg">Choose tonight's case, host</div>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {ALL_STORIES.map((s) => (
-                  <motion.button
+                  <button
                     key={s.id}
-                    whileHover={{ y: -2 }}
                     onClick={() => pickStory(s.id)}
-                    className="manila-folder p-4 text-left"
+                    className="bs-pick"
+                    aria-label={`Pick case: ${s.title}`}
                   >
-                    <div className="type-heading text-sm">{s.title}</div>
-                    <div className="mt-1 line-clamp-2 text-xs text-[var(--ink-dim)]">{s.riddle}</div>
-                  </motion.button>
+                    <PlayingCard faceDown size="lg" ariaLabel={`Sealed case file: ${s.title}`} />
+                    <span className="bs-pick__title">{s.title}</span>
+                    <span className="bs-pick__riddle">{s.riddle}</span>
+                  </button>
                 ))}
               </div>
             </>
@@ -183,52 +186,46 @@ export default function BlackStoriesGame({ room }: GameProps) {
       {/* ---- questioning ---- */}
       {(phase === 'questioning' || phase === 'solved' || phase === 'surrendered') && story && (
         <div className="space-y-4">
-          <div className="manila-folder relative p-6">
-            <div className="brass-pin absolute -top-2 left-6" />
-            <div className="eyebrow">The riddle</div>
-            <div className="type-heading mt-1 text-xl">{story.title}</div>
+          <div className="bs-riddle">
+            <span className="bs-riddle__seal">Case file</span>
+            <div className="type-heading text-xl">{story.title}</div>
             <p className="mt-3 text-sm leading-relaxed">{story.riddle}</p>
           </div>
 
-          {/* Q&A log — interrogation-lamp styling */}
-          <GlassCard className="p-5">
-            <div className="eyebrow mb-3">📋 Interrogation log</div>
+          {/* Q&A log — lamp-lit transcript */}
+          <div className="bs-log">
+            <div className="bs-log__head">📋 Interrogation log</div>
             {qa.length === 0 && (
-              <p className="text-sm italic text-[var(--ink-faint)]">No questions yet. The lamp is warming up…</p>
+              <p className="px-4 py-4 text-sm italic text-[var(--ink-faint)]">No questions yet. The lamp is warming up…</p>
             )}
-            <div className="max-h-72 space-y-3 overflow-y-auto pr-1">
+            <div className="bs-log__body">
               {qa.map((entry, i) => (
-                <div key={i} className="rounded-xl border border-[var(--glass-border)] bg-[rgba(232,163,61,0.05)] p-3">
-                  <div className="text-sm">“{entry.q}”</div>
-                  <div className="mt-2 flex items-center gap-2">
-                    {entry.a ? (
-                      <span
-                        className={`rounded-full px-3 py-0.5 text-xs font-bold tracking-widest ${
-                          entry.a === 'yes'
-                            ? 'bg-[rgba(76,175,80,0.2)] text-[#7ee787]'
-                            : entry.a === 'no'
-                              ? 'bg-[rgba(211,58,44,0.2)] text-[var(--blood-bright)]'
-                              : 'bg-[rgba(201,162,39,0.2)] text-[var(--brass)]'
-                        }`}
-                      >
-                        {ANSWER_LABEL[entry.a]}
-                      </span>
-                    ) : isHost ? (
-                      <div className="flex gap-2">
-                        {(['yes', 'no', 'irrelevant'] as Answer[]).map((a) => (
-                          <button key={a} onClick={() => answer(i, a)} className="noir-btn-ghost !px-3 !py-1 !text-xs">
-                            {ANSWER_LABEL[a]}
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-xs italic text-[var(--ink-faint)]">awaiting the host…</span>
-                    )}
+                <div key={i} className="bs-entry">
+                  <span className="bs-entry__no" aria-hidden>#{i + 1}</span>
+                  <div>
+                    <div className="bs-entry__q">“{entry.q}”</div>
+                    <div className="bs-entry__a">
+                      {entry.a ? (
+                        <span className={`bs-stamp bs-stamp--${entry.a}`}>
+                          {ANSWER_LABEL[entry.a]}
+                        </span>
+                      ) : isHost ? (
+                        <div className="flex flex-wrap gap-2">
+                          {(['yes', 'no', 'irrelevant'] as Answer[]).map((a) => (
+                            <button key={a} onClick={() => answer(i, a)} className="noir-btn-ghost !min-h-[44px] !px-4 !py-2 !text-xs !font-bold">
+                              {ANSWER_LABEL[a]}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs italic text-[var(--ink-faint)]">awaiting the host…</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          </GlassCard>
+          </div>
 
           {/* sleuth asks */}
           {phase === 'questioning' && isSleuth && (
@@ -300,21 +297,26 @@ export default function BlackStoriesGame({ room }: GameProps) {
             </div>
           )}
 
-          {/* solution reveal */}
+          {/* solution reveal — the card turns over */}
           {(phase === 'solved' || phase === 'surrendered') && (
             <div className="gk-modal-scope">
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-                <GlassCard className="p-6 text-center">
-                  <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[var(--ink-dim)]">{story.solution}</p>
-                  <div className="mt-3 text-xs text-[var(--ink-faint)]">
-                    Solved in {askedCount} question{askedCount === 1 ? '' : 's'} · +{XP_AWARDS.coopWin} XP each
+                <div className="bs-solution">
+                  <div className="bs-solution__inner text-center">
+                    <div className="bs-solution__label">
+                      {phase === 'solved' ? '🔓 The twisted truth' : '🏳️ The twisted truth'}
+                    </div>
+                    <p className="bs-solution__text mx-auto max-w-lg">{story.solution}</p>
+                    <div className="mt-4 text-xs text-[var(--ink-dim)]">
+                      Solved in {askedCount} question{askedCount === 1 ? '' : 's'} · +{XP_AWARDS.coopWin} XP each
+                    </div>
+                    <div className="mt-5">
+                      <GameButton variant="primary" onClick={newRound}>
+                        📂 Next case
+                      </GameButton>
+                    </div>
                   </div>
-                  <div className="mt-5">
-                    <GameButton variant="primary" onClick={newRound}>
-                      📂 Next case
-                    </GameButton>
-                  </div>
-                </GlassCard>
+                </div>
               </motion.div>
               <ResultModal
                 open

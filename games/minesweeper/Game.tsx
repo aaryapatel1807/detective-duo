@@ -23,6 +23,8 @@ import {
 } from './logic';
 import type { SweepBest, SweepStatus } from './types';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './game.css';
 import {
   DifficultyBadge,
   DifficultySelect,
@@ -36,16 +38,17 @@ import {
 
 const BEST_KEY = 'dd-solo-minesweeper-best';
 
+/* Classic Windows number colors. */
 const NUM_COLORS = [
   '',
-  'text-blue-400',
-  'text-green-400',
-  'text-red-400',
-  'text-purple-400',
-  'text-orange-400',
-  'text-teal-400',
-  'text-[var(--ink)]',
-  'text-[var(--ink-dim)]',
+  'ms-num-1',
+  'ms-num-2',
+  'ms-num-3',
+  'ms-num-4',
+  'ms-num-5',
+  'ms-num-6',
+  'ms-num-7',
+  'ms-num-8',
 ];
 
 /* Map the two sweep difficulties onto the kit's easy/medium/hard scale. */
@@ -153,7 +156,7 @@ export default function MinesweeperGame({ room }: GameProps) {
     if (longPressRef.current) window.clearTimeout(longPressRef.current);
   };
 
-  const cellSize = diff.cols > 9 ? 'h-6 w-6 text-[0.65rem]' : 'h-9 w-9 text-sm';
+  const cellSize = diff.cols > 9 ? 'ms-cell--sm' : 'ms-cell--lg';
   const minesLeft = board ? diff.mines - countFlags(board) : diff.mines;
   const bestForDiff = best[diff.id as keyof SweepBest];
 
@@ -193,13 +196,25 @@ export default function MinesweeperGame({ room }: GameProps) {
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <GlassCard className="p-4">
-          <div className="mb-3 text-center font-type text-xs tracking-[0.14em] uppercase text-[var(--ink-dim)]">
-            Grid — {diff.rows}×{diff.cols} · minefield scan
+          <div className="ms-panel mb-3" aria-hidden="true">
+            <div className="text-center">
+              <div className="ms-panel-label">Mines</div>
+              <div className="ms-lcd">{String(minesLeft).padStart(3, '0')}</div>
+            </div>
+            <div className="ms-panel-label text-center">
+              Grid — {diff.rows}×{diff.cols}
+              <br />
+              minefield scan
+            </div>
+            <div className="text-center">
+              <div className="ms-panel-label">Time</div>
+              <div className="ms-lcd">{String(Math.min(999, seconds)).padStart(3, '0')}</div>
+            </div>
           </div>
 
           <div className="flex justify-center overflow-x-auto">
             <div
-              className="grid gap-0.5"
+              className="ms-bed grid gap-1"
               style={{ gridTemplateColumns: `repeat(${diff.cols}, minmax(0, 1fr))` }}
             >
               {Array.from({ length: diff.rows * diff.cols }, (_, i) => {
@@ -207,13 +222,13 @@ export default function MinesweeperGame({ room }: GameProps) {
                 const isOpen = cell?.open ?? false;
                 let face: React.ReactNode = null;
                 if (isOpen && cell) {
-                  if (cell.mine) face = i === exploded ? '💥' : '💣';
+                  if (cell.mine) face = <span className="ms-face">{i === exploded ? '💥' : '💣'}</span>;
                   else if (cell.adj > 0)
                     face = <span className={NUM_COLORS[cell.adj]}>{cell.adj}</span>;
                 } else if (cell?.mark === 'flag') {
-                  face = '🚩';
+                  face = <span className="ms-face">🚩</span>;
                 } else if (cell?.mark === 'question') {
-                  face = <span className="text-[var(--amber-glow)]">?</span>;
+                  face = <span className="ms-num-q">?</span>;
                 }
                 return (
                   <button
@@ -230,13 +245,7 @@ export default function MinesweeperGame({ room }: GameProps) {
                     onPointerUp={onPointerUp}
                     onPointerLeave={onPointerUp}
                     aria-label={`Cell ${i + 1}`}
-                    className={`flex items-center justify-center rounded border font-bold select-none ${cellSize} ${
-                      isOpen
-                        ? i === exploded
-                          ? 'border-[var(--blood)] bg-[rgba(160,40,40,0.4)]'
-                          : 'border-[var(--glass-border)] bg-[rgba(0,0,0,0.35)]'
-                        : 'border-[var(--glass-border)] bg-[rgba(255,255,255,0.07)] hover:bg-[rgba(232,163,61,0.2)]'
-                    }`}
+                    className={`ms-cell ${cellSize} ${isOpen ? 'ms-cell--open' : ''} ${i === exploded ? 'ms-cell--boom' : ''}`}
                   >
                     {face}
                   </button>

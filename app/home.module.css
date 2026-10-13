@@ -507,6 +507,46 @@
   filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.6));
 }
 
+/* Real cover art — full-bleed image with a legibility scrim.
+ * Text overlays (.coverTitle/.coverCat/.featTitle/.featTag/.featFlag)
+ * sit above via z-index. */
+.coverArt,
+.featArt {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.coverArt img,
+.featArt img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.coverArt::after,
+.featArt::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 15, 26, 0.02) 30%,
+    rgba(10, 15, 26, 0.38) 62%,
+    rgba(10, 15, 26, 0.9) 100%
+  );
+}
+
+.coverTitle,
+.coverCat,
+.featTitle,
+.featTag,
+.featFlag {
+  position: relative;
+  z-index: 1;
+}
+
 .coverTitle {
   font-family: var(--hub-display), 'Cinzel', Georgia, serif;
   font-size: 0.92rem;

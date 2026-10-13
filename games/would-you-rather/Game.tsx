@@ -8,11 +8,12 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './would-you-rather.css';
 import {
   GameButton,
   ScoreHUD,
   ResultModal,
-  GameCard,
   SectionTitle,
 } from '../ui-kit';
 import type { GameProps } from '../types';
@@ -122,23 +123,25 @@ export default function WouldYouRatherGame({ room }: GameProps) {
           )}
 
           {!deckDone && pair && phase === 'voting' && (
-            <div className="flex flex-col gap-3">
+            <div className="wyr-table flex flex-col gap-4">
               {([0, 1] as const).map((i) => {
                 const chosen = myVote === i;
+                const locked = myVote !== undefined;
                 return (
-                  <GameCard
+                  <button
                     key={i}
+                    type="button"
                     onClick={() => vote(i)}
-                    disabled={myVote !== undefined}
-                    state={chosen ? 'active' : myVote !== undefined ? 'absent' : 'default'}
-                    ariaLabel={`Vote for ${i === 0 ? 'A' : 'B'}`}
-                    className="w-full"
+                    disabled={locked}
+                    aria-label={`Vote for ${i === 0 ? 'A' : 'B'}: ${pair[i]}`}
+                    className={`wyr-choice ${chosen ? 'wyr-choice--sealed' : locked ? 'wyr-choice--locked' : ''}`}
                   >
-                    <span className="text-left">
-                      <span className="opacity-60">{i === 0 ? '🅰️' : '🅱️'}</span> {pair[i]}
-                      {chosen && <span className="ml-2 text-sm">🔒 sealed</span>}
+                    <span className="wyr-seal" aria-hidden>{i === 0 ? 'A' : 'B'}</span>
+                    <span>
+                      {pair[i]}
+                      {chosen && <span className="ml-2 text-sm text-[var(--amber-glow)]">🔒 sealed</span>}
                     </span>
-                  </GameCard>
+                  </button>
                 );
               })}
               <p className="text-center text-xs opacity-60">
@@ -160,14 +163,11 @@ export default function WouldYouRatherGame({ room }: GameProps) {
               <div className="text-4xl">{matched ? '💞' : '🎭'}</div>
               <div className="grid w-full gap-3 md:grid-cols-2">
                 {([me, peer.id] as const).map((pid) => (
-                  <GameCard key={pid} state={matched ? 'correct' : 'absent'}>
-                    <span>
-                      <span className="block text-xs tracking-widest opacity-60">
-                        {nameOf(pid).toUpperCase()}
-                      </span>
-                      <span className="mt-1 block text-sm">{pair[votes[pid] ?? 0]}</span>
-                    </span>
-                  </GameCard>
+                  <div key={pid} className={`wyr-vote ${matched ? 'wyr-vote--match' : 'wyr-vote--miss'}`}>
+                    <span className="wyr-vote__name">{nameOf(pid)}</span>
+                    <span className="wyr-vote__text">{pair[votes[pid] ?? 0]}</span>
+                    <span className="wyr-vote__bar" aria-hidden />
+                  </div>
                 ))}
               </div>
               <p className="text-center text-sm">

@@ -19,6 +19,8 @@ import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './spot-the-liar.css';
 import { GameButton, ScoreHUD, ResultModal, SectionTitle } from '../ui-kit';
 
 export default function SpotTheLiarGame({ room }: GameProps) {
@@ -219,14 +221,19 @@ export default function SpotTheLiarGame({ room }: GameProps) {
       {/* ---- interrogation ---- */}
       {phase === 'interrogation' && (
         <div className="space-y-4">
-          <div className="manila-folder relative p-6">
-            <div className="brass-pin absolute -top-2 left-6" />
-            <div className="eyebrow">The statements · prompt: {prompt?.prompt}</div>
-            <ol className="mt-3 space-y-2">
+          <div className="gk-felt stl-table">
+            <div className="eyebrow mb-3 text-center !text-[#f5edd8]">The statements · prompt: {prompt?.prompt}</div>
+            <ol className="space-y-4">
               {statements.map((s, i) => (
-                <li key={i} className="flex items-start gap-3 rounded-xl border border-[var(--glass-border)] bg-[rgba(0,0,0,0.2)] p-3">
-                  <span className="type-heading text-lg text-[var(--amber-glow)]">{i + 1}</span>
-                  <span className="text-sm">{s}</span>
+                <li key={i} className="stl-card">
+                  <span className="stl-card__index" aria-hidden>
+                    {i + 1}
+                    <small>♠</small>
+                  </span>
+                  <span className="stl-card__text">“{s}”</span>
+                  {callIndex === i && (
+                    <span className="stl-verdict">The call</span>
+                  )}
                 </li>
               ))}
             </ol>
@@ -243,6 +250,7 @@ export default function SpotTheLiarGame({ room }: GameProps) {
                     key={i}
                     variant={callIndex === i ? 'danger' : 'primary'}
                     onClick={() => callIndex === i ? callTheLie(i) : setCallIndex(i)}
+                    className="stl-call"
                   >
                     {callIndex === i ? '⚖️ Confirm: #' + (i + 1) + ' is the lie' : 'Statement #' + (i + 1)}
                   </GameButton>
@@ -264,6 +272,11 @@ export default function SpotTheLiarGame({ room }: GameProps) {
         <div className="gk-modal-scope">
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
             <GlassCard className="p-6 text-center">
+              <div className="flex justify-center">
+                <span className={`stl-verdict stl-verdict--inline ${lastVerdict.correct ? 'stl-verdict--vindicated' : ''}`}>
+                  {lastVerdict.correct ? 'Lie exposed' : 'The liar walks'}
+                </span>
+              </div>
               <p className="mt-3 text-sm text-[var(--ink-dim)]">
                 The lie was statement <b className="text-[var(--blood-bright)]">#{lastVerdict.lieIndex + 1}</b>:
                 “{statements[lastVerdict.lieIndex]}”

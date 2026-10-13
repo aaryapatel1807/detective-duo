@@ -19,10 +19,10 @@ import {
 import { WORDS_4, WORDS_5, WORDS_6, rollBoggle } from '../../lib/content/words';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
-import { GlassCard } from '../../components/GlassCard';
 import { ManilaFolder } from '../../components/props';
 import '../ui-kit/kit.css';
-import { GameButton, GameCard, ScoreHUD, TimerChip, ResultModal, SectionTitle } from '../ui-kit';
+import './word-hunt.css';
+import { GameButton, ScoreHUD, TimerChip, ResultModal, SectionTitle } from '../ui-kit';
 
 const SLUG = 'word-hunt';
 const BANK = [...WORDS_4, ...WORDS_5, ...WORDS_6];
@@ -134,7 +134,7 @@ export default function WordHuntGame({ room }: GameProps) {
     <div className="gk-root mx-auto max-w-xl">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="Case file № 44 — Word & Code Duels" title="Word Hunt" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+        <p className="mt-1 text-sm text-[var(--gk-ink-dim)]">
           One grid, {WORD_HUNT_SECONDS} seconds, both detectives hunting at once. Most points wins.
         </p>
       </div>
@@ -158,7 +158,7 @@ export default function WordHuntGame({ room }: GameProps) {
       )}
 
       {phase === 'play' && (
-        <GlassCard className="p-6">
+        <div>
           <div className="flex items-center justify-center">
             <TimerChip seconds={Math.max(0, Math.ceil(timeLeft / 1000))} label="⏱ Time left" />
           </div>
@@ -174,18 +174,19 @@ export default function WordHuntGame({ room }: GameProps) {
             />
           </div>
 
-          {/* board */}
-          <div className="mx-auto mt-4 grid max-w-[20rem] grid-cols-4 gap-1.5">
+          {/* board — GamePigeon-style wooden board of cream tiles */}
+          <div className="wh-board mt-4" role="grid" aria-label="Letter grid">
             {board.map((t, i) => (
               <motion.div
                 key={i}
+                role="gridcell"
+                aria-label={`Letter ${t === 'Q' ? 'Qu' : t}`}
                 initial={{ scale: 0.6, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: i * 0.02 }}
+                className={`wh-tile${t === 'Q' ? ' wh-tile--qu' : ''}`}
               >
-                <GameCard state="default" className="!aspect-square !rounded-lg !p-0 !text-2xl">
-                  {t === 'Q' ? 'Qu' : t}
-                </GameCard>
+                {t === 'Q' ? 'Qu' : t}
               </motion.div>
             ))}
           </div>
@@ -216,25 +217,25 @@ export default function WordHuntGame({ room }: GameProps) {
           )}
 
           {/* my words */}
-          <div className="paper-strip mt-4">
-            <div className="eyebrow mb-1">
-              Your evidence bag — {myWords.length} words, {myScore} pts
+          <div className="wh-bag">
+            <div className="wh-bag-title">
+              Your words — {myWords.length} words, {myScore} pts
             </div>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="wh-words">
               {myWords.map((w, i) => (
                 <span
-                  key={i}
-                  className="rounded border border-[var(--glass-border)] bg-[rgba(255,255,255,0.05)] px-2 py-0.5 font-type text-sm"
+                  key={`${w}-${i}`}
+                  className={`wh-word${i === myWords.length - 1 ? ' wh-word--new' : ''}`}
                 >
-                  {w} <span className="text-[var(--amber-glow)]">+{boggleScore(w)}</span>
+                  {w} <span className="wh-word-score">+{boggleScore(w)}</span>
                 </span>
               ))}
               {myWords.length === 0 && (
-                <span className="text-xs text-[var(--ink-faint)]">Nothing pinned yet…</span>
+                <span className="wh-empty">Nothing found yet…</span>
               )}
             </div>
           </div>
-        </GlassCard>
+        </div>
       )}
 
       {phase === 'over' && (

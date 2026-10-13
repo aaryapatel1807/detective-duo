@@ -1,0 +1,139 @@
+/* ============================================================
+ * HANGMAN DUEL — classic hangman layout.
+ * Clean line-drawn gallows on white worksheet paper (paper is
+ * theme-independent, like a real puzzle page), letter blanks,
+ * flat alphabet keys. One worksheet per duelist.
+ * Kit chrome (TurnBanner, ScoreHUD, GameButton, ResultModal) stays noir.
+ * Unlayered CSS, hex fallbacks, explicit @media, mobile-first.
+ * ============================================================ */
+
+.hm-wordpaper {
+  border-radius: 12px;
+  background: #fdfdfa;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+}
+
+.hm-blanks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.hm-blank {
+  width: 2.4rem;
+  height: 3.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 3px solid #1a1a1b;
+  color: #1a1a1b;
+  font-family: 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.hm-duel {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.hm-paper {
+  border-radius: 12px;
+  background: #fdfdfa;
+  padding: 0.9rem 1rem 1rem;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+  text-align: center;
+}
+
+.hm-name {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #4b5563;
+  margin-bottom: 0.25rem;
+}
+
+.hm-gallows {
+  display: block;
+  margin: 0 auto;
+  width: 120px;
+  height: auto;
+}
+
+.hm-gallows .hm-wood { stroke: #1a1a1b; stroke-width: 5; stroke-linecap: round; }
+.hm-gallows .hm-rope { stroke: #6b7280; stroke-width: 3; stroke-linecap: round; }
+.hm-gallows .hm-part { stroke: #1a1a1b; stroke-width: 4; stroke-linecap: round; fill: none; }
+.hm-gallows .hm-head { stroke: #1a1a1b; stroke-width: 4; fill: none; }
+
+.hm-strikes {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b7280;
+  font-variant-numeric: tabular-nums;
+}
+
+.hm-strikes--danger { color: #a3231a; }
+
+/* ---------- alphabet keys ---------- */
+
+.hm-keys {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 1rem;
+}
+
+.hm-key {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0;
+  border: 0;
+  border-radius: 8px;
+  background: #818384;
+  color: #f8f8f8;
+  font-family: 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.hm-key:disabled { cursor: default; }
+.hm-key:not(:disabled):active { filter: brightness(1.2); }
+.hm-key:focus-visible { outline: 2px solid #d9a441; outline-offset: 2px; }
+
+.hm-key--hit { background: #538d4e; color: #f8f8f8; }
+.hm-key--miss { background: #3a3a3c; color: #f8f8f8; }
+
+.hm-sub { color: #a9b4c7; }
+
+/* ---------- light theme: keys go light, paper stays paper ---------- */
+
+[data-theme='light'] .hm-key { background: #d3d6da; color: #1a1a1b; }
+[data-theme='light'] .hm-key--hit { background: #6aaa64; color: #ffffff; }
+[data-theme='light'] .hm-key--miss { background: #787c7e; color: #ffffff; }
+[data-theme='light'] .hm-sub { color: #4b5563; }
+
+@media (min-width: 640px) {
+  .hm-duel { grid-template-columns: 1fr 1fr; }
+  .hm-keys { grid-template-columns: repeat(9, 1fr); }
+  .hm-blank { width: 2.8rem; height: 3.6rem; font-size: 2.2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-key { transition: none; }
+}

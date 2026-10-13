@@ -7,12 +7,13 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './game.css';
 import {
   GameButton,
   ScoreHUD,
   TurnBanner,
   ResultModal,
-  GameCard,
   SectionTitle,
 } from '../ui-kit';
 import type { GameProps } from '../types';
@@ -22,7 +23,7 @@ import type { Mark } from './logic';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 
-const GLYPH: Record<string, string> = { a: '🔍', b: '🕵' };
+const GLYPH: Record<string, string> = { a: 'X', b: 'O' };
 
 export default function TicTacToeGame({ room }: GameProps) {
   const gs: TTTShared = room.shared?.games?.['tic-tac-toe'] ?? {};
@@ -99,7 +100,7 @@ export default function TicTacToeGame({ room }: GameProps) {
     <div className="gk-root space-y-4">
       <SectionTitle
         eyebrow={`ROUND ${round} OF ${ROUNDS} · FIRST TO ${WINS_NEEDED}`}
-        title="🔍 Tic-Tac-Toe"
+        title="Tic-Tac-Toe"
       />
       <ScoreHUD
         leftLabel="YOU"
@@ -123,7 +124,7 @@ export default function TicTacToeGame({ room }: GameProps) {
           {inLobby ? (
             <div className="flex flex-col items-center gap-3 py-8">
               <p className="text-sm opacity-70">
-                🔍 opens against 🕵 — best of {ROUNDS}, first to {WINS_NEEDED}.
+                X opens against O — best of {ROUNDS}, first to {WINS_NEEDED}.
               </p>
               <GameButton onClick={startMatch} disabled={!peer}>
                 📁 Open the case
@@ -138,17 +139,21 @@ export default function TicTacToeGame({ room }: GameProps) {
                   theirText={`${nameOf(turn)} is marking…`}
                 />
               )}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="ttt-board grid grid-cols-3">
                 {board.map((cell, i) => (
-                  <GameCard
+                  <button
                     key={i}
+                    type="button"
                     onClick={() => play(i)}
                     disabled={!playable || cell !== null}
-                    ariaLabel={cell ? `Marked ${GLYPH[cell]}` : `Empty cell ${i + 1}`}
-                    className="aspect-square"
+                    aria-label={cell ? `Marked ${GLYPH[cell]}` : `Empty cell ${i + 1}`}
+                    data-mark={!cell && playable ? GLYPH[myMark] : undefined}
+                    className="ttt-cell"
                   >
-                    {cell ? <span style={{ fontSize: '2rem' }}>{GLYPH[cell]}</span> : ''}
-                  </GameCard>
+                    {cell ? (
+                      <span className={`ttt-mark ${cell === 'a' ? 'ttt-x' : 'ttt-o'}`}>{GLYPH[cell]}</span>
+                    ) : null}
+                  </button>
                 ))}
               </div>
               <ResultModal

@@ -21,6 +21,8 @@ import {
   type Grid,
 } from './logic';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './game.css';
 import { GameButton, ResultModal, ScoreHUD, SectionTitle } from '../ui-kit';
 
 const BEST_KEY = 'dd-solo-2048-best';
@@ -32,25 +34,11 @@ function freshGrid(): Grid {
   return g;
 }
 
-const TILE_BG: Record<number, string> = {
-  2: 'rgba(217,201,163,0.14)',
-  4: 'rgba(217,201,163,0.24)',
-  8: 'rgba(232,163,61,0.30)',
-  16: 'rgba(232,163,61,0.42)',
-  32: 'rgba(232,163,61,0.55)',
-  64: 'rgba(200,120,40,0.65)',
-  128: 'rgba(190,90,50,0.72)',
-  256: 'rgba(178,60,55,0.78)',
-  512: 'rgba(160,45,50,0.84)',
-  1024: 'rgba(150,35,48,0.9)',
-  2048: 'rgba(232,163,61,0.95)',
-};
-
-function tileStyle(v: number): React.CSSProperties {
-  if (v === 0) return {};
-  const bg = TILE_BG[v] ?? 'rgba(232,163,61,1)';
-  const fg = v >= 8 ? '#1c1410' : 'var(--ink)';
-  return { background: bg, color: fg, fontWeight: 700 };
+/* Value tier → beveled tile class (game.css). Values past 2048 share the max tier. */
+function tileClass(v: number): string {
+  if (v === 0) return 'x48-empty';
+  const tier = v <= 2048 && (v & (v - 1)) === 0 ? `x48-t${v}` : 'x48-tmax';
+  return `x48-tile ${tier}`;
 }
 
 export default function Game2048({ room }: GameProps) {
@@ -171,16 +159,12 @@ export default function Game2048({ room }: GameProps) {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <GlassCard className="p-3">
           <div
-            className="grid touch-none grid-cols-4 gap-2 select-none"
+            className="x48-board grid touch-none grid-cols-4 gap-2 select-none"
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
           >
             {grid.map((v, i) => (
-              <div
-                key={i}
-                className="flex aspect-square items-center justify-center rounded-xl border border-[var(--glass-border)] bg-[rgba(0,0,0,0.25)]"
-                style={tileStyle(v)}
-              >
+              <div key={i} className={`flex aspect-square items-center justify-center ${tileClass(v)}`}>
                 {v > 0 && (
                   <span className={v >= 1024 ? 'text-lg' : v >= 128 ? 'text-xl' : 'text-2xl'}>
                     {v}

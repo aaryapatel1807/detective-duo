@@ -1,0 +1,257 @@
+/* ============================================================
+ * WORD DUEL — Words With Friends / Wordfeud tile-duel feel.
+ * Wooden letter tiles with Scrabble point values, tile racks for
+ * the keyboard, and two player racks facing each other.
+ * Tiles are physical objects: same look in both themes.
+ * Kit chrome (ResultModal, GameButton, ManilaFolder) stays noir.
+ * Unlayered CSS, hex fallbacks, explicit @media, mobile-first.
+ * ============================================================ */
+
+/* ---------- duel bar: two racks facing each other ---------- */
+
+.wdu-duelbar {
+  display: flex;
+  align-items: stretch;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.wdu-rack {
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: 14px;
+  padding: 0.6rem 0.7rem 0.7rem;
+  text-align: center;
+  background:
+    repeating-linear-gradient(93deg, rgba(0, 0, 0, 0.07) 0 3px, rgba(255, 255, 255, 0.02) 3px 7px, rgba(0, 0, 0, 0.03) 7px 11px),
+    linear-gradient(150deg, #8a5a30 0%, #6e4423 50%, #59351b 100%);
+  box-shadow:
+    inset 0 2px 10px rgba(0, 0, 0, 0.35),
+    inset 0 -2px 6px rgba(255, 235, 200, 0.08),
+    0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.wdu-rack-name {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #f3e3bb;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wdu-rack-tries {
+  margin-top: 0.1rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #ffe9b8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.wdu-rack-sub {
+  font-size: 0.7rem;
+  color: rgba(243, 227, 187, 0.75);
+}
+
+.wdu-vs {
+  flex: none;
+  align-self: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 35% 30%, #f0c96a 0%, #b9882f 70%);
+  color: #2a1f08;
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+/* ---------- wooden letter tiles (WWF / Wordfeud) ---------- */
+
+.wdu-grid {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+.wdu-gridrow {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.wdu-tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12%;
+  font-family: 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  color: #2a2118;
+  background:
+    repeating-linear-gradient(97deg, rgba(0, 0, 0, 0.05) 0 2px, rgba(255, 255, 255, 0.03) 2px 5px),
+    linear-gradient(165deg, #eec96f 0%, #e3b95c 45%, #d0a243 100%);
+  box-shadow:
+    inset 0 2px 2px rgba(255, 246, 220, 0.85),
+    inset 0 -3px 5px rgba(120, 80, 30, 0.45),
+    inset 2px 0 3px rgba(255, 246, 220, 0.35),
+    inset -2px 0 3px rgba(120, 80, 30, 0.25),
+    0 3px 5px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 0 rgba(255, 246, 220, 0.7);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wdu-tile__pts {
+  position: absolute;
+  bottom: 7%;
+  right: 10%;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #5c4526;
+  text-shadow: 0 1px 0 rgba(255, 246, 220, 0.6);
+  line-height: 1;
+}
+
+.wdu-tile--slot {
+  background: transparent;
+  border: 2px dashed rgba(238, 201, 111, 0.35);
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.wdu-tile--correct {
+  background:
+    repeating-linear-gradient(97deg, rgba(0, 0, 0, 0.05) 0 2px, rgba(255, 255, 255, 0.03) 2px 5px),
+    linear-gradient(165deg, #8fd694 0%, #5cb86a 45%, #3f9a52 100%);
+  color: #0c2b1a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.wdu-tile--correct .wdu-tile__pts { color: #0c2b1a; text-shadow: none; }
+
+.wdu-tile--present {
+  background:
+    repeating-linear-gradient(97deg, rgba(0, 0, 0, 0.05) 0 2px, rgba(255, 255, 255, 0.03) 2px 5px),
+    linear-gradient(165deg, #f2cd7d 0%, #e0aa45 45%, #c78d2c 100%);
+  color: #3a2508;
+}
+
+.wdu-tile--present .wdu-tile__pts { color: #3a2508; text-shadow: none; }
+
+.wdu-tile--absent { filter: grayscale(0.75) brightness(0.78); }
+.wdu-tile--absent .wdu-tile__pts { color: #3a352c; }
+
+/* ---------- keyboard on a wooden rack ---------- */
+
+.wdu-kbrack {
+  width: 100%;
+  max-width: 520px;
+  margin: 1rem auto 0;
+  padding: 10px;
+  border-radius: 16px;
+  background:
+    repeating-linear-gradient(93deg, rgba(0, 0, 0, 0.07) 0 3px, rgba(255, 255, 255, 0.02) 3px 7px, rgba(0, 0, 0, 0.03) 7px 11px),
+    linear-gradient(150deg, #8a5a30 0%, #6e4423 50%, #59351b 100%);
+  box-shadow:
+    inset 0 2px 10px rgba(0, 0, 0, 0.35),
+    0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.wdu-kb { display: flex; flex-direction: column; gap: 6px; }
+.wdu-kb-row { display: flex; gap: 6px; width: 100%; }
+
+.wdu-key {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 12%;
+  font-family: 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #2a2118;
+  background:
+    repeating-linear-gradient(97deg, rgba(0, 0, 0, 0.05) 0 2px, rgba(255, 255, 255, 0.03) 2px 5px),
+    linear-gradient(165deg, #eec96f 0%, #e3b95c 45%, #d0a243 100%);
+  box-shadow:
+    inset 0 2px 2px rgba(255, 246, 220, 0.85),
+    inset 0 -3px 5px rgba(120, 80, 30, 0.45),
+    0 3px 5px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 0 rgba(255, 246, 220, 0.7);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.wdu-key:active { transform: translateY(1px); }
+.wdu-key:focus-visible { outline: 2px solid #d9a441; outline-offset: 2px; }
+
+.wdu-key .wdu-tile__pts { font-size: 0.55rem; }
+
+.wdu-key--correct {
+  background: linear-gradient(165deg, #8fd694 0%, #5cb86a 45%, #3f9a52 100%);
+  color: #0c2b1a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.wdu-key--present {
+  background: linear-gradient(165deg, #f2cd7d 0%, #e0aa45 45%, #c78d2c 100%);
+  color: #3a2508;
+}
+.wdu-key--absent { filter: grayscale(0.75) brightness(0.78); }
+
+/* ---------- result panels ---------- */
+
+.wdu-result {
+  border-radius: 14px;
+  padding: 0.8rem;
+  background:
+    repeating-linear-gradient(93deg, rgba(0, 0, 0, 0.07) 0 3px, rgba(255, 255, 255, 0.02) 3px 7px),
+    linear-gradient(150deg, #8a5a30 0%, #6e4423 60%, #59351b 100%);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.35), 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.wdu-result-word {
+  display: flex;
+  gap: 4px;
+  margin-top: 0.5rem;
+}
+
+.wdu-result-word .wdu-tile { font-size: 1.2rem; }
+
+.wdu-sub { color: #a9b4c7; }
+[data-theme='light'] .wdu-sub { color: #4b5563; }
+
+@media (max-width: 380px) {
+  .wdu-tile { font-size: 1.45rem; }
+  .wdu-key { height: 50px; font-size: 0.9rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wdu-tile, .wdu-key { transition: none; }
+}

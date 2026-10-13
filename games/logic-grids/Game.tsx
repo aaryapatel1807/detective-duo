@@ -24,6 +24,8 @@ import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './game.css';
 import { GameButton, GameCard, TimerChip, ResultModal, SectionTitle } from '../ui-kit';
 
 export default function LogicGridsGame({ room }: GameProps) {
@@ -184,7 +186,7 @@ export default function LogicGridsGame({ room }: GameProps) {
             </ul>
           </div>
 
-          <GlassCard className={`p-5 ${wrongFlash ? 'border-[var(--blood-bright)]' : ''}`}>
+          <GlassCard className={`lg-sheet p-5 ${wrongFlash ? 'border-[var(--blood-bright)]' : ''}`}>
             <div className="eyebrow mb-3 text-center">Tap a cell: empty → ✓ → ✗</div>
             <div className="overflow-x-auto">
               <table className="mx-auto border-collapse">
@@ -210,9 +212,9 @@ export default function LogicGridsGame({ room }: GameProps) {
                                 onClick={() => toggleCell(ri, ci)}
                                 disabled={myFinished}
                                 ariaLabel={`Cell ${r} ${c}`}
-                                className="!h-12 !w-12 !min-h-0 !min-w-0 !rounded-lg !p-0 !text-xl sm:!h-14 sm:!w-14"
+                                className={`lg-cell !h-12 !w-12 !min-h-0 !min-w-0 !p-0 !text-xl sm:!h-14 sm:!w-14${m === 'yes' ? ' lg-cell--yes' : m === 'no' ? ' lg-cell--no' : ''}`}
                               >
-                                {m === 'yes' ? '✓' : m === 'no' ? '✗' : ''}
+                                {m === 'yes' ? <span className="lg-yes">✓</span> : m === 'no' ? <span className="lg-no">✗</span> : ''}
                               </GameCard>
                             </motion.div>
                           </td>

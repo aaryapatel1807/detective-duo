@@ -1,0 +1,244 @@
+/* ============================================================
+ * BLACK STORIES — case-file noir realism.
+ * Stories are dealt as face-down noir cards; the solution flips over
+ * with a dramatic full-card reveal. The interrogation log is a lamp-lit
+ * transcript.
+ * Unlayered custom CSS, hex fallbacks, mobile-first.
+ * ============================================================ */
+
+/* The riddle card — a true black Black Stories card. */
+.bs-riddle {
+  position: relative;
+  border-radius: 12px;
+  padding: 22px 20px;
+  color: #f5f2ea;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(165deg, #17171a 0%, #0e0e10 60%, #08080a 100%);
+  border: 1px solid #2e2e33;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 22px rgba(0, 0, 0, 0.6);
+}
+
+.bs-riddle__seal {
+  display: inline-block;
+  padding: 4px 14px;
+  border: 2px solid #c22f2f;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #e0685a;
+  transform: rotate(-2deg);
+  margin-bottom: 10px;
+}
+
+/* The dramatic solution flip — a full noir card turning over. */
+.bs-solution {
+  perspective: 900px;
+}
+
+.bs-solution__inner {
+  position: relative;
+  border-radius: 14px;
+  padding: 26px 22px;
+  color: #f0e8d4;
+  background:
+    radial-gradient(80% 60% at 50% 20%, rgba(217, 164, 65, 0.16) 0%, rgba(217, 164, 65, 0) 60%),
+    linear-gradient(165deg, #1c2a4a 0%, #121c33 55%, #0a1122 100%);
+  border: 1px solid #d9a441;
+  box-shadow:
+    inset 0 0 0 6px #0d1424,
+    inset 0 0 0 7px rgba(217, 164, 65, 0.6),
+    0 14px 34px rgba(0, 0, 0, 0.6),
+    0 0 40px rgba(217, 164, 65, 0.18);
+  transform-style: preserve-3d;
+  animation: bs-cardflip 0.7s cubic-bezier(0.35, 0.1, 0.25, 1) both;
+}
+
+@keyframes bs-cardflip {
+  from {
+    opacity: 0;
+    transform: rotateY(90deg) scale(0.92);
+  }
+  60% {
+    opacity: 1;
+    transform: rotateY(-8deg) scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: rotateY(0deg) scale(1);
+  }
+}
+
+.bs-solution__label {
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #d9a441;
+  margin-bottom: 10px;
+}
+
+.bs-solution__text {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: #fbf7ea;
+}
+
+/* Story picker: face-down noir cards with the case title beneath. */
+.bs-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 10px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  min-height: 44px;
+}
+
+.bs-pick:hover:not(:disabled) {
+  transform: translateY(-4px) rotate(-1deg);
+  background: rgba(217, 164, 65, 0.06);
+  border-color: #4a3f28;
+}
+
+.bs-pick:focus-visible {
+  outline: 2px solid #d9a441;
+  outline-offset: 3px;
+}
+
+.bs-pick:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.bs-pick__title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.9rem;
+  color: #f0e8d4;
+  text-align: center;
+}
+
+.bs-pick__riddle {
+  font-size: 0.72rem;
+  color: #8a8074;
+  text-align: center;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* The interrogation log — same lamp-lit transcript as the agency desk. */
+.bs-log {
+  border: 1px solid #3a332a;
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 28px),
+    linear-gradient(180deg, #211c14 0%, #181410 100%);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.bs-log__head {
+  padding: 10px 14px;
+  border-bottom: 1px solid #3a332a;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #d9a441;
+}
+
+.bs-log__body {
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: 12px 14px;
+}
+
+.bs-entry {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px dashed rgba(217, 164, 65, 0.22);
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.bs-entry:last-child {
+  border-bottom: 0;
+}
+
+.bs-entry__no {
+  color: #d9a441;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding-top: 2px;
+}
+
+.bs-entry__q {
+  color: #f0e8d4;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.bs-entry__q::before {
+  content: 'Q. ';
+  color: #8a7a52;
+}
+
+.bs-entry__a {
+  margin-top: 6px;
+}
+
+.bs-entry__a::before {
+  content: 'A. ';
+  color: #8a7a52;
+}
+
+.bs-stamp {
+  display: inline-block;
+  padding: 3px 12px;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  transform: rotate(-3deg);
+}
+
+.bs-stamp--yes {
+  color: #3ddc74;
+  text-shadow: 0 0 12px rgba(61, 220, 116, 0.5);
+}
+
+.bs-stamp--no {
+  color: #e5484d;
+  text-shadow: 0 0 12px rgba(229, 72, 77, 0.5);
+}
+
+.bs-stamp--irrelevant {
+  color: #d9a441;
+  text-shadow: 0 0 12px rgba(217, 164, 65, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bs-solution__inner {
+    animation: none;
+  }
+  .bs-pick,
+  .bs-pick:hover:not(:disabled) {
+    transition: none;
+    transform: none;
+  }
+}

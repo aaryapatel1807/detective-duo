@@ -9,12 +9,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './truth-or-dare.css';
 import {
   GameButton,
   ScoreHUD,
   TurnBanner,
   ResultModal,
   SectionTitle,
+  PlayingCard,
 } from '../ui-kit';
 import type { GameProps } from '../types';
 import type { ToDShared } from './types';
@@ -135,16 +138,28 @@ export default function TruthOrDareGame({ room }: GameProps) {
           )}
 
           {deck.length > 0 && !deckDone && phase === 'lobby' && (
-            <div className="flex flex-col items-center gap-4 py-6">
+            <div className="tod-table flex flex-col items-center gap-4 py-6">
               <motion.div
                 animate={spinning ? { rotate: [0, 8, -8, 0], scale: [1, 1.06, 1] } : {}}
                 transition={{ duration: 0.9 }}
-                className="manila-folder flex h-44 w-64 items-center justify-center"
               >
-                <span className="text-5xl">🂠</span>
+                <button
+                  type="button"
+                  onClick={spin}
+                  disabled={!myTurn || spinning}
+                  className="tod-deck"
+                  aria-label={myTurn ? 'Draw a card from the deck' : `${nameOf(turn)} draws the next card`}
+                >
+                  <PlayingCard faceDown ariaLabel="Card back" />
+                  <PlayingCard faceDown ariaLabel="Card back" />
+                  <PlayingCard faceDown ariaLabel="Card back" />
+                </button>
               </motion.div>
+              <div className="tod-deck__label">
+                {deck.length - idx} cards left
+              </div>
               <p className="text-center text-sm opacity-80">
-                {myTurn ? 'Your draw, detective.' : `${nameOf(turn)} draws the next card…`}
+                {myTurn ? 'Your draw, detective — tap the deck.' : `${nameOf(turn)} draws the next card…`}
               </p>
               <GameButton onClick={spin} disabled={!myTurn || spinning}>
                 {spinning ? 'Shuffling…' : '🃏 Draw a card'}
@@ -153,20 +168,15 @@ export default function TruthOrDareGame({ room }: GameProps) {
           )}
 
           {deck.length > 0 && !deckDone && phase === 'spun' && card && (
-            <motion.div
-              initial={{ rotateY: 90, opacity: 0 }}
-              animate={{ rotateY: 0, opacity: 1 }}
-              transition={{ duration: 0.4 }}
-              className="flex flex-col items-center gap-4 py-4"
-            >
-              <div className="manila-folder w-full p-6 text-center">
-                <p className="text-xs tracking-[0.3em] opacity-70">
-                  {card.type === 'truth' ? '🤫 TRUTH' : '🔥 DARE'}
-                </p>
-                <p className="mt-3 text-lg">
+            <div className="tod-table flex flex-col items-center gap-4 py-4">
+              <div className={`tod-card ${card.type === 'truth' ? 'tod-card--truth' : 'tod-card--dare'}`}>
+                <span className="tod-card__type">
+                  {card.type === 'truth' ? '🤫 Truth' : '🔥 Dare'}
+                </span>
+                <p className="tod-card__text">
                   {card.text}
                 </p>
-                <p className="mt-3 text-xs opacity-60">
+                <p className="tod-card__for">
                   For: {nameOf(turn)}
                 </p>
               </div>
@@ -184,7 +194,7 @@ export default function TruthOrDareGame({ room }: GameProps) {
                   Waiting on {nameOf(turn)}…
                 </p>
               )}
-            </motion.div>
+            </div>
           )}
 
           {deck.length > 0 && deckDone && (

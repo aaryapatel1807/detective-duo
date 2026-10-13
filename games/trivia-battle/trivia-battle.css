@@ -1,0 +1,201 @@
+/* ============================================================
+ * TRIVIA BATTLE — Kahoot! / HQ Trivia gameshow stage.
+ * Bright studio wash with the signature four colored answer
+ * buttons (red triangle, blue diamond, yellow circle, green square)
+ * with real 3D press depth, plus stamped dramatic reveals.
+ * Unlayered custom CSS, hex fallbacks, mobile-first.
+ * ============================================================ */
+
+/* The stage: a bright TV studio backdrop with light beams. */
+.tb-stage {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #b9c4e8;
+  background:
+    radial-gradient(55% 45% at 15% 0%, rgba(99, 132, 255, 0.28) 0%, rgba(99, 132, 255, 0) 60%),
+    radial-gradient(55% 45% at 85% 0%, rgba(255, 107, 180, 0.24) 0%, rgba(255, 107, 180, 0) 60%),
+    radial-gradient(70% 55% at 50% 0%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, #f4f7ff 0%, #e3eafc 60%, #d3ddf7 100%);
+  box-shadow: inset 0 2px 14px rgba(70, 90, 180, 0.18), 0 18px 40px rgba(40, 60, 140, 0.22);
+  color: #1b2340;
+}
+
+/* Footlight strip along the stage top. */
+.tb-stage::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 4px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, #5b7cfa 20%, #ffffff 50%, #5b7cfa 80%, transparent);
+  box-shadow: 0 0 18px rgba(91, 124, 250, 0.8);
+  pointer-events: none;
+}
+
+.tb-stage h3 {
+  color: #141b36;
+}
+
+.tb-category {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: #4a63d8;
+}
+
+/* ---------------- Kahoot-style answer buttons ---------------- */
+
+.tb-option {
+  --opt: #1368ce;
+  --opt-dark: #0d4b96;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 18px;
+  text-align: left;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  background: linear-gradient(180deg, var(--opt) 0%, var(--opt) 70%, var(--opt-dark) 100%);
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.22),
+    0 6px 0 var(--opt-dark),
+    0 12px 22px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.tb-option--a { --opt: #e21b3c; --opt-dark: #a31228; }
+.tb-option--b { --opt: #1368ce; --opt-dark: #0d4b96; }
+.tb-option--c { --opt: #d89e00; --opt-dark: #9c7100; }
+.tb-option--d { --opt: #26890c; --opt-dark: #1a6109; }
+
+.tb-option:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.tb-option:active:not(:disabled) {
+  transform: translateY(5px);
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    0 1px 0 var(--opt-dark),
+    0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.tb-option:focus-visible {
+  outline: 3px solid #1b2340;
+  outline-offset: 3px;
+}
+
+.tb-option:disabled {
+  cursor: default;
+}
+
+/* The white shape key — triangle, diamond, circle, square. */
+.tb-option__key {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: #ffffff;
+  font-size: 1.5rem;
+  line-height: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
+}
+
+/* Reveal states — the right answer lights up, the rest fall back. */
+.tb-option--correct {
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.22),
+    0 6px 0 var(--opt-dark),
+    0 0 34px rgba(255, 255, 255, 0.9),
+    0 0 22px var(--opt);
+  animation: tb-winner 0.9s ease-in-out infinite;
+}
+
+@keyframes tb-winner {
+  50% { filter: brightness(1.22); }
+}
+
+.tb-option--wrong {
+  filter: saturate(0.4) brightness(0.72);
+}
+
+.tb-option--dim {
+  filter: saturate(0.35) brightness(0.75);
+  opacity: 0.85;
+}
+
+/* ---------------- stamped verdict ---------------- */
+
+.tb-stamp {
+  display: inline-block;
+  padding: 10px 26px;
+  font-weight: 800;
+  font-size: 1.75rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  border: 4px double currentColor;
+  border-radius: 8px;
+  transform: rotate(-7deg);
+  background: rgba(255, 255, 255, 0.75);
+  animation: gk-pop 0.32s ease-out both;
+}
+
+.tb-stamp--correct {
+  color: #157a3c;
+  text-shadow: 0 0 18px rgba(61, 220, 116, 0.5);
+}
+
+.tb-stamp--wrong {
+  color: #c22f2f;
+  text-shadow: 0 0 18px rgba(229, 72, 77, 0.5);
+}
+
+.tb-answertext {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #1a237e;
+}
+
+@media (min-width: 640px) {
+  .tb-option {
+    min-height: 68px;
+    font-size: 1.1rem;
+  }
+  .tb-stamp {
+    font-size: 2.1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-option,
+  .tb-option:active:not(:disabled) {
+    transition: none;
+    transform: none;
+  }
+  .tb-option--correct {
+    animation: none;
+  }
+  .tb-stamp {
+    animation: none;
+    transform: rotate(-7deg);
+  }
+}

@@ -14,7 +14,9 @@ import { sounds } from '../../lib/sound';
 import { allMatched, createDeck, matchPair, type Card } from './logic';
 import type { MemoryBest } from './types';
 import '../ui-kit/kit.css';
-import { GameButton, GameCard, ResultModal, ScoreHUD, SectionTitle, TimerChip } from '../ui-kit';
+import '../ui-kit/realism.css';
+import './game.css';
+import { GameButton, ResultModal, ScoreHUD, SectionTitle, TimerChip } from '../ui-kit';
 
 const BEST_KEY = 'dd-solo-memory-best';
 
@@ -133,17 +135,24 @@ export default function MemoryMatchGame({ room }: GameProps) {
           <div className="grid grid-cols-6 gap-2">
             {deck.map((card, idx) => {
               const up = isUp(idx);
-              const state = card.matched ? 'correct' : 'default';
               return (
-                <GameCard
+                <button
                   key={card.id}
-                  state={state}
+                  type="button"
                   onClick={() => flip(idx)}
-                  ariaLabel={`Card ${idx + 1}${up ? `, ${card.icon}` : ''}`}
-                  className={`aspect-[3/4] !text-2xl${up ? '' : ' !bg-[rgba(0,0,0,0.35)]'}`}
+                  aria-label={`Card ${idx + 1}${up ? `, ${card.icon}` : ', face down'}`}
+                  className={`gk-flip mm-card${up ? ' gk-flip--flipped' : ''}`}
                 >
-                  {up ? card.icon : <span className="text-[var(--ink-faint)]">?</span>}
-                </GameCard>
+                  <span className="gk-flip__inner mm-flip-inner">
+                    <span className="mm-back mm-face" aria-hidden="true" />
+                    <span
+                      className={`gk-pcard gk-pcard--faceup mm-face mm-front${card.matched ? ' mm-matched' : ''}`}
+                      aria-hidden="true"
+                    >
+                      <span className="mm-icon">{card.icon}</span>
+                    </span>
+                  </span>
+                </button>
               );
             })}
           </div>

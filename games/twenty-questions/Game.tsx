@@ -25,6 +25,8 @@ import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './twenty-questions.css';
 import { GameButton, ProgressBar, ResultModal, SectionTitle } from '../ui-kit';
 
 export default function TwentyQuestionsGame({ room }: GameProps) {
@@ -223,7 +225,15 @@ export default function TwentyQuestionsGame({ room }: GameProps) {
 
       {/* ---- play ---- */}
       {phase === 'play' && (
-        <div className="space-y-4">
+        <div className="tq-room space-y-4">
+          <div className="tq-tags" aria-label={`${left} questions remaining`}>
+            <span className="sr-only">{left} of {MAX_QUESTIONS} questions remaining</span>
+            {Array.from({ length: MAX_QUESTIONS }, (_, i) => (
+              <span key={i} className={`tq-tag ${i < used ? 'tq-tag--spent' : ''}`} aria-hidden>
+                Q{i + 1}
+              </span>
+            ))}
+          </div>
           {isThinker && (
             <div className="manila-folder relative p-5">
               <div className="brass-pin absolute -top-2 left-6" />
@@ -233,33 +243,39 @@ export default function TwentyQuestionsGame({ room }: GameProps) {
             </div>
           )}
 
-          <GlassCard className="p-5">
-            <div className="eyebrow mb-3">📋 Question log</div>
+          <div className="tq-transcript">
+            <div className="tq-transcript__head">
+              <span>📋 Case transcript</span>
+              <span>{category}</span>
+            </div>
             {qa.length === 0 && (
-              <p className="text-sm italic text-[var(--ink-faint)]">No questions yet. The lamp is warming up…</p>
+              <p className="px-4 py-4 text-sm italic text-[var(--ink-faint)]">No questions yet. The lamp is warming up…</p>
             )}
-            <div className="max-h-72 space-y-3 overflow-y-auto pr-1">
+            <div className="tq-transcript__body">
               {qa.map((entry, i) => (
-                <div key={i} className="rounded-xl border border-[var(--glass-border)] bg-[rgba(232,163,61,0.05)] p-3">
-                  <div className="text-sm">“{entry.q}”</div>
-                  <div className="mt-2">
-                    {entry.a ? (
-                      <span className={`rounded-full px-3 py-0.5 text-xs font-bold tracking-widest ${entry.a === 'yes' ? 'bg-[rgba(76,175,80,0.2)] text-[#7ee787]' : 'bg-[rgba(211,58,44,0.2)] text-[var(--blood-bright)]'}`}>
-                        {entry.a.toUpperCase()}
-                      </span>
-                    ) : isThinker ? (
-                      <div className="flex gap-2">
-                        <button onClick={() => answer(i, 'yes')} className="noir-btn-ghost !px-3 !py-1 !text-xs">YES</button>
-                        <button onClick={() => answer(i, 'no')} className="noir-btn-ghost !px-3 !py-1 !text-xs">NO</button>
-                      </div>
-                    ) : (
-                      <span className="text-xs italic text-[var(--ink-faint)]">awaiting the thinker…</span>
-                    )}
+                <div key={i} className="tq-entry">
+                  <span className="tq-entry__no" aria-hidden>#{i + 1}</span>
+                  <div>
+                    <div className="tq-entry__q">“{entry.q}”</div>
+                    <div className="tq-entry__a">
+                      {entry.a ? (
+                        <span className={`tq-stamp ${entry.a === 'yes' ? 'tq-stamp--yes' : 'tq-stamp--no'}`}>
+                          {entry.a.toUpperCase()}
+                        </span>
+                      ) : isThinker ? (
+                        <div className="flex gap-2">
+                          <button onClick={() => answer(i, 'yes')} className="tq-answerbtn tq-answerbtn--yes">YES</button>
+                          <button onClick={() => answer(i, 'no')} className="tq-answerbtn tq-answerbtn--no">NO</button>
+                        </div>
+                      ) : (
+                        <span className="tq-awaiting">awaiting the thinker…</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          </GlassCard>
+          </div>
 
           {isGuesser && (
             <GlassCard className="p-5">

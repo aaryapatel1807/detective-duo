@@ -16,6 +16,8 @@ import { PAGES, PALETTE, type ArtDecor, type ArtRegion, type ShapeKind } from '.
 import { filledCount, isComplete, setFill, type Fills } from './logic';
 import type { ColoringSaves } from './types';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './game.css';
 import { GameButton, SectionTitle } from '../ui-kit';
 
 const SAVES_KEY = 'dd-coloring-saves';
@@ -129,16 +131,16 @@ export default function ColoringGame({ room }: GameProps) {
                   setColor(c.hex);
                   sounds.typewriterClick();
                 }}
-                className={`h-11 w-11 rounded-full border-2 transition-transform ${
-                  color === c.hex ? 'scale-110 border-[var(--amber-glow)]' : 'border-[rgba(0,0,0,0.4)]'
+                className={`col-swatch h-11 w-11 rounded-full border-2 transition-transform ${
+                  color === c.hex ? 'col-swatch--active scale-110 border-[var(--amber-glow)]' : 'border-[rgba(0,0,0,0.4)]'
                 }`}
                 style={{ background: c.hex }}
               />
             ))}
           </div>
 
-          <div className="mx-auto max-w-[320px] text-[var(--ink)]">
-            <svg viewBox="0 0 200 200" className="w-full rounded-xl bg-[rgba(217,201,163,0.08)]">
+          <div className="col-paper mx-auto max-w-[320px]">
+            <svg viewBox="0 0 200 200" className="w-full">
               {page.regions.map((r) => (
                 <Shape
                   key={r.id}

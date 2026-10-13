@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { RedStringLayer } from '../components/RedString';
+import { GameCoverArt } from '../components/GameCoverArt';
 import { ManilaFolder } from '../components/props';
 import { listGames, categories } from '../games/all';
 import type { GameMeta } from '../games/types';
@@ -69,17 +70,6 @@ const COVER_CLASS: Record<string, string> = {
   'Quick Games': s.cvSolo,
 };
 
-const COVER_MOTIF: Record<string, string> = {
-  Flagship: '★',
-  Deduction: '◈',
-  'Word & Code Duels': '✦',
-  'Quick Cases': '⬢',
-  'Co-op Missions': '◉',
-  'Chase & Bluff': '⬣',
-  'Solo Files': '❖',
-  'Quick Games': '✚',
-};
-
 const RARITY: Record<'easy' | 'medium' | 'hard', { cls: string; label: string }> = {
   // ROUTINE/TRICKY stamp language reused from the Crime Mystery case select
   easy: { cls: s.rarityEasy, label: 'Routine' },
@@ -107,13 +97,8 @@ function GameCard({ game }: { game: GameMeta }) {
       aria-label={`Open ${game.title}`}
     >
       <div className={`${s.cover} ${COVER_CLASS[game.category] ?? s.cvDefault}`}>
-        <span className={s.coverMotif} aria-hidden>
-          {COVER_MOTIF[game.category] ?? '❖'}
-        </span>
         <span className={s.coverCat}>{game.category}</span>
-        <span className={s.coverIcon} aria-hidden>
-          {game.icon}
-        </span>
+        <GameCoverArt slug={game.slug} className={s.coverArt} />
         <span className={s.coverTitle}>{game.title}</span>
       </div>
       <div className={s.cardBody}>
@@ -456,12 +441,7 @@ export default function HubPage() {
                 <span className={`hub-eyebrow ${s.featFlag}`} style={{ color: 'var(--hub-gold)' }}>
                   {i === 0 ? '★ Flagship' : `№ 0${i + 1} · Featured`}
                 </span>
-                <span className={s.coverMotif} aria-hidden>
-                  {COVER_MOTIF[g.category] ?? '❖'}
-                </span>
-                <span className={s.featIcon} aria-hidden>
-                  {g.icon}
-                </span>
+                <GameCoverArt slug={g.slug} className={s.featArt} />
                 <span className={s.featTitle}>{g.title}</span>
                 <span className={s.featTag}>{g.tagline ?? g.blurb}</span>
               </div>

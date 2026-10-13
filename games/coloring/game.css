@@ -1,0 +1,62 @@
+/* ============================================================
+ * COLORING — realism pass: sketchbook paper, glossy paint pots.
+ * Unlayered custom CSS. Mobile-first. Hex fallbacks throughout.
+ * ============================================================ */
+
+/* The sketchbook page — warm paper with grain and a deckle shadow. */
+.col-paper {
+  border-radius: 10px;
+  padding: 10px;
+  color: #2b241a;
+  background:
+    radial-gradient(90% 70% at 50% 0%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 60%),
+    repeating-linear-gradient(0deg, rgba(120, 90, 40, 0.035) 0 1px, rgba(255, 255, 255, 0) 1px 3px),
+    repeating-linear-gradient(90deg, rgba(120, 90, 40, 0.03) 0 1px, rgba(255, 255, 255, 0) 1px 4px),
+    linear-gradient(160deg, #f6efdb 0%, #ece0c2 60%, #ddcda6 100%);
+  box-shadow:
+    inset 0 0 34px rgba(120, 90, 40, 0.22),
+    inset 0 2px 4px rgba(255, 255, 255, 0.6),
+    0 8px 18px rgba(0, 0, 0, 0.4);
+  border: 1px solid #b7a67e;
+}
+.col-paper svg {
+  display: block;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.5));
+}
+
+/* Paint pots — glossy domes of color. */
+.col-swatch {
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    inset 0 4px 6px rgba(255, 255, 255, 0.5),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.35),
+    0 4px 8px rgba(0, 0, 0, 0.45);
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
+}
+.col-swatch::after {
+  /* wet-paint highlight */
+  content: '';
+  position: absolute;
+  left: 18%;
+  top: 10%;
+  width: 44%;
+  height: 30%;
+  border-radius: 9999px;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0));
+  transform: rotate(-20deg);
+  pointer-events: none;
+}
+.col-swatch:not(.col-swatch--active):hover { transform: translateY(-2px) scale(1.05); }
+.col-swatch--active {
+  box-shadow:
+    inset 0 4px 6px rgba(255, 255, 255, 0.5),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.35),
+    0 0 0 3px #d9a441,
+    0 0 14px rgba(217, 164, 65, 0.7),
+    0 4px 8px rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .col-swatch { transition: none; }
+}

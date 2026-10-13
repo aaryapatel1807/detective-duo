@@ -20,10 +20,10 @@ import {
 import { WORDS_4, WORDS_5, WORDS_6 } from '../../lib/content/words';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
-import { GlassCard } from '../../components/GlassCard';
 import { ManilaFolder } from '../../components/props';
 import '../ui-kit/kit.css';
-import { GameButton, GameCard, TurnBanner, ScoreHUD, ResultModal, SectionTitle } from '../ui-kit';
+import './ghost.css';
+import { GameButton, TurnBanner, ScoreHUD, ResultModal, SectionTitle } from '../ui-kit';
 
 const SLUG = 'ghost';
 const BANK = [...WORDS_4, ...WORDS_5, ...WORDS_6];
@@ -156,7 +156,7 @@ export default function GhostGame({ room }: GameProps) {
     <div className="gk-root mx-auto max-w-xl">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="Case file № 31 — Word & Code Duels" title="Ghost" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+        <p className="mt-1 text-sm text-[var(--gk-ink-dim)]">
           Add one letter per turn. Complete a word (4+ letters) and the round is yours to lose —
           or <em>challenge</em> a bluff instead of playing.
         </p>
@@ -181,30 +181,32 @@ export default function GhostGame({ room }: GameProps) {
       )}
 
       {phase === 'play' && (
-        <GlassCard className="p-6">
+        <div>
           <TurnBanner
             isYourTurn={myTurn}
             yourText="🎯 Your move"
             theirText={room.peer ? `⏳ ${playerName(room, turn)} is writing` : '⏳ Waiting'}
           />
 
-          {/* fragment display */}
-          <div className="mt-5 flex min-h-[4rem] flex-wrap items-center justify-center gap-1.5">
+          {/* fragment strip — clean letter tiles, red when doomed */}
+          <div className={`gh-strip${fragment && !viable ? ' gh-strip--danger' : ''}`}>
             {fragment.split('').map((ch, i) => (
               <motion.div
                 key={`${i}-${ch}`}
                 initial={{ scale: 0.4, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="flex h-12 w-10 items-center justify-center rounded-md border border-[var(--brass)] bg-[rgba(0,0,0,0.3)] font-type text-2xl text-[var(--amber-glow)]"
+                transition={{ duration: 0.18 }}
+                className="gh-tile"
+                aria-label={`Letter ${ch}`}
               >
                 {ch}
               </motion.div>
             ))}
             {fragment === '' && (
-              <span className="font-type text-lg text-[var(--ink-faint)]">— the page is blank —</span>
+              <span className="gh-blank">— the page is blank —</span>
             )}
           </div>
-          <div className="mt-2 text-center text-xs text-[var(--ink-dim)]">
+          <div className={`gh-hint${fragment && !viable ? ' gh-hint--danger' : ''}`}>
             {fragment && (viable ? '📖 a word could still be forming…' : '🚩 no word can form from this!')}
           </div>
 
@@ -224,17 +226,17 @@ export default function GhostGame({ room }: GameProps) {
           {/* controls */}
           {myTurn ? (
             <div className="mt-5">
-              <div className="grid grid-cols-7 gap-1.5 sm:grid-cols-9">
+              <div className="gh-keys" role="group" aria-label="Letter keys">
                 {LETTERS.map((L) => (
-                  <GameCard
+                  <button
                     key={L}
-                    state="default"
+                    type="button"
                     onClick={() => play(L)}
-                    ariaLabel={`Play letter ${L}`}
-                    className="!min-h-0 !min-w-0 !rounded-md !p-0 !py-1.5 !text-sm"
+                    aria-label={`Play letter ${L}`}
+                    className="gh-key"
                   >
                     {L}
-                  </GameCard>
+                  </button>
                 ))}
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
@@ -260,7 +262,7 @@ export default function GhostGame({ room }: GameProps) {
               </div>
             </div>
           ) : (
-            <div className="mt-5 text-center text-sm text-[var(--ink-dim)]">
+            <div className="mt-5 text-center text-sm text-[var(--gk-ink-dim)]">
               Waiting for {playerName(room, turn)} to play or challenge…
             </div>
           )}
@@ -272,7 +274,7 @@ export default function GhostGame({ room }: GameProps) {
               <div key={i} className="text-xs">{line}</div>
             ))}
           </div>
-        </GlassCard>
+        </div>
       )}
 
       {phase === 'over' && (

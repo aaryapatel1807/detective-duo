@@ -22,6 +22,8 @@ import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './guess-who.css';
 import { GameButton, TurnBanner, ProgressBar, ResultModal, SectionTitle } from '../ui-kit';
 
 interface QLog {
@@ -199,22 +201,28 @@ export default function GuessWhoGame({ room }: GameProps) {
 
       {/* ---- setup: pick your secret suspect ---- */}
       {phase === 'setup' && !myPick && (
-        <GlassCard className="p-6">
-          <div className="type-heading mb-1 text-center text-lg">Choose your secret suspect</div>
-          <p className="mb-4 text-center text-xs text-[var(--ink-dim)]">
+        <div className="gw-board gw-board--red">
+          <div className="gw-board__label">Choose your secret suspect</div>
+          <p className="mb-4 text-center text-xs text-white/80">
             Only you will know. Your partner asks questions to find them.
           </p>
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
             {SUSPECTS.map((s) => (
-              <motion.button
+              <button
                 key={s.id}
-                whileHover={{ y: -3, rotate: -1 }}
+                type="button"
                 onClick={() => confirmPick(s.id)}
-                className="polaroid p-2 text-center"
+                className="gw-tile"
+                aria-label={`Pick ${s.name} as your secret suspect`}
               >
-                <div className="text-4xl">{s.face}</div>
-                <div className="caption mt-1 !text-[0.6rem]">{s.name}</div>
-              </motion.button>
+                <span className="gw-tile__inner">
+                  <span className="gw-tile__face gw-tile__face--front">
+                    <span className="gw-tile__mug" aria-hidden>{s.face}</span>
+                    <span className="gw-tile__name">{s.name}</span>
+                  </span>
+                  <span className="gw-tile__face gw-tile__face--back" aria-hidden />
+                </span>
+              </button>
             ))}
           </div>
           {!peerId && !practice && (
@@ -224,7 +232,7 @@ export default function GuessWhoGame({ room }: GameProps) {
               </GameButton>
             </div>
           )}
-        </GlassCard>
+        </div>
       )}
 
       {/* ---- waiting for partner to pick ---- */}
@@ -271,34 +279,38 @@ export default function GuessWhoGame({ room }: GameProps) {
             )}
           </GlassCard>
 
-          <div className="eyebrow text-center">Your board — tap to eliminate the innocent</div>
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-            {SUSPECTS.map((s) => {
-              const out = eliminated.includes(s.id);
-              return (
-                <motion.button
-                  key={s.id}
-                  whileTap={{ scale: 0.94 }}
-                  onClick={() => {
-                    if (out) {
-                      setEliminated((e) => e.filter((id) => id !== s.id));
-                    } else {
-                      sounds.pinTap();
-                      setEliminated((e) => [...e, s.id]);
-                    }
-                  }}
-                  className={`polaroid relative p-2 text-center transition-opacity ${out ? 'opacity-40' : ''}`}
-                >
-                  <div className="text-4xl">{s.face}</div>
-                  <div className="caption mt-1 !text-[0.6rem]">{s.name}</div>
-                  {out && (
-                    <div className="absolute inset-0 flex items-center justify-center text-4xl text-[var(--blood-bright)]">
-                      ✕
-                    </div>
-                  )}
-                </motion.button>
-              );
-            })}
+          <div className="gw-board">
+            <div className="gw-board__label">Your board — tap to flip down the innocent</div>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+              {SUSPECTS.map((s) => {
+                const out = eliminated.includes(s.id);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      if (out) {
+                        setEliminated((e) => e.filter((id) => id !== s.id));
+                      } else {
+                        sounds.pinTap();
+                        setEliminated((e) => [...e, s.id]);
+                      }
+                    }}
+                    className={`gw-tile ${out ? 'gw-tile--down' : ''}`}
+                    aria-label={out ? `Bring back ${s.name}` : `Eliminate ${s.name}`}
+                    aria-pressed={out}
+                  >
+                    <span className="gw-tile__inner">
+                      <span className="gw-tile__face gw-tile__face--front">
+                        <span className="gw-tile__mug" aria-hidden>{s.face}</span>
+                        <span className="gw-tile__name">{s.name}</span>
+                      </span>
+                      <span className="gw-tile__face gw-tile__face--back" aria-hidden />
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <GlassCard className="p-5 text-center">
@@ -326,9 +338,9 @@ export default function GuessWhoGame({ room }: GameProps) {
                   <button
                     key={s.id}
                     onClick={() => myTurn && setAccusing(s.id)}
-                    className="rounded-full border border-[var(--glass-border)] px-3 py-1 text-xs hover:border-[var(--amber-glow)]"
+                    className="gw-chip"
                   >
-                    {s.face} {s.name}
+                    <span aria-hidden>{s.face}</span> {s.name}
                   </button>
                 ))}
               </div>

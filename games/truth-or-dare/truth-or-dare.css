@@ -1,0 +1,154 @@
+/* ============================================================
+ * TRUTH OR DARE — classic party-card realism.
+ * The deck is a stack of real card backs; the drawn card flips over
+ * into a bright party card — teal for truth, hot red for dare.
+ * Unlayered custom CSS, hex fallbacks, mobile-first.
+ * ============================================================ */
+
+.tod-table {
+  perspective: 1000px;
+}
+
+/* The deck — a stacked pile of card backs. */
+.tod-deck {
+  position: relative;
+  width: 200px;
+  height: 280px;
+  margin: 0 auto;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.tod-deck:disabled {
+  cursor: default;
+}
+
+.tod-deck:focus-visible {
+  outline: 3px solid #4a63d8;
+  outline-offset: 6px;
+  border-radius: 14px;
+}
+
+.tod-deck .gk-pcard {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  --pc-w: 150px;
+  --pc-h: 210px;
+}
+
+.tod-deck .gk-pcard:nth-child(1) { transform: translateX(-50%) rotate(-7deg) translateY(6px); }
+.tod-deck .gk-pcard:nth-child(2) { transform: translateX(-50%) rotate(4deg) translateY(3px); }
+.tod-deck .gk-pcard:nth-child(3) { transform: translateX(-50%) rotate(-1deg); }
+
+.tod-deck:not(:disabled):hover .gk-pcard:nth-child(3) {
+  transform: translateX(-50%) rotate(-1deg) translateY(-8px);
+}
+
+.tod-deck__label {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #8a7a52;
+}
+
+/* The drawn party card — flips in, bright and bold. */
+.tod-card {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  border-radius: 20px;
+  padding: 28px 24px;
+  text-align: center;
+  transform-style: preserve-3d;
+  animation: tod-flipin 0.5s cubic-bezier(0.35, 0.1, 0.25, 1) both;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -6px 0 rgba(0, 0, 0, 0.08),
+    0 14px 30px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes tod-flipin {
+  from { opacity: 0; transform: rotateY(80deg) scale(0.9); }
+  60% { opacity: 1; transform: rotateY(-8deg) scale(1.02); }
+  to { opacity: 1; transform: rotateY(0deg) scale(1); }
+}
+
+.tod-card--truth {
+  color: #083b3b;
+  background: linear-gradient(165deg, #e8fbf7 0%, #b8ecdf 60%, #8fd8c4 100%);
+  border: 3px solid #1e9e83;
+}
+
+.tod-card--dare {
+  color: #4a1010;
+  background: linear-gradient(165deg, #fff0ec 0%, #f9c9b8 60%, #f0a183 100%);
+  border: 3px solid #d05252;
+}
+
+.tod-card__type {
+  display: inline-block;
+  padding: 5px 18px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.tod-card--truth .tod-card__type {
+  background: linear-gradient(180deg, #2bb89a 0%, #1e9e83 100%);
+  box-shadow: 0 3px 8px rgba(30, 158, 131, 0.5);
+}
+
+.tod-card--dare .tod-card__type {
+  background: linear-gradient(180deg, #e0685a 0%, #c74545 100%);
+  box-shadow: 0 3px 8px rgba(199, 69, 69, 0.5);
+}
+
+.tod-card__text {
+  margin-top: 16px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  line-height: 1.55;
+  font-weight: 700;
+}
+
+.tod-card__for {
+  margin-top: 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+@media (min-width: 640px) {
+  .tod-deck {
+    width: 230px;
+    height: 310px;
+  }
+  .tod-deck .gk-pcard {
+    --pc-w: 170px;
+    --pc-h: 238px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tod-card {
+    animation: none;
+  }
+  .tod-deck:not(:disabled):hover .gk-pcard:nth-child(3) {
+    transform: translateX(-50%) rotate(-1deg);
+  }
+}

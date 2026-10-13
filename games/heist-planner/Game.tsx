@@ -11,6 +11,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './heist-planner.css';
 import {
   GameButton,
   DifficultyBadge,
@@ -204,21 +206,24 @@ function RolePick({
             { r: 'lookout' as HeistRole, icon: '🔭', title: 'Lookout', desc: 'Guard patrol routes + timing table.' },
           ]
         ).map(({ r, icon, title, desc }) => (
-          <motion.button
+          <button
             key={r}
-            whileTap={{ scale: 0.97 }}
+            type="button"
             onClick={() => onChoose(r)}
-            className={`glass-card !rounded-2xl p-5 text-left transition ${
-              myRole === r ? '!border-[var(--amber-glow)] shadow-[0_0_24px_rgba(232,163,61,0.25)]' : 'hover:!border-[var(--brass)]'
-            }`}
+            className={`hp-badge ${myRole === r ? 'hp-badge--active' : ''}`}
+            aria-label={`Take the ${title} role`}
           >
-            <div className="text-3xl">{icon}</div>
-            <div className="type-heading mt-2">{title}</div>
-            <div className="text-sm text-[var(--ink-dim)]">{desc}</div>
-            {peerRole === r && room.peer && (
-              <div className="eyebrow mt-2">{room.peer.name} has this</div>
+            <div className="hp-badge__photo" aria-hidden>{icon}</div>
+            <div className="hp-badge__name mt-3">{title}</div>
+            <span className="hp-badge__role">Crew</span>
+            <div className="hp-badge__desc">{desc}</div>
+            {myRole === r && (
+              <div className="hp-badge__holder">← your badge</div>
             )}
-          </motion.button>
+            {peerRole === r && room.peer && (
+              <div className="hp-badge__holder">{room.peer.name} has this</div>
+            )}
+          </button>
         ))}
       </div>
     </GlassCard>
@@ -232,15 +237,14 @@ function MapSelect({ map, onSelectMap }: { map: HeistMap; onSelectMap: (id: stri
         <button
           key={m.id}
           onClick={() => onSelectMap(m.id)}
-          className={`glass-card !rounded-2xl p-3 text-left transition ${
-            m.id === map.id ? '!border-[var(--amber-glow)]' : 'hover:!border-[var(--brass)]'
-          }`}
+          className={`hp-mapcard ${m.id === map.id ? 'hp-mapcard--active' : ''}`}
+          aria-label={`Plan the ${m.name} heist`}
         >
-          <div className="flex items-center justify-between">
-            <span className="type-heading text-sm">{m.name}</span>
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-bold text-sm">{m.name}</span>
             <DifficultyBadge difficulty={m.difficulty.toLowerCase() as Difficulty} />
           </div>
-          <p className="mt-1 text-xs text-[var(--ink-dim)]">{m.blurb}</p>
+          <p className="mt-1 text-xs text-white/75">{m.blurb}</p>
         </button>
       ))}
     </div>
@@ -336,8 +340,8 @@ function HeistGrid({
         bg = 'rgba(61,125,232,0.10)';
       }
       if (wp != null) {
-        content = <span className="font-type text-xs font-bold text-[var(--amber-glow)]">{wp}</span>;
-        bg = 'rgba(232,163,61,0.22)';
+        content = <span className="hp-pin">{wp}</span>;
+        bg = 'rgba(255,255,255,0.14)';
       }
       if (guardName && role === 'lookout') { content = '💂'; bg = 'rgba(214,58,44,0.3)'; }
       if (isToken) { content = '🕵️'; bg = 'rgba(201,162,39,0.35)'; }
@@ -359,7 +363,7 @@ function HeistGrid({
 
   return (
     <div
-      className="grid w-full gap-[3px]"
+      className="hp-grid grid w-full gap-[3px]"
       style={{ gridTemplateColumns: `repeat(${map.width}, minmax(0,1fr))` }}
     >
       {cells}
@@ -412,12 +416,12 @@ function PlanPhase({
               ))}
             </div>
           )}
-          <GlassCard className="p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="eyebrow">
+          <div className="hp-blueprint">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <span className="hp-blueprint__title">
                 {myRole === 'mastermind' ? '🗺️ Vault map — your eyes only' : '🔭 Patrol chart — your eyes only'}
               </span>
-              <span className="font-type text-xs text-[var(--ink-dim)]">
+              <span className="font-type text-xs text-white/70">
                 {plan.length} waypoint{plan.length === 1 ? '' : 's'}
               </span>
             </div>
@@ -442,16 +446,16 @@ function PlanPhase({
               >
                 🗑 Clear
               </GameButton>
-              <span className="ml-auto text-xs text-[var(--ink-dim)]">
+              <span className="ml-auto text-xs text-white/70">
                 Click tiles to plot the route · click the last pin to remove it
               </span>
             </div>
             {!endsAtVault && plan.length > 0 && (
-              <p className="mt-2 text-xs text-[var(--blood-bright)]">
+              <p className="mt-2 text-xs text-[#ffb3ab]">
                 ⚠ The route must end at the vault 🏦.
               </p>
             )}
-          </GlassCard>
+          </div>
 
           {myRole === 'lookout' ? (
             <TimingTable map={map} />
@@ -604,12 +608,12 @@ function ExecutePhase({
             ))}
           </div>
         )}
-        <GlassCard className="p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="eyebrow">
+        <div className="hp-blueprint">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="hp-blueprint__title">
               🎬 Execution — {myRole === 'mastermind' ? 'watch the lasers & cameras' : 'watch the guards'}
             </span>
-            <span className="font-type text-xs text-[var(--ink-dim)]">
+            <span className="font-type text-xs text-white/70">
               step {Math.min(stepIdx + 1, path.length)}/{path.length}
             </span>
           </div>
@@ -626,11 +630,11 @@ function ExecutePhase({
             {finished ? '⛔ Route complete — vault not reached' : '👣 STEP THE CREW →'}
           </GameButton>
           {finished && (
-            <p className="mt-2 text-center text-xs text-[var(--blood-bright)]">
+            <p className="mt-2 text-center text-xs text-[#ffb3ab]">
               The plan ended before the vault. Abort and replan — or add the vault as the final waypoint next time.
             </p>
           )}
-        </GlassCard>
+        </div>
         <div className="glass-card !rounded-2xl p-4">
           <span className="eyebrow">📻 Run log</span>
           <div className="mt-2 max-h-36 space-y-1 overflow-y-auto font-type text-xs text-[var(--ink-dim)]">
