@@ -1,9 +1,12 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { cn } from '../lib/cn';
+import styles from './hub-chrome.module.css';
 
-/** Corkboard surface. Children are absolutely-positioned pins/folders/photos. */
+/**
+ * Noir evidence-wall surface. Children are absolutely-positioned
+ * pins/dossiers/photos. Props unchanged from the corkboard era.
+ */
 export function Corkboard({
   children,
   className,
@@ -11,5 +14,9 @@ export function Corkboard({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={cn('corkboard', className)}>{children}</div>;
+  return (
+    <div className={className ? `${styles.board} ${className}` : styles.board}>
+      {children}
+    </div>
+  );
 }

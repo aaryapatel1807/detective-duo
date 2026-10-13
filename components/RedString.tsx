@@ -48,10 +48,11 @@ export function RedStringLayer({
             key={i}
             d={d}
             fill="none"
-            stroke="var(--blood)"
+            stroke="var(--hub-red, var(--blood))"
             strokeWidth={0.45}
             vectorEffect="non-scaling-stroke"
             strokeLinecap="round"
+            style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.6))' }}
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
             transition={{ duration: 0.9, delay: 0.25 + i * 0.18, ease: 'easeOut' }}
