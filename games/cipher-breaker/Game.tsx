@@ -136,11 +136,11 @@ export default function CipherBreakerGame({ room }: GameProps) {
                       {solver && <div className="text-lg">✅</div>}
                     </div>
                     <div className="type-heading mt-1 text-lg leading-snug">{c.title}</div>
-                    <div className="mt-2 truncate font-type text-sm text-[var(--ink-dim)]">
+                    <div className="mt-2 truncate font-type text-sm text-[var(--gk-ink-dim)]">
                       {c.message.slice(0, 34)}…
                     </div>
                     {solver ? (
-                      <div className="mt-2 text-xs text-[var(--ink-dim)]">
+                      <div className="mt-2 text-xs text-[var(--gk-ink-dim)]">
                         Cracked by {playerName(room, solver)} → 🎞️ {c.keyword}
                       </div>
                     ) : (

@@ -131,7 +131,7 @@ export default function MindMeldGame({ room }: GameProps) {
         <GlassCard className="p-10 text-center">
           <div className="text-5xl">🔮</div>
           <h2 className="type-heading mt-4 text-2xl">Mind Meld</h2>
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">
+          <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
             A meld needs two minds. Create a room from the hub and invite your
             partner — then try to think the same word at the same instant.
           </p>
@@ -240,12 +240,12 @@ export default function MindMeldGame({ room }: GameProps) {
       )}
 
       {!revealed && myWord && (
-        <p className="mt-4 text-center font-type text-sm text-[var(--ink-dim)]">
+        <p className="mt-4 text-center font-type text-sm text-[var(--gk-ink-dim)]">
           🔒 Your word is sealed… waiting for {room.peer.name}.
         </p>
       )}
       {!revealed && !myWord && (
-        <p className="mt-4 text-center font-type text-sm text-[var(--ink-dim)]">
+        <p className="mt-4 text-center font-type text-sm text-[var(--gk-ink-dim)]">
           Type one word and seal it — neither of you sees the other's until both are in.
         </p>
       )}

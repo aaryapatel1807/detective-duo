@@ -52,6 +52,7 @@
   --gk-red: #b3261e;
   --gk-ink: #ece7d9;
   --gk-ink-dim: #a9b4c7;
+  --gk-ink-faint: rgba(236, 231, 217, 0.42);
   --gk-font-display: var(--hub-display, Cinzel, Georgia, serif);
   --gk-font-mono: var(--hub-mono, JetBrains Mono, ui-monospace, monospace);
   --gk-font-body: var(--hub-body, Inter, system-ui, sans-serif);

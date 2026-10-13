@@ -107,7 +107,7 @@ export default function BlackStoriesGame({ room }: GameProps) {
   const header = (
     <div className="mb-5 text-center">
       <SectionTitle eyebrow="Case file · lateral puzzle" title="Black Stories" />
-      <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-xs text-[var(--ink-dim)]">
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-xs text-[var(--gk-ink-dim)]">
         <span className="rounded-full border border-[var(--glass-border)] px-3 py-1">
           🎙️ Host: {hostId === room.me.id ? 'You' : room.peer && hostId === room.peer.id ? room.peer.name : '—'}
         </span>
@@ -125,28 +125,28 @@ export default function BlackStoriesGame({ room }: GameProps) {
       {/* ---- role picking ---- */}
       {phase === 'pick-roles' && (
         <GlassCard className="p-8 text-center">
-          <p className="text-sm text-[var(--ink-dim)]">
+          <p className="text-sm text-[var(--gk-ink-dim)]">
             One detective hosts the case — they know the twisted truth.
             The other asks only <b>yes / no</b> questions to crack it.
           </p>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <motion.div whileHover={{ y: -3 }} className="manila-folder p-5 text-left">
               <div className="type-heading text-lg">🎙️ The Host</div>
-              <p className="mt-2 text-xs text-[var(--ink-dim)]">Reads the full story, answers yes / no / irrelevant.</p>
+              <p className="mt-2 text-xs text-[var(--gk-ink-dim)]">Reads the full story, answers yes / no / irrelevant.</p>
               <GameButton variant="primary" onClick={becomeHost} className="mt-4 w-full" disabled={!!hostId}>
                 Become host
               </GameButton>
             </motion.div>
             <motion.div whileHover={{ y: -3 }} className="manila-folder p-5 text-left">
               <div className="type-heading text-lg">🔍 The Sleuth</div>
-              <p className="mt-2 text-xs text-[var(--ink-dim)]">Hears only the riddle, interrogates with questions.</p>
+              <p className="mt-2 text-xs text-[var(--gk-ink-dim)]">Hears only the riddle, interrogates with questions.</p>
               <GameButton variant="primary" onClick={becomeSleuth} className="mt-4 w-full" disabled={!!hostId || !bothHere}>
                 Become sleuth
               </GameButton>
             </motion.div>
           </div>
           {!bothHere && (
-            <p className="mt-4 text-xs text-[var(--ink-faint)]">
+            <p className="mt-4 text-xs text-[var(--gk-ink-faint)]">
               Waiting for your partner to join the room… (solo practice coming soon)
             </p>
           )}
@@ -175,8 +175,8 @@ export default function BlackStoriesGame({ room }: GameProps) {
               </div>
             </>
           ) : (
-            <div className="p-8 text-center text-sm text-[var(--ink-dim)]">
-              <div className="type-heading mb-2 text-lg text-[var(--ink)]">The host is choosing a case…</div>
+            <div className="p-8 text-center text-sm text-[var(--gk-ink-dim)]">
+              <div className="type-heading mb-2 text-lg text-[var(--gk-ink)]">The host is choosing a case…</div>
               Sit tight, sleuth. The riddle lands on your desk any second.
             </div>
           )}
@@ -196,7 +196,7 @@ export default function BlackStoriesGame({ room }: GameProps) {
           <div className="bs-log">
             <div className="bs-log__head">📋 Interrogation log</div>
             {qa.length === 0 && (
-              <p className="px-4 py-4 text-sm italic text-[var(--ink-faint)]">No questions yet. The lamp is warming up…</p>
+              <p className="px-4 py-4 text-sm italic text-[var(--gk-ink-faint)]">No questions yet. The lamp is warming up…</p>
             )}
             <div className="bs-log__body">
               {qa.map((entry, i) => (
@@ -218,7 +218,7 @@ export default function BlackStoriesGame({ room }: GameProps) {
                           ))}
                         </div>
                       ) : (
-                        <span className="text-xs italic text-[var(--ink-faint)]">awaiting the host…</span>
+                        <span className="text-xs italic text-[var(--gk-ink-faint)]">awaiting the host…</span>
                       )}
                     </div>
                   </div>
@@ -272,7 +272,7 @@ export default function BlackStoriesGame({ room }: GameProps) {
           {phase === 'questioning' && isHost && claimedBy && (
             <GlassCard className="border-[var(--amber-glow)] p-5 text-center">
               <div className="type-heading text-lg">The sleuth claims they cracked it!</div>
-              <p className="mt-1 text-xs text-[var(--ink-dim)]">Did they speak the truth, host?</p>
+              <p className="mt-1 text-xs text-[var(--gk-ink-dim)]">Did they speak the truth, host?</p>
               <div className="mt-4 flex flex-wrap justify-center gap-3">
                 <GameButton variant="primary" onClick={() => reveal(true)}>✅ Correct — case solved</GameButton>
                 <GameButton
@@ -307,7 +307,7 @@ export default function BlackStoriesGame({ room }: GameProps) {
                       {phase === 'solved' ? '🔓 The twisted truth' : '🏳️ The twisted truth'}
                     </div>
                     <p className="bs-solution__text mx-auto max-w-lg">{story.solution}</p>
-                    <div className="mt-4 text-xs text-[var(--ink-dim)]">
+                    <div className="mt-4 text-xs text-[var(--gk-ink-dim)]">
                       Solved in {askedCount} question{askedCount === 1 ? '' : 's'} · +{XP_AWARDS.coopWin} XP each
                     </div>
                     <div className="mt-5">

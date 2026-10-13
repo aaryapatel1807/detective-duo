@@ -164,7 +164,7 @@ export default function MinesweeperGame({ room }: GameProps) {
     <div className="gk-root gk-modal-scope mx-auto max-w-xl">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="BOMB SQUAD" title="Minesweeper" />
-        <p className="mt-2 text-sm text-[var(--ink-dim)]">
+        <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
           Left-click to sweep, right-click or long-press to flag. First click is always safe.
         </p>
       </div>

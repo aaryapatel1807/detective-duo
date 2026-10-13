@@ -62,13 +62,13 @@ export default function TapDuelGame({ room }: GameProps) {
 
   return (
     <div className="gk-root gk-modal-scope mx-auto max-w-xl">
-      <div className="mb-4 rounded-xl border border-dashed border-[var(--amber-glow)] bg-[rgba(232,163,61,0.08)] px-4 py-2 text-center font-type text-[0.72rem] tracking-[0.18em] uppercase text-[var(--ink-dim)]">
+      <div className="mb-4 rounded-xl border border-dashed border-[var(--amber-glow)] bg-[rgba(232,163,61,0.08)] px-4 py-2 text-center font-type text-[0.72rem] tracking-[0.18em] uppercase text-[var(--gk-ink-dim)]">
         🕹️ Practice cabinet — warm up your tapping finger
       </div>
 
       <div className="mb-5 text-center">
         <SectionTitle eyebrow="DUO PRACTICE" title="Tap Duel" />
-        <p className="mt-2 text-sm text-[var(--ink-dim)]">
+        <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
           First detective to {TAP_TARGET} taps cracks the case.
         </p>
       </div>

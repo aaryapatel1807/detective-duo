@@ -165,12 +165,12 @@ export default function GhostGame({ room }: GameProps) {
       {phase === 'lobby' && (
         <ManilaFolder className="p-6 text-center">
           <div className="type-heading text-xl">The Séance Rules</div>
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">
+          <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
             First detective to lose {GHOST_ROUNDS_TO_LOSE} rounds loses the match. Words come
             from the case dictionary (4–6 letters).
           </p>
           {!room.peer && (
-            <p className="mt-2 text-xs text-[var(--ink-faint)]">
+            <p className="mt-2 text-xs text-[var(--gk-ink-faint)]">
               Solo practice — you play both sides of the séance.
             </p>
           )}

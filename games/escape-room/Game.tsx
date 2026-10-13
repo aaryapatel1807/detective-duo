@@ -99,7 +99,7 @@ export default function EscapeRoomGame({ room }: GameProps) {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <SectionTitle eyebrow="ESCAPE ROOM" title={`🔎 ${def.title}`} />
-          <p className="max-w-xl text-sm text-[var(--ink-dim)]">{def.intro}</p>
+          <p className="max-w-xl text-sm text-[var(--gk-ink-dim)]">{def.intro}</p>
         </div>
         <div className="flex items-center gap-3">
           <TimerChip
@@ -183,7 +183,7 @@ function RoomSelect({ onStart }: { onStart: (id: string) => void }) {
     <div className="gk-root mx-auto max-w-3xl">
       <GlassCard className="p-8 text-center">
         <h2 className="type-heading text-2xl">🔎 Escape Room</h2>
-        <p className="mx-auto mt-2 max-w-lg text-sm text-[var(--ink-dim)]">
+        <p className="mx-auto mt-2 max-w-lg text-sm text-[var(--gk-ink-dim)]">
           Two detectives, one locked room, twenty soft minutes. Examine
           everything, crack the codes, find the exit key — together.
         </p>
@@ -196,7 +196,7 @@ function RoomSelect({ onStart }: { onStart: (id: string) => void }) {
               className="manila-folder p-5 text-left transition hover:!border-[var(--amber-glow)]"
             >
               <div className="type-heading text-lg">{r.title}</div>
-              <p className="mt-1 text-sm text-[var(--ink-dim)]">{r.blurb}</p>
+              <p className="mt-1 text-sm text-[var(--gk-ink-dim)]">{r.blurb}</p>
               <div className="eyebrow mt-2">{r.hotspots.length} hotspots · 20:00</div>
             </motion.button>
           ))}
@@ -255,7 +255,7 @@ function RoomScene({
           )}
         </motion.button>
       ))}
-      <div className="pointer-events-none absolute bottom-2 left-3 font-type text-[0.65rem] tracking-[0.2em] text-[var(--ink-faint)]">
+      <div className="pointer-events-none absolute bottom-2 left-3 font-type text-[0.65rem] tracking-[0.2em] text-[var(--gk-ink-faint)]">
         CRIME SCENE — DO NOT CROSS
       </div>
     </div>
@@ -269,10 +269,10 @@ function InventoryBar({ items }: { items: { id: string; name: string; icon: stri
     <div className="glass-card !rounded-2xl p-3">
       <div className="mb-2 flex items-center justify-between">
         <span className="eyebrow">🎒 Shared inventory</span>
-        <span className="font-type text-xs text-[var(--ink-dim)]">{items.length} items</span>
+        <span className="font-type text-xs text-[var(--gk-ink-dim)]">{items.length} items</span>
       </div>
       {items.length === 0 ? (
-        <p className="text-xs text-[var(--ink-faint)]">
+        <p className="text-xs text-[var(--gk-ink-faint)]">
           Empty pockets. Examine the room — anything you take appears here for both detectives.
         </p>
       ) : (
@@ -317,7 +317,7 @@ function DetailPanel({
     return (
       <div className="glass-card !rounded-2xl p-4">
         <span className="eyebrow">🔍 Examine</span>
-        <p className="mt-2 text-sm text-[var(--ink-dim)]">
+        <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
           Click a hotspot in the room to examine it. Clues land in the journal —
           both detectives share everything.
         </p>
@@ -359,11 +359,11 @@ function DetailPanel({
         <h3 className="type-heading text-lg">
           {h.icon} {h.name}
         </h3>
-        <button onClick={onClose} className="text-[var(--ink-dim)] hover:text-[var(--ink)]">
+        <button onClick={onClose} className="text-[var(--gk-ink-dim)] hover:text-[var(--gk-ink)]">
           ✕
         </button>
       </div>
-      <p className="mt-2 text-sm text-[var(--ink-dim)]">{h.desc}</p>
+      <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">{h.desc}</p>
 
       {foundNote && h.note && (
         <div className="paper-strip mt-3 p-3">
@@ -373,7 +373,7 @@ function DetailPanel({
       )}
 
       {needItem && (
-        <p className="mt-3 rounded-xl border border-[var(--blood)] bg-[rgba(179,38,30,0.12)] p-3 text-xs text-[var(--ink)]">
+        <p className="mt-3 rounded-xl border border-[var(--blood)] bg-[rgba(179,38,30,0.12)] p-3 text-xs text-[var(--gk-ink)]">
           🔒 {h.requiresHint ?? 'You need something to use this.'}
         </p>
       )}
@@ -381,7 +381,7 @@ function DetailPanel({
       {h.lock && !isUnlocked && !needItem && (
         <div className="mt-3">
           <div className="eyebrow mb-1">4-digit combination</div>
-          <p className="mb-2 text-xs italic text-[var(--ink-dim)]">Hint: {h.lock.hint}</p>
+          <p className="mb-2 text-xs italic text-[var(--gk-ink-dim)]">Hint: {h.lock.hint}</p>
           <div className="flex gap-2">
             <input
               value={code}
@@ -409,10 +409,10 @@ function DetailPanel({
         </GameButton>
       )}
       {taken && (
-        <p className="mt-3 text-xs text-[var(--ink-faint)]">Picked clean — nothing left here.</p>
+        <p className="mt-3 text-xs text-[var(--gk-ink-faint)]">Picked clean — nothing left here.</p>
       )}
       {isUnlocked && h.lock && !taken && !h.inside && (
-        <p className="mt-3 text-xs text-[var(--ink-faint)]">Unlocked — empty.</p>
+        <p className="mt-3 text-xs text-[var(--gk-ink-faint)]">Unlocked — empty.</p>
       )}
     </motion.div>
   );
@@ -425,10 +425,10 @@ function JournalPanel({ notes }: { notes: { id: string; title: string; text: str
     <div className="glass-card !rounded-2xl p-4">
       <div className="mb-2 flex items-center justify-between">
         <span className="eyebrow">📓 Clue journal</span>
-        <span className="font-type text-xs text-[var(--ink-dim)]">{notes.length} found</span>
+        <span className="font-type text-xs text-[var(--gk-ink-dim)]">{notes.length} found</span>
       </div>
       {notes.length === 0 ? (
-        <p className="text-xs text-[var(--ink-faint)]">No clues yet. Examine the room.</p>
+        <p className="text-xs text-[var(--gk-ink-faint)]">No clues yet. Examine the room.</p>
       ) : (
         <div className="max-h-56 space-y-2 overflow-y-auto">
           {notes.map((n) => (

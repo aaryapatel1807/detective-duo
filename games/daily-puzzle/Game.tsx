@@ -114,7 +114,7 @@ export default function DailyPuzzleGame({ room }: GameProps) {
   return (
     <div className="gk-root mx-auto max-w-md">
       <div className="mb-4 flex items-center justify-center gap-3">
-        <span className="font-type text-xs tracking-[0.18em] uppercase text-[var(--ink-dim)]">
+        <span className="font-type text-xs tracking-[0.18em] uppercase text-[var(--gk-ink-dim)]">
           🔥 streak {streak.streak}
         </span>
         <TimerChip seconds={countdown} label="Next case" />

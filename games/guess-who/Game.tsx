@@ -240,8 +240,8 @@ export default function GuessWhoGame({ room }: GameProps) {
         <GlassCard className="p-8 text-center">
           <div className="text-5xl">{myPickSuspect?.face}</div>
           <div className="type-heading mt-2 text-xl">{myPickSuspect?.name}</div>
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">Locked in. Your secret is safe with the desk.</p>
-          <p className="mt-4 text-xs italic text-[var(--ink-faint)]">Waiting for your partner to pick their suspect…</p>
+          <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">Locked in. Your secret is safe with the desk.</p>
+          <p className="mt-4 text-xs italic text-[var(--gk-ink-faint)]">Waiting for your partner to pick their suspect…</p>
         </GlassCard>
       )}
 
@@ -264,8 +264,8 @@ export default function GuessWhoGame({ room }: GameProps) {
               <GameButton variant="primary" onClick={ask} disabled={!myTurn}>
                 Ask ❓
               </GameButton>
-              <span className="ml-auto text-xs text-[var(--ink-faint)]">
-                My secret: <b className="text-[var(--ink)]">{myPickSuspect?.name ?? '—'}</b>
+              <span className="ml-auto text-xs text-[var(--gk-ink-faint)]">
+                My secret: <b className="text-[var(--gk-ink)]">{myPickSuspect?.name ?? '—'}</b>
               </span>
             </div>
             {qlog.length > 0 && (
@@ -356,7 +356,7 @@ export default function GuessWhoGame({ room }: GameProps) {
             <GlassCard className="p-8 text-center">
               {resolved && (
                 <>
-                  <p className="mt-2 text-sm text-[var(--ink-dim)]">
+                  <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
                     {resolved.correct
                       ? `${resolved.accuserId === room.me.id ? 'You named' : 'Your partner named'} ${getSuspect(resolved.suspectId)?.name} — and the cuffs are on.`
                       : `${resolved.accuserId === room.me.id ? 'You accused' : 'Your partner accused'} ${getSuspect(resolved.suspectId)?.name} — an innocent. Case blown.`}

@@ -160,7 +160,7 @@ export default function SpotTheLiarGame({ room }: GameProps) {
       {/* ---- lobby ---- */}
       {phase === 'lobby' && (
         <GlassCard className="p-8 text-center">
-          <p className="mx-auto max-w-md text-sm text-[var(--ink-dim)]">
+          <p className="mx-auto max-w-md text-sm text-[var(--gk-ink-dim)]">
             Each round, one detective draws a prompt card and writes <b>3 statements — 2 true, 1 lie</b>.
             The other cross-examines over the wire, then calls the lie. Correct call scores for the
             interrogator; a miss scores for the liar. Best of {TOTAL_ROUNDS} rounds takes the case.
@@ -169,7 +169,7 @@ export default function SpotTheLiarGame({ room }: GameProps) {
             🎲 Draw a prompt & start
           </GameButton>
           {!peerId && (
-            <p className="mt-3 text-xs italic text-[var(--ink-faint)]">Waiting for your partner to join…</p>
+            <p className="mt-3 text-xs italic text-[var(--gk-ink-faint)]">Waiting for your partner to join…</p>
           )}
         </GlassCard>
       )}
@@ -181,7 +181,7 @@ export default function SpotTheLiarGame({ room }: GameProps) {
             <div className="brass-pin absolute -top-2 left-6" />
             <div className="eyebrow">Prompt card</div>
             <div className="type-heading mt-1 text-xl">{prompt?.prompt ?? '…'}</div>
-            <p className="mt-1 text-xs italic text-[var(--ink-dim)]">{prompt?.hint}</p>
+            <p className="mt-1 text-xs italic text-[var(--gk-ink-dim)]">{prompt?.hint}</p>
           </div>
           {isLiar ? (
             <GlassCard className="p-6">
@@ -199,7 +199,7 @@ export default function SpotTheLiarGame({ room }: GameProps) {
                   <button
                     onClick={() => setLieIndex(i)}
                     title="Mark as the lie"
-                    className={`mt-1 rounded-full border px-3 py-1.5 text-xs ${lieIndex === i ? 'border-[var(--blood-bright)] bg-[rgba(211,58,44,0.2)] text-[var(--blood-bright)]' : 'border-[var(--glass-border)] text-[var(--ink-faint)]'}`}
+                    className={`mt-1 rounded-full border px-3 py-1.5 text-xs ${lieIndex === i ? 'border-[var(--blood-bright)] bg-[rgba(211,58,44,0.2)] text-[var(--blood-bright)]' : 'border-[var(--glass-border)] text-[var(--gk-ink-faint)]'}`}
                   >
                     {lieIndex === i ? '🤥 THE LIE' : 'lie?'}
                   </button>
@@ -212,7 +212,7 @@ export default function SpotTheLiarGame({ room }: GameProps) {
           ) : (
             <GlassCard className="p-8 text-center">
               <div className="type-heading text-lg">The liar is writing…</div>
-              <p className="mt-2 text-sm text-[var(--ink-dim)]">Sharpen your questions, interrogator.</p>
+              <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">Sharpen your questions, interrogator.</p>
             </GlassCard>
           )}
         </div>
@@ -256,11 +256,11 @@ export default function SpotTheLiarGame({ room }: GameProps) {
                   </GameButton>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-[var(--ink-faint)]">Tap twice to lock in your call. No take-backs.</p>
+              <p className="mt-2 text-xs text-[var(--gk-ink-faint)]">Tap twice to lock in your call. No take-backs.</p>
             </GlassCard>
           )}
           {isLiar && (
-            <p className="text-center text-xs italic text-[var(--ink-faint)]">
+            <p className="text-center text-xs italic text-[var(--gk-ink-faint)]">
               Sweat it out, liar. The call is coming.
             </p>
           )}
@@ -277,7 +277,7 @@ export default function SpotTheLiarGame({ room }: GameProps) {
                   {lastVerdict.correct ? 'Lie exposed' : 'The liar walks'}
                 </span>
               </div>
-              <p className="mt-3 text-sm text-[var(--ink-dim)]">
+              <p className="mt-3 text-sm text-[var(--gk-ink-dim)]">
                 The lie was statement <b className="text-[var(--blood-bright)]">#{lastVerdict.lieIndex + 1}</b>:
                 “{statements[lastVerdict.lieIndex]}”
               </p>
@@ -311,7 +311,7 @@ export default function SpotTheLiarGame({ room }: GameProps) {
             <GlassCard className="p-8 text-center">
               <div className="wax-seal mx-auto mb-3" />
               <div className="type-heading text-xl text-[var(--amber-glow)]">📁 CASE CLOSED</div>
-              <p className="mt-2 text-sm text-[var(--ink-dim)]">
+              <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
                 {scoreLine(room.me.id)} — {peerId ? scoreLine(peerId) : ''}
               </p>
               <p className="mt-3 text-lg">

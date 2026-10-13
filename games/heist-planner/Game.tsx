@@ -123,7 +123,7 @@ export default function HeistPlannerGame({ room }: GameProps) {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="type-heading text-2xl">🏦 Heist Planner</h2>
-          <p className="text-sm text-[var(--ink-dim)]">
+          <p className="text-sm text-[var(--gk-ink-dim)]">
             {map.name} · {map.difficulty} ·{' '}
             {myRole === 'mastermind'
               ? 'You are the MASTERMIND — you see the vault, lasers and cameras.'
@@ -134,7 +134,7 @@ export default function HeistPlannerGame({ room }: GameProps) {
         </div>
         {phase === 'execute' && (
           <div className="flex items-center gap-4">
-            <span className="font-type text-sm text-[var(--ink-dim)]">
+            <span className="font-type text-sm text-[var(--gk-ink-dim)]">
               TICK <span className="text-[var(--amber-glow)]">{gs.tick ?? 0}</span>
             </span>
             <div className="w-32">
@@ -194,7 +194,7 @@ function RolePick({
   return (
     <GlassCard className="p-8 text-center">
       <h3 className="type-heading text-xl">Assemble the crew</h3>
-      <p className="mx-auto mt-2 max-w-lg text-sm text-[var(--ink-dim)]">
+      <p className="mx-auto mt-2 max-w-lg text-sm text-[var(--gk-ink-dim)]">
         The Mastermind studies the vault map — lasers, cameras, the vault
         itself. The Lookout tracks every guard's patrol route and timing.
         Neither sees the other's intel.
@@ -514,7 +514,7 @@ function TimingTable({ map }: { map: HeistMap }) {
         {map.guards.map((g) => (
           <div key={g.name} className="paper-strip p-3">
             <div className="type-heading text-sm">💂 {g.name}</div>
-            <div className="mt-1 font-type text-xs leading-relaxed text-[var(--ink-dim)]">
+            <div className="mt-1 font-type text-xs leading-relaxed text-[var(--gk-ink-dim)]">
               {g.route.map((p, i) => (
                 <span key={i}>
                   <span className="text-[var(--amber-glow)]">t{i}</span>({p.x},{p.y})
@@ -525,7 +525,7 @@ function TimingTable({ map }: { map: HeistMap }) {
           </div>
         ))}
       </div>
-      <p className="mt-3 text-xs text-[var(--ink-dim)]">
+      <p className="mt-3 text-xs text-[var(--gk-ink-dim)]">
         Read the route aloud to your Mastermind — they can't see any of this.
         Route marks on your chart read as guard-initial + tick.
       </p>
@@ -551,7 +551,7 @@ function IntelPanel({ map }: { map: HeistMap }) {
           </div>
         ))}
       </div>
-      <p className="mt-3 text-xs text-[var(--ink-dim)]">
+      <p className="mt-3 text-xs text-[var(--gk-ink-dim)]">
         Amber tiles are camera cones, red ⚡ tiles are lasers (bright = live).
         Your Lookout can't see any of this — describe the safe corridors.
       </p>
@@ -637,7 +637,7 @@ function ExecutePhase({
         </div>
         <div className="glass-card !rounded-2xl p-4">
           <span className="eyebrow">📻 Run log</span>
-          <div className="mt-2 max-h-36 space-y-1 overflow-y-auto font-type text-xs text-[var(--ink-dim)]">
+          <div className="mt-2 max-h-36 space-y-1 overflow-y-auto font-type text-xs text-[var(--gk-ink-dim)]">
             {log.map((l, i) => (
               <p key={i}>{l}</p>
             ))}

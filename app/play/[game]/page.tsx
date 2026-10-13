@@ -95,8 +95,10 @@ export default function PlayPage() {
               ← Lobby
             </Link>
           </div>
-          {/* evidence-board panel: games always render on dark for contrast */}
-          <div className="mt-6 rounded-2xl bg-[#161316]/95 p-4 text-[var(--ink)] shadow-[inset_0_2px_18px_rgba(0,0,0,0.6)] md:p-6">
+          {/* evidence-board panel: ALWAYS dark in both app themes, so its
+              base text is pinned to the kit's light-on-dark ink (not the
+              theme-following --ink, which goes dark-on-dark in light mode) */}
+          <div className="mt-6 rounded-2xl bg-[#161316]/95 p-4 text-[#ece7d9] shadow-[inset_0_2px_18px_rgba(0,0,0,0.6)] md:p-6">
             {Comp ? (
               <Comp room={room} />
             ) : (

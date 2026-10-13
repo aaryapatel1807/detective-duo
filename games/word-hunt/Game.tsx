@@ -142,12 +142,12 @@ export default function WordHuntGame({ room }: GameProps) {
       {phase === 'lobby' && (
         <ManilaFolder className="p-6 text-center">
           <div className="type-heading text-xl">The Evidence Grid</div>
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">
+          <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
             Find words of 4+ letters in the case dictionary — trace adjacent tiles (including
             diagonals). Longer words score more.
           </p>
           {!room.peer && (
-            <p className="mt-2 text-xs text-[var(--ink-faint)]">
+            <p className="mt-2 text-xs text-[var(--gk-ink-faint)]">
               Solo practice — create a room from the hub to race live.
             </p>
           )}

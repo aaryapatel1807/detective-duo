@@ -138,7 +138,7 @@ export default function AlibiGame({ room }: GameProps) {
         <span className="rounded-full border border-[var(--glass-border)] px-3 py-1">🕰️ {crime.time}</span>
         <span className="rounded-full border border-[var(--glass-border)] px-3 py-1">📍 {crime.place}</span>
       </div>
-      <p className="mt-2 text-sm italic text-[var(--ink-dim)]">{crime.detail}</p>
+      <p className="mt-2 text-sm italic text-[var(--gk-ink-dim)]">{crime.detail}</p>
     </div>
   );
 
@@ -164,7 +164,7 @@ export default function AlibiGame({ room }: GameProps) {
       {/* ---- lobby ---- */}
       {phase === 'lobby' && (
         <GlassCard className="p-8 text-center">
-          <p className="mx-auto max-w-md text-sm text-[var(--ink-dim)]">
+          <p className="mx-auto max-w-md text-sm text-[var(--gk-ink-dim)]">
             A crime card is drawn. The suspect invents an <b>alibi</b> — then the interrogator
             cross-examines over the wire, firing <b>timed questions</b> (45 seconds to answer).
             Finally: <b className="text-[var(--blood-bright)]">BUSTED</b> or <b className="text-[#7ee787]">CLEAN</b>.
@@ -173,7 +173,7 @@ export default function AlibiGame({ room }: GameProps) {
           <GameButton variant="primary" onClick={startMatch} className="mt-6" disabled={!peerId}>
             🚨 Draw a crime & start
           </GameButton>
-          {!peerId && <p className="mt-3 text-xs italic text-[var(--ink-faint)]">Waiting for your partner…</p>}
+          {!peerId && <p className="mt-3 text-xs italic text-[var(--gk-ink-faint)]">Waiting for your partner…</p>}
         </GlassCard>
       )}
 
@@ -184,7 +184,7 @@ export default function AlibiGame({ room }: GameProps) {
           {isCriminal ? (
             <GlassCard className="p-6">
               <div className="type-heading mb-2 text-center text-lg">Invent your alibi, suspect</div>
-              <p className="mb-3 text-center text-xs text-[var(--ink-dim)]">
+              <p className="mb-3 text-center text-xs text-[var(--gk-ink-dim)]">
                 Where were you at {crime?.time}? Make it airtight — the interrogator is already suspicious.
               </p>
               <textarea
@@ -202,7 +202,7 @@ export default function AlibiGame({ room }: GameProps) {
           ) : (
             <GlassCard className="p-8 text-center">
               <div className="type-heading text-lg">The suspect is writing…</div>
-              <p className="mt-2 text-sm text-[var(--ink-dim)]">Prepare your questions, interrogator. Liars hate specifics.</p>
+              <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">Prepare your questions, interrogator. Liars hate specifics.</p>
             </GlassCard>
           )}
         </div>
@@ -228,7 +228,7 @@ export default function AlibiGame({ room }: GameProps) {
             </div>
           )}
           {timedQ && remaining === 0 && (
-            <div className="rounded-2xl border border-[var(--glass-border)] p-4 text-center text-sm text-[var(--ink-dim)]">
+            <div className="rounded-2xl border border-[var(--glass-border)] p-4 text-center text-sm text-[var(--gk-ink-dim)]">
               ⏱️ Time's up on: “{timedQ.text}” — {isInterrogator ? 'note the hesitation, interrogator.' : 'the interrogator noticed that.'}
             </div>
           )}
@@ -257,7 +257,7 @@ export default function AlibiGame({ room }: GameProps) {
             </GlassCard>
           )}
           {isCriminal && (
-            <p className="text-center text-xs italic text-[var(--ink-faint)]">
+            <p className="text-center text-xs italic text-[var(--gk-ink-faint)]">
               Hold your story together, suspect. The verdict is coming.
             </p>
           )}
@@ -281,7 +281,7 @@ export default function AlibiGame({ room }: GameProps) {
                 </GameButton>
               </div>
             ) : (
-              <p className="mt-4 text-sm italic text-[var(--ink-dim)]">Sweat, suspect. The gavel is falling.</p>
+              <p className="mt-4 text-sm italic text-[var(--gk-ink-dim)]">Sweat, suspect. The gavel is falling.</p>
             )}
           </GlassCard>
         </div>
@@ -327,7 +327,7 @@ export default function AlibiGame({ room }: GameProps) {
             <GlassCard className="p-8 text-center">
               <div className="wax-seal mx-auto mb-3" />
               <div className="type-heading text-xl text-[var(--amber-glow)]">📁 CASE CLOSED</div>
-              <p className="mt-2 text-sm text-[var(--ink-dim)]">{scoreLine(room.me.id)} — {peerId ? scoreLine(peerId) : ''}</p>
+              <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">{scoreLine(room.me.id)} — {peerId ? scoreLine(peerId) : ''}</p>
               <p className="mt-3 text-lg">
                 Winner: <b className="text-[var(--amber-glow)]">
                   {winner === null ? 'A perfect tie — both walked.' : winner === room.me.id ? 'YOU' : room.peer?.name ?? 'Partner'}

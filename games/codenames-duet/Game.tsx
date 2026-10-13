@@ -212,12 +212,12 @@ export default function CodenamesDuetGame({ room }: GameProps) {
       {phase === 'lobby' && (
         <ManilaFolder className="p-6 text-center">
           <div className="type-heading text-xl">The Informant Network</div>
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">
+          <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
             The clue-giver sees every card&rsquo;s identity and gives a one-word clue + a number.
             The guesser uncovers cards. Wrong card ends the turn — an assassin ends the case.
           </p>
           {!room.peer && (
-            <p className="mt-2 text-xs text-[var(--ink-faint)]">
+            <p className="mt-2 text-xs text-[var(--gk-ink-faint)]">
               Solo practice — you play both the informant and the detective.
             </p>
           )}
@@ -355,8 +355,8 @@ export default function CodenamesDuetGame({ room }: GameProps) {
       {phase === 'over' && (
         <div className="gk-modal-scope">
           <ManilaFolder className="p-6 text-center">
-            {result === 'lose' && <p className="mt-2 text-sm text-[var(--ink-dim)]">{loseReason}</p>}
-            <div className="mt-3 text-sm text-[var(--ink-dim)]">
+            {result === 'lose' && <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">{loseReason}</p>}
+            <div className="mt-3 text-sm text-[var(--gk-ink-dim)]">
               Agents found: {found} / {DUET_AGENTS} · turns used: {Math.min(turn, maxTurns)} / {maxTurns}
             </div>
           </ManilaFolder>

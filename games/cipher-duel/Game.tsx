@@ -161,11 +161,11 @@ export default function CipherDuelGame({ room }: GameProps) {
       {phase === 'setup' && (
         <ManilaFolder className="p-6 text-center">
           <div className="type-heading text-xl">Set the Safe Combination</div>
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">
+          <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
             Four digits, no repeats (e.g. 7391). Your partner must crack it.
           </p>
           {!room.peer && (
-            <p className="mt-2 text-xs text-[var(--ink-faint)]">
+            <p className="mt-2 text-xs text-[var(--gk-ink-faint)]">
               No partner in the room — Cipher Duel needs two detectives.
             </p>
           )}

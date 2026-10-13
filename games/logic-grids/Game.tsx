@@ -130,7 +130,7 @@ export default function LogicGridsGame({ room }: GameProps) {
       <div className="mb-5 text-center">
         <SectionTitle eyebrow="Evidence board · elimination puzzle" title="Logic Grids" />
         {phase === 'solving' && (
-          <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-xs text-[var(--ink-dim)]">
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-xs text-[var(--gk-ink-dim)]">
             <TimerChip seconds={Math.floor((myFinished ? finished[room.me.id] : elapsed) / 1000)} label="⏱️ Elapsed" />
             <span className="rounded-full border border-[var(--glass-border)] px-3 py-1 capitalize">{mode}</span>
             {peerFinished && <span className="text-[#7ee787]">Partner finished in {formatMs(finished[peerId!])}</span>}
@@ -150,7 +150,7 @@ export default function LogicGridsGame({ room }: GameProps) {
                 className={`manila-folder p-4 text-left ${selGrid === g.id ? '!border-[var(--amber-glow)]' : ''}`}
               >
                 <div className="type-heading text-sm">{g.title}</div>
-                <div className="mt-1 text-xs text-[var(--ink-dim)]">{g.rows.length}×{g.cols.length} grid · {g.clues.length} clues</div>
+                <div className="mt-1 text-xs text-[var(--gk-ink-dim)]">{g.rows.length}×{g.cols.length} grid · {g.clues.length} clues</div>
               </button>
             ))}
           </div>
@@ -165,7 +165,7 @@ export default function LogicGridsGame({ room }: GameProps) {
               </button>
             ))}
           </div>
-          <p className="mt-2 text-center text-xs text-[var(--ink-faint)]">
+          <p className="mt-2 text-center text-xs text-[var(--gk-ink-faint)]">
             {selMode === 'race' ? 'Fastest correct grid takes the case.' : 'Both detectives must crack it — the desk celebrates together.'}
           </p>
           <GameButton variant="primary" onClick={() => start()} className="mx-auto mt-4 block">🔍 Start the clock</GameButton>
@@ -178,7 +178,7 @@ export default function LogicGridsGame({ room }: GameProps) {
           <div className="manila-folder relative p-6">
             <div className="brass-pin absolute -top-2 left-6" />
             <div className="type-heading text-xl">{grid.title}</div>
-            <p className="mt-2 text-sm text-[var(--ink-dim)]">{grid.setup}</p>
+            <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">{grid.setup}</p>
             <ul className="mt-3 space-y-1">
               {grid.clues.map((c, i) => (
                 <li key={i} className="text-sm">📌 {c}</li>
@@ -254,7 +254,7 @@ export default function LogicGridsGame({ room }: GameProps) {
                   {' · '} +{XP_AWARDS.duoWin} XP
                 </p>
               )}
-              {mode === 'coop' && <p className="mt-3 text-sm text-[var(--ink-dim)]">+{XP_AWARDS.coopWin} XP each — the desk salutes you.</p>}
+              {mode === 'coop' && <p className="mt-3 text-sm text-[var(--gk-ink-dim)]">+{XP_AWARDS.coopWin} XP each — the desk salutes you.</p>}
               <div className="mt-5 flex flex-wrap justify-center gap-3">
                 <GameButton variant="primary" onClick={() => start(gridId ?? undefined)}>🔄 Same grid, again</GameButton>
                 <GameButton variant="ghost" onClick={reset}>Lobby</GameButton>

@@ -113,7 +113,7 @@ export default function MemoryMatchGame({ room }: GameProps) {
     <div className="gk-root gk-modal-scope mx-auto max-w-xl">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="EVIDENCE PHOTOS" title="Memory Match" />
-        <p className="mt-2 text-sm text-[var(--ink-dim)]">
+        <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
           Match all 12 pairs. Fewer moves, faster time — the chief is watching.
         </p>
       </div>

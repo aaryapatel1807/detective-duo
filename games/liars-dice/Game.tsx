@@ -171,7 +171,7 @@ export default function LiarsDiceGame({ room }: GameProps) {
       <div className="grid gap-4 md:grid-cols-2">
         {/* My hand */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="gk-felt ld-panel">
-          <h3 className="mb-2 text-sm tracking-widest text-[var(--ink-dim)]">
+          <h3 className="mb-2 text-sm tracking-widest text-[var(--gk-ink-dim)]">
             YOUR HAND — {nameOf(me).toUpperCase()}
           </h3>
           <div className="ld-dice">
@@ -183,7 +183,7 @@ export default function LiarsDiceGame({ room }: GameProps) {
               ))
             )}
           </div>
-          <h3 className="mb-2 mt-4 text-sm tracking-widest text-[var(--ink-dim)]">
+          <h3 className="mb-2 mt-4 text-sm tracking-widest text-[var(--gk-ink-dim)]">
             {peer ? nameOf(peer.id).toUpperCase() + "'S HAND" : 'PARTNER'}
           </h3>
           <div className="ld-dice opacity-90">

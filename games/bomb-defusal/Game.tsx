@@ -198,7 +198,7 @@ export default function BombDefusalGame({ room }: GameProps) {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="type-heading text-2xl">💣 Bomb Defusal</h2>
-          <p className="text-sm text-[var(--ink-dim)]">
+          <p className="text-sm text-[var(--gk-ink-dim)]">
             {myRole === 'technician'
               ? 'You are the TECHNICIAN — describe what you see.'
               : myRole === 'expert'
@@ -298,7 +298,7 @@ function SetupView({
         💣
       </div>
       <h3 className="type-heading text-xl">Case file: The Ticking Device</h3>
-      <p className="mx-auto mt-2 max-w-lg text-sm text-[var(--ink-dim)]">
+      <p className="mx-auto mt-2 max-w-lg text-sm text-[var(--gk-ink-dim)]">
         A device with four modules and a five-minute fuse. The Technician sees
         the bomb but not the manual. The Expert holds the manual but never sees
         the bomb. Talk.
@@ -322,7 +322,7 @@ function SetupView({
           >
             <div className="text-3xl">{icon}</div>
             <div className="type-heading mt-2">{title}</div>
-            <div className="text-sm text-[var(--ink-dim)]">{desc}</div>
+            <div className="text-sm text-[var(--gk-ink-dim)]">{desc}</div>
             {myRole === r && (
               <div className="eyebrow mt-2 text-[var(--amber-glow)]">← your role</div>
             )}
@@ -333,7 +333,7 @@ function SetupView({
         ))}
       </div>
       {!room.peer && (
-        <p className="mt-4 text-xs text-[var(--ink-faint)]">
+        <p className="mt-4 text-xs text-[var(--gk-ink-faint)]">
           Solo practice — arm the device and you can flip between both views.
         </p>
       )}
@@ -423,7 +423,7 @@ function ModuleCard({
       <span className="bd-module__screw bd-module__screw--bl" aria-hidden />
       <span className="bd-module__screw bd-module__screw--br" aria-hidden />
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="type-heading text-lg text-[var(--ink)]">
+        <h3 className="type-heading text-lg text-[var(--gk-ink)]">
           {icon} {title}
         </h3>
         <div className="flex items-center gap-2">
@@ -456,7 +456,7 @@ function WiresModule({
   };
   return (
     <ModuleCard title="Wires" icon="🔌" done={done}>
-      <p className="mb-3 text-xs text-[var(--ink-dim)]">
+      <p className="mb-3 text-xs text-[var(--gk-ink-dim)]">
         Describe the wires left-to-right to your Expert, then cut the ONE they name.
       </p>
       <div className="flex flex-col gap-2">
@@ -482,7 +482,7 @@ function WiresModule({
                 {i + 1} · {WIRE_NAMES[w]}
               </span>
               {isCut && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--ink-dim)]">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--gk-ink-dim)]">
                   ✂ cut
                 </span>
               )}
@@ -515,7 +515,7 @@ function KeypadModule({
   };
   return (
     <ModuleCard title="Keypad" icon="🔢" done={done}>
-      <p className="mb-3 text-xs text-[var(--ink-dim)]">
+      <p className="mb-3 text-xs text-[var(--gk-ink-dim)]">
         Read the four symbols to your Expert. Press them in the order they dictate.
       </p>
       <div className="grid grid-cols-4 gap-3">
@@ -538,7 +538,7 @@ function KeypadModule({
           );
         })}
       </div>
-      <div className="mt-2 font-type text-xs text-[var(--ink-dim)]">
+      <div className="mt-2 font-type text-xs text-[var(--gk-ink-dim)]">
         Pressed: {pressed.join(' ') || '—'}
       </div>
     </ModuleCard>
@@ -601,7 +601,7 @@ function SimonModule({
   return (
     <ModuleCard title="Simon Lights" icon="💡" done={done}>
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs text-[var(--ink-dim)]">
+        <p className="text-xs text-[var(--gk-ink-dim)]">
           Round {Math.min(round + 1, SIMON_ROUNDS)}/{SIMON_ROUNDS} — watch the
           flashes, then press the RESPONSE colors your Expert dictates.
         </p>
@@ -627,13 +627,13 @@ function SimonModule({
             }}
             title={SIMON_NAMES[c]}
           >
-            <span className="font-type text-xs text-[var(--ink-dim)]">
+            <span className="font-type text-xs text-[var(--gk-ink-dim)]">
               {SIMON_NAMES[c].toUpperCase()}
             </span>
           </motion.button>
         ))}
       </div>
-      <div className="mt-2 font-type text-xs text-[var(--ink-dim)]">
+      <div className="mt-2 font-type text-xs text-[var(--gk-ink-dim)]">
         {watching ? '👁 WATCH…' : `Input: ${input.length}/${seq.length}`}
       </div>
     </ModuleCard>
@@ -665,7 +665,7 @@ function PasswordModule({
   };
   return (
     <ModuleCard title="Password Wheels" icon="🎡" done={done}>
-      <p className="mb-3 text-xs text-[var(--ink-dim)]">
+      <p className="mb-3 text-xs text-[var(--gk-ink-dim)]">
         Spin each wheel and read the letters to your Expert. Submit when the
         three letters form a manual word.
       </p>
@@ -701,7 +701,7 @@ function ExpertView({ room }: { room: RoomApi }) {
       <div className="manila-folder p-6">
         <div className="mb-1 flex items-center justify-between">
           <span className="eyebrow">📖 Defusal manual — expert eyes only</span>
-          <span className="font-type text-xs text-[var(--ink-dim)]">
+          <span className="font-type text-xs text-[var(--gk-ink-dim)]">
             {page + 1}/{MANUAL_PAGES.length}
           </span>
         </div>
@@ -730,7 +730,7 @@ function ExpertView({ room }: { room: RoomApi }) {
       </div>
       <div className="glass-card !rounded-2xl p-4">
         <span className="eyebrow">Field notes</span>
-        <ul className="mt-2 space-y-1 text-xs text-[var(--ink-dim)]">
+        <ul className="mt-2 space-y-1 text-xs text-[var(--gk-ink-dim)]">
           {MANUAL_TIPS.map((t, i) => (
             <li key={i}>• {t}</li>
           ))}
@@ -766,7 +766,7 @@ function EndView({
       <h3 className="type-heading mt-4 text-3xl">
         {won ? 'DEVICE DEFUSED' : 'DETONATION'}
       </h3>
-      <p className="mt-2 text-sm text-[var(--ink-dim)]">
+      <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
         {won
           ? `Case closed with ${fmt(remaining)} to spare and ${strikes} strike${strikes === 1 ? '' : 's'}. Flawless teamwork, detectives.`
           : strikes >= MAX_STRIKES

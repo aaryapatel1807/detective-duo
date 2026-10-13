@@ -233,7 +233,7 @@ export default function SnakeGame({ room }: GameProps) {
     <div className="gk-root gk-modal-scope mx-auto max-w-md">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="THE GETAWAY" title="Snake" />
-        <p className="mt-2 text-sm text-[var(--ink-dim)]">
+        <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
           Arrows, WASD, or swipe. Eat the red apples (+10). New record = +{XP_AWARDS.soloWin} XP.
         </p>
       </div>

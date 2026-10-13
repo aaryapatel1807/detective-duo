@@ -193,12 +193,12 @@ export default function HangmanDuelGame({ room }: GameProps) {
       {phase === 'lobby' && (
         <ManilaFolder className="p-6 text-center">
           <div className="type-heading text-xl">The Interrogation Room</div>
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">
+          <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
             A word is sealed in the envelope. Each wrong letter is a strike against you —
             {HANGMAN_MAX_STRIKES} strikes and the round goes cold.
           </p>
           {!room.peer && (
-            <p className="mt-2 text-xs text-[var(--ink-faint)]">
+            <p className="mt-2 text-xs text-[var(--gk-ink-faint)]">
               Solo practice — create a room from the hub to duel live.
             </p>
           )}

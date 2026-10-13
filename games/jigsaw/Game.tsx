@@ -147,7 +147,7 @@ export default function JigsawGame({ room }: GameProps) {
     <div className="gk-root gk-modal-scope mx-auto max-w-lg">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="EVIDENCE PHOTO" title="Jigsaw" />
-        <p className="mt-2 text-sm text-[var(--ink-dim)]">
+        <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
           Drag pieces from the tray onto the board. They snap when close to home.
         </p>
       </div>
@@ -163,7 +163,7 @@ export default function JigsawGame({ room }: GameProps) {
             {sizeOpt}×{sizeOpt}
           </GameButton>
         ))}
-        <span className="mx-1 hidden self-center text-[var(--ink-faint)] sm:inline">|</span>
+        <span className="mx-1 hidden self-center text-[var(--gk-ink-faint)] sm:inline">|</span>
         {(
           [
             ['pattern', '🌃 Noir'],

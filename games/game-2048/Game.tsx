@@ -147,7 +147,7 @@ export default function Game2048({ room }: GameProps) {
     <div className="gk-root gk-modal-scope mx-auto max-w-md">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="NOIR DETECTIVE" title="2048 · Evidence Merge" />
-        <p className="mt-2 text-sm text-[var(--ink-dim)]">
+        <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
           Arrow keys, WASD, or swipe. Merge matching tiles to file the 2048.
         </p>
       </div>

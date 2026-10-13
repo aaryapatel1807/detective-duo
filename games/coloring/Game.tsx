@@ -98,7 +98,7 @@ export default function ColoringGame({ room }: GameProps) {
     <div className="gk-root mx-auto max-w-xl">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="THE SKETCHBOOK" title="Coloring" />
-        <p className="mt-2 text-sm text-[var(--ink-dim)]">
+        <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
           Pick a color, click a region. Finished pieces stay in your case file ({finishedPages}/4).
         </p>
       </div>
@@ -156,7 +156,7 @@ export default function ColoringGame({ room }: GameProps) {
             </svg>
           </div>
 
-          <div className="mt-3 text-center font-type text-xs tracking-[0.14em] uppercase text-[var(--ink-dim)]">
+          <div className="mt-3 text-center font-type text-xs tracking-[0.14em] uppercase text-[var(--gk-ink-dim)]">
             {filledCount(page, fills)}/{page.regions.length} regions · {page.title}
           </div>
 
@@ -165,7 +165,7 @@ export default function ColoringGame({ room }: GameProps) {
               <div className="type-heading text-base text-[var(--amber-glow)]">
                 🖼️ Piece finished — saved to your case file!
               </div>
-              <p className="mt-1 text-sm text-[var(--ink-dim)]">+{XP_AWARDS.soloWin} XP filed on first finish.</p>
+              <p className="mt-1 text-sm text-[var(--gk-ink-dim)]">+{XP_AWARDS.soloWin} XP filed on first finish.</p>
             </div>
           )}
 

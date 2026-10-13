@@ -49,7 +49,7 @@ export default function ChatBox({ room, label }: Props) {
       </div>
       <div className="h-44 space-y-2 overflow-y-auto px-4 py-3">
         {messages.length === 0 && (
-          <p className="text-xs italic text-[var(--ink-faint)]">The wire is live. Ask anything — the liar is sweating.</p>
+          <p className="text-xs italic text-[var(--gk-ink-faint)]">The wire is live. Ask anything — the liar is sweating.</p>
         )}
         {messages.map((m, i) => {
           const mine = m.from === room.me.id;
@@ -58,11 +58,11 @@ export default function ChatBox({ room, label }: Props) {
               <div
                 className={`max-w-[80%] rounded-xl px-3 py-1.5 text-sm ${
                   mine
-                    ? 'bg-[rgba(232,163,61,0.18)] text-[var(--ink)]'
-                    : 'bg-[rgba(255,255,255,0.06)] text-[var(--ink)]'
+                    ? 'bg-[rgba(232,163,61,0.18)] text-[var(--gk-ink)]'
+                    : 'bg-[rgba(255,255,255,0.06)] text-[var(--gk-ink)]'
                 }`}
               >
-                <span className="mr-2 text-[0.65rem] uppercase tracking-wider text-[var(--ink-faint)]">{m.name}</span>
+                <span className="mr-2 text-[0.65rem] uppercase tracking-wider text-[var(--gk-ink-faint)]">{m.name}</span>
                 {m.text}
               </div>
             </div>

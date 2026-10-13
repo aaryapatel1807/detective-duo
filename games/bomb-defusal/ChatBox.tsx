@@ -79,7 +79,7 @@ export default function ChatBox({
       </div>
       <div className="flex h-44 flex-col gap-2 overflow-y-auto px-3 py-2">
         {msgs.length === 0 && (
-          <p className="text-xs text-[var(--ink-faint)]">
+          <p className="text-xs text-[var(--gk-ink-faint)]">
             Radio silence. Coordinate with your partner here.
           </p>
         )}
@@ -88,8 +88,8 @@ export default function ChatBox({
             key={m.id}
             className={`max-w-[85%] rounded-xl px-3 py-1.5 text-sm ${
               m.mine
-                ? 'self-end bg-[rgba(232,163,61,0.18)] text-[var(--ink)]'
-                : 'self-start bg-[rgba(255,255,255,0.07)] text-[var(--ink)]'
+                ? 'self-end bg-[rgba(232,163,61,0.18)] text-[var(--gk-ink)]'
+                : 'self-start bg-[rgba(255,255,255,0.07)] text-[var(--gk-ink)]'
             }`}
           >
             <span className="mr-1 font-type text-[0.65rem] text-[var(--amber-glow)]">
@@ -106,7 +106,7 @@ export default function ChatBox({
             <button
               key={q}
               onClick={() => sendText(q)}
-              className="rounded-full border border-[var(--glass-border)] px-2.5 py-1 text-[0.7rem] text-[var(--ink-dim)] transition hover:border-[var(--amber-glow)] hover:text-[var(--ink)]"
+              className="rounded-full border border-[var(--glass-border)] px-2.5 py-1 text-[0.7rem] text-[var(--gk-ink-dim)] transition hover:border-[var(--amber-glow)] hover:text-[var(--gk-ink)]"
             >
               {q}
             </button>

@@ -146,7 +146,7 @@ export default function WordDuelGame({ room }: GameProps) {
       {phase === 'setup' && (
         <ManilaFolder className="p-6 text-center">
           <div className="type-heading text-xl">Seal Your Word</div>
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">
+          <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
             Type a 5-letter word. Your partner will try to crack it — and you theirs.
           </p>
           {mySecret ? (
