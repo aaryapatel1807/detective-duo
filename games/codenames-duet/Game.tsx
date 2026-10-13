@@ -6,7 +6,6 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 import type { GameProps } from '../types';
 import type { CodenamesShared } from './types';
 import {
@@ -25,27 +24,28 @@ import { WORDS_4, WORDS_5, WORDS_6 } from '../../lib/content/words';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { recordCoopWin } from '../../lib/lovenotes';
 import { sounds } from '../../lib/sound';
-import { GlassCard } from '../../components/GlassCard';
 import { ManilaFolder } from '../../components/props';
 import '../ui-kit/kit.css';
+import './codenames-duet.css';
 import { GameButton, TurnBanner, ScoreHUD, ResultModal, SectionTitle } from '../ui-kit';
 
 const SLUG = 'codenames-duet';
 const POOL = [...WORDS_4, ...WORDS_5, ...WORDS_6];
 
-const CARD_STYLE: Record<CardKind, { revealed: string; hint: string }> = {
-  agent: {
-    revealed: 'border-[var(--amber-glow)] bg-[rgba(232,163,61,0.22)] text-[var(--amber-glow)]',
-    hint: 'ring-2 ring-[var(--amber-glow)]/60',
-  },
-  assassin: {
-    revealed: 'border-[var(--blood)] bg-[rgba(120,10,10,0.55)] text-[#ffb3b3]',
-    hint: 'ring-2 ring-[var(--blood)]/70',
-  },
-  bystander: {
-    revealed: 'border-[var(--glass-border)] bg-[rgba(120,120,120,0.25)] text-[var(--ink-dim)]',
-    hint: '',
-  },
+/** Classic Codenames sides: agents alternate red/blue like the real game. */
+const agentSide = (i: number): 'red' | 'blue' => (i % 2 === 0 ? 'red' : 'blue');
+
+const cardClass = (kind: CardKind, index: number, revealed: boolean, showKey: boolean): string => {
+  if (revealed) {
+    if (kind === 'agent') return `cn-card cn-card--agent-${agentSide(index)}`;
+    if (kind === 'assassin') return 'cn-card cn-card--assassin';
+    return 'cn-card cn-card--bystander';
+  }
+  if (showKey) {
+    if (kind === 'agent') return `cn-card cn-card--key-${agentSide(index)}`;
+    return `cn-card cn-card--key-${kind}`;
+  }
+  return 'cn-card';
 };
 
 function playerName(room: GameProps['room'], pid: string | null | undefined): string {
@@ -203,7 +203,7 @@ export default function CodenamesDuetGame({ room }: GameProps) {
     <div className="gk-root mx-auto max-w-2xl">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="Case file № 68 — Word & Code Duels" title="Codenames Duet" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+        <p className="mt-1 text-sm text-[var(--gk-ink-dim)]">
           Co-op: find all {DUET_AGENTS} agents, dodge {DUET_ASSASSINS} assassins. Clue-giver
           alternates each turn — {DUET_MAX_TURNS} turns before the trail goes cold.
         </p>
@@ -228,7 +228,7 @@ export default function CodenamesDuetGame({ room }: GameProps) {
       )}
 
       {phase === 'play' && (
-        <GlassCard className="p-6">
+        <div>
           <ScoreHUD
             leftLabel="🕵️ Agents"
             leftValue={found}
@@ -246,56 +246,66 @@ export default function CodenamesDuetGame({ room }: GameProps) {
             />
           </div>
 
-          {/* clue banner */}
+          {/* clue slip */}
           <div className="mt-3 text-center">
             {clue ? (
-              <div className="inline-block rounded-lg border border-[var(--brass)] bg-[rgba(232,163,61,0.1)] px-5 py-2">
-                <span className="font-type text-xl tracking-[0.15em] text-[var(--amber-glow)]">
-                  {clue.word}
-                </span>
-                <span className="ml-3 font-type text-lg text-[var(--ink-dim)]">{clue.count}</span>
+              <div className="cn-clue">
+                <span className="cn-clue-word">{clue.word}</span>
+                <span className="cn-clue-count">{clue.count}</span>
                 {!iAmGiver && (
-                  <span className="ml-3 text-xs text-[var(--ink-dim)]">{guessesLeft} guesses left</span>
+                  <span className="cn-clue-left">{guessesLeft} guesses left</span>
                 )}
               </div>
             ) : (
-              <div className="text-sm text-[var(--ink-dim)]">
+              <div className="text-sm text-[var(--gk-ink-dim)]">
                 {iAmGiver ? 'Give a one-word clue below.' : `Waiting for ${playerName(room, clueGiver)}'s clue…`}
               </div>
             )}
           </div>
 
-          {/* board */}
-          <div className="mt-4 grid grid-cols-5 gap-1.5">
-            {words.map((w, i) => {
-              const isOut = revealed[i];
-              const kind = key[i];
-              const showKey = iAmGiver && !isOut;
-              return (
-                <motion.div
-                  key={i}
-                  whileTap={!iAmGiver && !isOut && clue ? { scale: 0.92 } : undefined}
-                >
+          {/* board on the card table */}
+          <div className="cn-table">
+            <div className="cn-grid" role="grid" aria-label="Code name board">
+              {words.map((w, i) => {
+                const isOut = revealed[i];
+                const kind = key[i];
+                const showKey = iAmGiver && !isOut;
+                return (
                   <button
+                    key={i}
+                    type="button"
+                    role="gridcell"
                     disabled={iAmGiver || isOut || !clue || guessesLeft <= 0}
                     onClick={() => guessCard(i)}
-                    title={showKey ? kind : undefined}
-                    className={
-                      'flex aspect-square w-full items-center justify-center rounded-md border p-1 text-center font-type text-[0.68rem] leading-tight transition sm:text-xs ' +
-                      (isOut
-                        ? CARD_STYLE[kind].revealed
-                        : 'border-[var(--glass-border)] bg-[rgba(255,255,255,0.04)] text-[var(--ink)] hover:border-[var(--brass)] ') +
-                      (showKey ? CARD_STYLE[kind].hint : '')
-                    }
+                    title={showKey ? `${kind}${kind === 'agent' ? ` (${agentSide(i)})` : ''}` : undefined}
+                    aria-label={`${w}${isOut ? `, revealed ${kind}` : ''}`}
+                    className={cardClass(kind, i, isOut, showKey)}
                   >
-                    {isOut && kind === 'assassin' ? '💀' : ''}
-                    {isOut && kind === 'agent' ? '✅ ' : ''}
+                    {isOut && kind === 'agent' && <span className="cn-card__icon" aria-hidden>★</span>}
+                    {isOut && kind === 'assassin' && <span className="cn-card__icon" aria-hidden>💀</span>}
                     {w}
                   </button>
-                </motion.div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
+
+          {/* spymaster key card — only the clue-giver sees it */}
+          {iAmGiver && (
+            <div className="mt-4 flex justify-center">
+              <div className="cn-keycard" aria-label="Spymaster key card">
+                <div className="cn-keycard-grid" aria-hidden>
+                  {key.map((k, i) => (
+                    <div
+                      key={i}
+                      className={`cn-keycard-cell cn-keycard-cell--${k === 'agent' ? agentSide(i) : k}`}
+                    />
+                  ))}
+                </div>
+                <div className="cn-keycard-cap">Key card</div>
+              </div>
+            </div>
+          )}
 
           {/* clue controls */}
           {iAmGiver && !clue && (
@@ -320,8 +330,8 @@ export default function CodenamesDuetGame({ room }: GameProps) {
                 </GameButton>
               </div>
               {clueError && <div className="mt-1 text-center text-xs text-[var(--blood)]">{clueError}</div>}
-              <div className="mt-1 text-center text-xs text-[var(--ink-faint)]">
-                Ringed cards show you the answers — the guesser can&rsquo;t see them.
+              <div className="mt-1 text-center text-xs text-[var(--gk-ink-dim)]">
+                Your key card shows every card&rsquo;s identity — the guesser can&rsquo;t see it.
               </div>
             </div>
           )}
@@ -339,7 +349,7 @@ export default function CodenamesDuetGame({ room }: GameProps) {
               <div key={i} className="text-xs">{line}</div>
             ))}
           </div>
-        </GlassCard>
+        </div>
       )}
 
       {phase === 'over' && (

@@ -1,0 +1,90 @@
+/* ============================================================
+ * CONNECT 4 — realism pass: yellow plastic frame, glossy discs.
+ * Unlayered custom CSS. Mobile-first. Hex fallbacks throughout.
+ * ============================================================ */
+
+/* Yellow plastic board frame — glossy, rounded, deep-set. */
+.c4-frame {
+  border-radius: 22px;
+  padding: 12px;
+  background:
+    radial-gradient(130% 70% at 50% -10%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 45%),
+    linear-gradient(165deg, #ffc63f 0%, #f2a71e 45%, #cf7f10 100%);
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.7),
+    inset 0 -4px 8px rgba(120, 60, 0, 0.45),
+    0 8px 18px rgba(0, 0, 0, 0.5),
+    0 18px 40px rgba(0, 0, 0, 0.35);
+  border: 1px solid #8a5208;
+}
+
+/* Column drop buttons — generous touch targets. */
+.c4-colbtn {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Disc slots — dark punched holes with inner shadow. */
+.c4-slot {
+  aspect-ratio: 1 / 1;
+  border-radius: 9999px;
+  background: #14100a;
+  box-shadow:
+    inset 0 4px 9px rgba(0, 0, 0, 0.9),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* The discs themselves — radial depth, plastic gloss. */
+.c4-disc {
+  width: 92%;
+  height: 92%;
+  border-radius: 9999px;
+  position: relative;
+  animation: c4-drop 0.32s cubic-bezier(0.3, 0.9, 0.4, 1.1) both;
+}
+.c4-disc::after {
+  /* gloss highlight */
+  content: '';
+  position: absolute;
+  left: 12%;
+  top: 7%;
+  width: 46%;
+  height: 30%;
+  border-radius: 9999px;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0));
+  transform: rotate(-18deg);
+  pointer-events: none;
+}
+.c4-disc--red {
+  background: radial-gradient(circle at 34% 28%, #ff9a8a 0%, #e5383b 46%, #9c1620 100%);
+  box-shadow:
+    inset 0 -4px 7px rgba(90, 5, 10, 0.65),
+    inset 0 3px 5px rgba(255, 255, 255, 0.4),
+    0 3px 6px rgba(0, 0, 0, 0.55);
+}
+.c4-disc--gold {
+  background: radial-gradient(circle at 34% 28%, #ffe9a3 0%, #f2b233 46%, #96690e 100%);
+  box-shadow:
+    inset 0 -4px 7px rgba(110, 70, 5, 0.6),
+    inset 0 3px 5px rgba(255, 255, 255, 0.45),
+    0 3px 6px rgba(0, 0, 0, 0.55);
+}
+
+@keyframes c4-drop {
+  0% { transform: translateY(-320%); }
+  70% { transform: translateY(8%); }
+  100% { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .c4-disc { animation: none; }
+}
+
+@media (min-width: 640px) {
+  .c4-frame { padding: 16px; border-radius: 26px; }
+}
