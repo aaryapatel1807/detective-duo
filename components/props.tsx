@@ -2,9 +2,12 @@
 
 import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { cn } from '../lib/cn';
+import styles from './hub-chrome.module.css';
 
-/** Manila case folder card. */
+/**
+ * Noir dossier (restyled manila folder). Props unchanged:
+ * children / className / onClick. Game shells keep importing this.
+ */
 export function ManilaFolder({
   children,
   className,
@@ -19,14 +22,21 @@ export function ManilaFolder({
       whileHover={{ y: -4 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className={cn('manila-folder p-4 pt-5', onClick && 'cursor-pointer', className)}
+      className={
+        className
+          ? `${styles.dossier} p-4 pt-5 ${onClick ? 'cursor-pointer' : ''} ${className}`
+          : `${styles.dossier} p-4 pt-5 ${onClick ? 'cursor-pointer' : ''}`
+      }
     >
       {children}
     </motion.div>
   );
 }
 
-/** Polaroid photo card. */
+/**
+ * Noir evidence photo (restyled polaroid). Props unchanged:
+ * children / caption / className / onClick.
+ */
 export function Polaroid({
   children,
   caption,
@@ -43,10 +53,14 @@ export function Polaroid({
       whileHover={{ y: -4, rotate: 0.8 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className={cn('polaroid', onClick && 'cursor-pointer', className)}
+      className={
+        className
+          ? `${styles.photo} ${onClick ? 'cursor-pointer' : ''} ${className}`
+          : `${styles.photo} ${onClick ? 'cursor-pointer' : ''}`
+      }
     >
       {children}
-      {caption && <div className="caption">{caption}</div>}
+      {caption && <div className={styles.photoCaption}>{caption}</div>}
     </motion.div>
   );
 }

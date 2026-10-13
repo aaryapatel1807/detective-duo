@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { cn } from '../lib/cn';
+import './hub-noir.css';
 
 /**
- * Typewriter heading. Renders text in the typewriter serif; with
+ * Typewriter heading. Renders text in the noir display serif; with
  * `animate` it types character-by-character like a typewriter.
  */
 export function Typewriter({
@@ -38,7 +39,7 @@ export function Typewriter({
   }, [text, animate, speed]);
 
   return (
-    <Tag className={cn('type-heading', className)}>
+    <Tag className={cn('hub-display', className)}>
       {shown}
       {animate && shown.length < text.length && <span className="animate-pulse">▌</span>}
     </Tag>
