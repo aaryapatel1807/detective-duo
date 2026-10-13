@@ -16,12 +16,57 @@ import {
 } from './logic';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
-import { GlassCard } from '../../components/GlassCard';
 import { ManilaFolder } from '../../components/props';
 import '../ui-kit/kit.css';
+import './cipher-duel.css';
 import { GameButton, TurnBanner, ResultModal, SectionTitle } from '../ui-kit';
 
 const SLUG = 'cipher-duel';
+
+interface GuessStripProps {
+  name: string;
+  target: string;
+  list: { guess: string; bulls: number; cows: number }[];
+  active: boolean;
+}
+
+/** One detective's cipher strip: digit tiles + bull/cow pegs. */
+function GuessStrip({ name, target, list, active }: GuessStripProps) {
+  return (
+    <div className={`cd-strip${active ? ' cd-strip--active' : ''}`}>
+      <div className="cd-strip-name">{name}</div>
+      <div className="cd-strip-target">Cracking {target}</div>
+      <div className="cd-guesses">
+        {list.length === 0 && (
+          <div className="cd-none">No guesses yet — dial the first combination.</div>
+        )}
+        {list.map((g, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="cd-guess"
+          >
+            <div className="cd-digits" aria-label={`Guess ${g.guess}`}>
+              {g.guess.split('').map((d, j) => (
+                <div key={j} className="cd-digit" aria-hidden>{d}</div>
+              ))}
+            </div>
+            <div className="cd-pegs" aria-hidden>
+              {Array.from({ length: g.bulls }).map((_, k) => (
+                <span key={`b${k}`} className="cd-peg cd-peg--bull" />
+              ))}
+              {Array.from({ length: g.cows }).map((_, k) => (
+                <span key={`c${k}`} className="cd-peg cd-peg--cow" />
+              ))}
+            </div>
+            <span className="cd-score">{g.bulls}B · {g.cows}C</span>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function playerName(room: GameProps['room'], pid: string | null | undefined): string {
   if (!pid) return '—';
@@ -107,9 +152,9 @@ export default function CipherDuelGame({ room }: GameProps) {
     <div className="gk-root mx-auto max-w-xl">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="Case file № 23 — Word & Code Duels" title="Cipher Duel" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+        <p className="mt-1 text-sm text-[var(--gk-ink-dim)]">
           Bulls &amp; Cows: seal a 4-digit safe code, then crack your partner&rsquo;s with
-          alternating guesses. 🐂 bull = right digit, right place · 🐄 cow = right digit, wrong place.
+          alternating guesses. <span aria-hidden>🐂</span> bull = right digit, right place · <span aria-hidden>🐄</span> cow = right digit, wrong place.
         </p>
       </div>
 
@@ -154,38 +199,29 @@ export default function CipherDuelGame({ room }: GameProps) {
       )}
 
       {phase === 'play' && (
-        <GlassCard className="p-6">
-          <div className="flex flex-col items-center gap-2">
-            <div className="eyebrow">Cracking: {playerName(room, opponentId)}&rsquo;s safe</div>
-            <TurnBanner
-              isYourTurn={myTurn}
-              yourText="🎯 Your move"
-              theirText={room.peer ? `⏳ ${playerName(room, opponentId)} is guessing` : '⏳ Waiting'}
-            />
-          </div>
+        <div>
+          <TurnBanner
+            isYourTurn={myTurn}
+            yourText="🎯 Your move"
+            theirText={room.peer ? `⏳ ${playerName(room, opponentId)} is guessing` : '⏳ Waiting'}
+          />
 
-          <div className="mt-4 space-y-1.5">
-            {myGuesses.length === 0 && (
-              <div className="text-center text-sm text-[var(--ink-faint)]">
-                No guesses yet — dial the first combination.
-              </div>
+          {/* two cipher strips racing */}
+          <div className="cd-race">
+            <GuessStrip
+              name="You"
+              target={`${playerName(room, opponentId)}'s safe`}
+              list={myGuesses}
+              active={myTurn}
+            />
+            {opponentId && (
+              <GuessStrip
+                name={playerName(room, opponentId)}
+                target="your safe"
+                list={guesses[opponentId] ?? []}
+                active={turn === opponentId}
+              />
             )}
-            {myGuesses.map((g, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex items-center justify-center gap-3"
-              >
-                <span className="font-type text-xl tracking-[0.25em]">{g.guess}</span>
-                <span className="text-sm">
-                  {'🐂'.repeat(g.bulls)}{'🐄'.repeat(g.cows)}
-                  <span className="ml-2 text-xs text-[var(--ink-dim)]">
-                    {g.bulls}B · {g.cows}C
-                  </span>
-                </span>
-              </motion.div>
-            ))}
           </div>
 
           <div className="mt-5 flex justify-center gap-2">
@@ -207,12 +243,7 @@ export default function CipherDuelGame({ room }: GameProps) {
               🔓 Crack
             </GameButton>
           </div>
-          {room.peer && (
-            <div className="mt-3 text-center text-xs text-[var(--ink-dim)]">
-              {playerName(room, opponentId)} has made {(opponentId ? guesses[opponentId] ?? [] : []).length} guesses
-            </div>
-          )}
-        </GlassCard>
+        </div>
       )}
 
       {phase === 'over' && (
@@ -224,12 +255,14 @@ export default function CipherDuelGame({ room }: GameProps) {
                 const pg = guesses[pid] ?? [];
                 const crackedCode = other ? codes[other] ?? '????' : '—';
                 return (
-                  <div key={pid} className="glass-card !rounded-2xl p-3">
-                    <div className="eyebrow">{playerName(room, pid)} cracked</div>
-                    <div className="type-heading mt-1 text-2xl tracking-[0.2em]">
-                      {crackedCode}
+                  <div key={pid} className="cd-strip">
+                    <div className="cd-strip-name">{playerName(room, pid)}</div>
+                    <div className="cd-code" aria-label={`Code ${crackedCode}`}>
+                      {crackedCode.split('').map((d, i) => (
+                        <div key={i} className="cd-digit" aria-hidden>{d}</div>
+                      ))}
                     </div>
-                    <div className="text-xs text-[var(--ink-dim)]">
+                    <div className="cd-score mt-2">
                       in {pg.length} {pg.length === 1 ? 'guess' : 'guesses'}
                     </div>
                   </div>

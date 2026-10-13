@@ -19,9 +19,9 @@ import {
 import { BREAKER_CIPHERS, getBreakerCipher } from './content';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
-import { GlassCard } from '../../components/GlassCard';
-import { ManilaFolder, Polaroid } from '../../components/props';
+import { ManilaFolder } from '../../components/props';
 import '../ui-kit/kit.css';
+import './cipher-breaker.css';
 import { GameButton, ScoreHUD, DifficultyBadge, SectionTitle } from '../ui-kit';
 
 const SLUG = 'cipher-breaker';
@@ -101,7 +101,7 @@ export default function CipherBreakerGame({ room }: GameProps) {
     <div className="gk-root mx-auto max-w-2xl">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="Case file № 52 — Word & Code Duels" title="Cipher Breaker" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+        <p className="mt-1 text-sm text-[var(--gk-ink-dim)]">
           Intercepted messages from the underworld. Decode them — each solved cipher plants an{' '}
           <span className="text-[var(--amber-glow)]">evidence token</span> for the Crime Mystery.
         </p>
@@ -160,7 +160,7 @@ export default function CipherBreakerGame({ room }: GameProps) {
           )}
         </>
       ) : (
-        <GlassCard className="p-6">
+        <div className="cb-sheet">
           <GameButton variant="ghost" size="sm" onClick={() => setOpenId(null)}>
             ← Back to intercepts
           </GameButton>
@@ -171,18 +171,18 @@ export default function CipherBreakerGame({ room }: GameProps) {
             />
           </div>
 
-          <Polaroid caption="Intercepted message" className="mx-auto mt-4 max-w-md p-4">
-            <div className="bg-[rgba(0,0,0,0.55)] p-4 font-type text-lg leading-relaxed tracking-wider text-[var(--amber-glow)]">
-              {cipher.message}
-            </div>
-          </Polaroid>
+          <div className="mt-5">
+            <div className="cb-label">Intercepted message</div>
+            <div className="cb-message">{cipher.message}</div>
+          </div>
 
           {solvedBy[cipher.id] ? (
-            <div className="paper-strip mt-4 text-center">
-              ✅ Decoded by {playerName(room, solvedBy[cipher.id])}
-              <div className="mt-1 font-type text-sm">{cipher.solution}</div>
-              <div className="mt-1 text-xs text-[var(--amber-glow)]">
-                🎞️ Evidence token planted: {cipher.keyword}
+            <div className="mt-5">
+              <div className="cb-label">Decoded plaintext</div>
+              <div className="cb-solution">{cipher.solution}</div>
+              <div className="cb-keyword">
+                🎞️ Evidence token planted: {cipher.keyword} · cracked by{' '}
+                {playerName(room, solvedBy[cipher.id])}
               </div>
             </div>
           ) : (
@@ -213,7 +213,7 @@ export default function CipherBreakerGame({ room }: GameProps) {
               )}
             </div>
           )}
-        </GlassCard>
+        </div>
       )}
     </div>
   );

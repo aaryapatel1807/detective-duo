@@ -9,6 +9,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './bomb-defusal.css';
 import { GameButton, ProgressBar } from '../ui-kit';
 import type { GameProps } from '../types';
 import type { RoomApi } from '../../lib/realtime/useRoom';
@@ -206,21 +208,12 @@ export default function BombDefusalGame({ room }: GameProps) {
         </div>
         {status === 'armed' && (
           <div className="flex items-center gap-4">
-            <div
-              className={`type-heading text-4xl tabular-nums ${
-                timeDanger ? 'text-[var(--blood-bright)]' : 'text-[var(--amber-glow)]'
-              }`}
-            >
+            <div className={`bd-timer ${timeDanger ? 'bd-timer--danger' : ''}`} role="timer" aria-label={`${fmt(remaining)} remaining`}>
               {fmt(remaining)}
             </div>
-            <div className="flex gap-1" title="Strikes">
+            <div className="flex gap-2" title="Strikes" aria-label={`${strikes} of ${MAX_STRIKES} strikes`}>
               {Array.from({ length: MAX_STRIKES }).map((_, i) => (
-                <span
-                  key={i}
-                  className={`text-xl ${i < strikes ? 'text-[var(--blood-bright)]' : 'text-[var(--ink-faint)]'}`}
-                >
-                  ✕
-                </span>
+                <span key={i} className={`bd-led ${i < strikes ? 'bd-led--on' : ''}`} aria-hidden />
               ))}
             </div>
           </div>
@@ -344,15 +337,14 @@ function SetupView({
           Solo practice — arm the device and you can flip between both views.
         </p>
       )}
-      <GameButton
-        variant="danger"
-        size="lg"
+      <button
+        type="button"
         onClick={onArm}
         disabled={!myRole && !!room.peer && !roles[room.peer?.id ?? '']}
-        className="mt-6"
+        className="bd-arm mt-6"
       >
         🔴 ARM THE DEVICE
-      </GameButton>
+      </button>
     </GlassCard>
   );
 }
@@ -380,7 +372,7 @@ function TechnicianView({
 }) {
   const cfg = useMemo(() => generateBomb(seed), [seed]);
   return (
-    <div className="space-y-4">
+    <div className="bd-console space-y-4">
       {solo && (
         <div className="flex gap-2">
           <GameButton
@@ -425,24 +417,21 @@ function ModuleCard({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className={`glass-card !rounded-2xl p-5 transition ${
-        done ? '!border-[var(--brass)]' : ''
-      }`}
-    >
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="type-heading text-lg">
+    <div className="bd-module">
+      <span className="bd-module__screw bd-module__screw--tl" aria-hidden />
+      <span className="bd-module__screw bd-module__screw--tr" aria-hidden />
+      <span className="bd-module__screw bd-module__screw--bl" aria-hidden />
+      <span className="bd-module__screw bd-module__screw--br" aria-hidden />
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="type-heading text-lg text-[var(--ink)]">
           {icon} {title}
         </h3>
-        {done ? (
-          <span className="eyebrow rounded-full bg-[rgba(201,162,39,0.2)] px-3 py-1 text-[var(--brass)]">
-            ✓ DEFUSED
+        <div className="flex items-center gap-2">
+          <span className={`bd-led ${done ? 'bd-led--green bd-led--on' : 'bd-led--on'}`} aria-hidden />
+          <span className={`eyebrow ${done ? 'text-[var(--brass)]' : 'text-[var(--blood-bright)]'}`}>
+            {done ? '✓ DEFUSED' : '● ARMED'}
           </span>
-        ) : (
-          <span className="eyebrow rounded-full bg-[rgba(179,38,30,0.2)] px-3 py-1 text-[var(--blood-bright)]">
-            ● ARMED
-          </span>
-        )}
+        </div>
       </div>
       {children}
     </div>
@@ -479,7 +468,8 @@ function WiresModule({
               whileTap={done ? undefined : { scale: 0.98 }}
               onClick={() => cut(i)}
               disabled={done || gs.cutWire != null}
-              className="relative h-9 overflow-hidden rounded-full transition disabled:cursor-default"
+              aria-label={`Cut wire ${i + 1}, ${WIRE_NAMES[w]}`}
+              className="bd-wire relative min-h-[52px] overflow-hidden rounded-full transition disabled:cursor-default"
               style={{
                 background: isCut
                   ? 'rgba(255,255,255,0.06)'
@@ -537,11 +527,11 @@ function KeypadModule({
               whileTap={done ? undefined : { scale: 0.92 }}
               onClick={() => press(sym)}
               disabled={done}
-              className={`flex h-16 items-center justify-center rounded-xl border text-3xl transition ${
-                idx >= 0
-                  ? 'border-[var(--brass)] bg-[rgba(201,162,39,0.2)]'
-                  : 'border-[var(--glass-border)] bg-[rgba(255,255,255,0.05)] hover:border-[var(--amber-glow)]'
+              aria-label={`Keypad symbol ${sym}`}
+              className={`bd-key flex items-center justify-center ${
+                idx >= 0 ? '!border-[var(--brass)]' : ''
               }`}
+              style={idx >= 0 ? { background: 'linear-gradient(180deg, #6b5a33 0%, #4a3f28 60%, #35301f 100%)' } : undefined}
             >
               {sym}
             </motion.button>
@@ -628,7 +618,7 @@ function SimonModule({
             whileTap={done || watching ? undefined : { scale: 0.9 }}
             onClick={() => press(c)}
             disabled={done || watching}
-            className="flex h-16 items-center justify-center rounded-2xl border transition"
+            className="bd-simon flex items-center justify-center"
             style={{
               borderColor: 'var(--glass-border)',
               background: flash === c ? SIMON_CSS[c] : 'rgba(255,255,255,0.05)',
@@ -685,7 +675,7 @@ function PasswordModule({
             <GameButton size="sm" variant="ghost" onClick={() => spin(w, -1)} disabled={done} ariaLabel="Spin wheel down">
               ▲
             </GameButton>
-            <div className="flex h-20 w-16 items-center justify-center rounded-xl border border-[var(--brass)] bg-[rgba(0,0,0,0.4)] font-type text-4xl text-[var(--amber-glow)]">
+            <div className="bd-wheel flex h-20 w-16 items-center justify-center font-type text-4xl">
               {letters[idx[w] ?? 0]}
             </div>
             <GameButton size="sm" variant="ghost" onClick={() => spin(w, 1)} disabled={done} ariaLabel="Spin wheel up">

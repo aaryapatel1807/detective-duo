@@ -1,0 +1,253 @@
+/* ============================================================
+ * BOMB DEFUSAL — control-panel realism.
+ * A riveted steel console: seven-seg countdown, LED strike lights,
+ * chunky toggle modules with screws, tactile wire switches.
+ * Unlayered custom CSS, hex fallbacks, mobile-first.
+ * ============================================================ */
+
+/* The steel console housing the whole operation. */
+.bd-console {
+  border-radius: 20px;
+  padding: 16px;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.015) 0 2px, rgba(0, 0, 0, 0.05) 2px 4px),
+    linear-gradient(165deg, #3a3f46 0%, #2b2f35 50%, #1e2126 100%);
+  border: 1px solid #14161a;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.5),
+    0 16px 34px rgba(0, 0, 0, 0.55);
+}
+
+/* The countdown readout — seven-seg style on an LCD bezel. */
+.bd-timer {
+  display: inline-block;
+  padding: 10px 22px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #0a0c0e 0%, #111417 100%);
+  border: 2px solid #2c3138;
+  box-shadow:
+    inset 0 3px 10px rgba(0, 0, 0, 0.9),
+    0 1px 0 rgba(255, 255, 255, 0.08);
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+  font-size: 2.4rem;
+  letter-spacing: 0.14em;
+  color: #ff4d4d;
+  text-shadow: 0 0 14px rgba(255, 77, 77, 0.85), 0 0 3px rgba(255, 77, 77, 1);
+  font-variant-numeric: tabular-nums;
+}
+
+.bd-timer--danger {
+  animation: bd-blink 1s steps(2, start) infinite;
+}
+
+@keyframes bd-blink {
+  50% { opacity: 0.55; }
+}
+
+/* LED indicator dots. */
+.bd-led {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #5a2a26 0%, #3a1a18 70%);
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.bd-led--on {
+  background: radial-gradient(circle at 35% 30%, #ff8a7a 0%, #e5484d 60%, #a5271f 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.4),
+    0 0 12px rgba(229, 72, 77, 0.9);
+  animation: bd-blink 1.2s steps(2, start) infinite;
+}
+
+.bd-led--green {
+  background: radial-gradient(circle at 35% 30%, #5a3d2a 0%, #3a2a1a 70%);
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.bd-led--green.bd-led--on {
+  background: radial-gradient(circle at 35% 30%, #9df0b8 0%, #3ddc74 60%, #1d8a46 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.4),
+    0 0 12px rgba(61, 220, 116, 0.9);
+  animation: none;
+}
+
+/* Chunky console module with corner screws. */
+.bd-module {
+  position: relative;
+  border-radius: 16px;
+  padding: 18px;
+  background: linear-gradient(165deg, #262b31 0%, #1c1f24 60%, #15181c 100%);
+  border: 1px solid #101215;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.5),
+    0 8px 18px rgba(0, 0, 0, 0.45);
+}
+
+.bd-module__screw {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #8a9098 0%, #4a4f56 60%, #2c3036 100%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.bd-module__screw::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 2px;
+  right: 2px;
+  height: 2px;
+  background: #1a1d21;
+  transform: rotate(38deg);
+}
+
+.bd-module__screw--tl { top: 8px; left: 8px; }
+.bd-module__screw--tr { top: 8px; right: 8px; }
+.bd-module__screw--bl { bottom: 8px; left: 8px; }
+.bd-module__screw--br { bottom: 8px; right: 8px; }
+
+/* Tactile wire switches — thicker, with a snip handle. */
+.bd-wire {
+  min-height: 52px;
+}
+
+/* Chunky keypad buttons. */
+.bd-key {
+  min-height: 72px;
+  border-radius: 12px;
+  border: 1px solid #3a3f46;
+  background: linear-gradient(180deg, #4a5058 0%, #33383f 55%, #24282e 100%);
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.18),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.45),
+    0 6px 0 #101215,
+    0 10px 16px rgba(0, 0, 0, 0.5);
+  color: #f0e8d4;
+  font-size: 1.9rem;
+  transition: transform 0.07s ease, box-shadow 0.07s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.bd-key:active:not(:disabled) {
+  transform: translateY(5px);
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.18),
+    0 1px 0 #101215,
+    0 3px 8px rgba(0, 0, 0, 0.5);
+}
+
+.bd-key:disabled {
+  cursor: default;
+}
+
+.bd-key:focus-visible {
+  outline: 2px solid #d9a441;
+  outline-offset: 3px;
+}
+
+/* Simon lamps — chunky lit domes. */
+.bd-simon {
+  min-height: 76px;
+  border-radius: 18px;
+  border: 1px solid #3a3f46;
+  background: linear-gradient(180deg, #33383f 0%, #24282e 100%);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    0 6px 0 #101215,
+    0 10px 16px rgba(0, 0, 0, 0.5);
+  transition: transform 0.07s ease, box-shadow 0.07s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.bd-simon:active:not(:disabled) {
+  transform: translateY(4px);
+}
+
+.bd-simon:disabled {
+  cursor: default;
+}
+
+.bd-simon:focus-visible {
+  outline: 2px solid #d9a441;
+  outline-offset: 3px;
+}
+
+/* Password wheel windows — little LCD letter slots. */
+.bd-wheel {
+  border-radius: 10px;
+  background: linear-gradient(180deg, #0a0c0e 0%, #111417 100%);
+  border: 2px solid #2c3138;
+  box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.9);
+  font-family: 'Courier New', Courier, monospace;
+  color: #ff4d4d;
+  text-shadow: 0 0 10px rgba(255, 77, 77, 0.8);
+}
+
+/* The big red ARM button. */
+.bd-arm {
+  min-height: 64px;
+  padding: 14px 40px;
+  border-radius: 16px;
+  border: 1px solid #6e1f1a;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  background: linear-gradient(180deg, #c8553d 0%, #a53a28 55%, #7c281b 100%);
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.35),
+    inset 0 -5px 0 rgba(60, 10, 5, 0.55),
+    0 8px 0 #3a0f0a,
+    0 14px 24px rgba(0, 0, 0, 0.5);
+  transition: transform 0.07s ease, box-shadow 0.07s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.bd-arm:active:not(:disabled) {
+  transform: translateY(6px);
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.35),
+    0 2px 0 #3a0f0a,
+    0 5px 10px rgba(0, 0, 0, 0.5);
+}
+
+.bd-arm:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.bd-arm:focus-visible {
+  outline: 2px solid #d9a441;
+  outline-offset: 3px;
+}
+
+@media (min-width: 640px) {
+  .bd-console {
+    padding: 24px;
+  }
+  .bd-timer {
+    font-size: 3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-timer--danger,
+  .bd-led--on {
+    animation: none;
+  }
+  .bd-key,
+  .bd-simon,
+  .bd-arm {
+    transition: none;
+  }
+}

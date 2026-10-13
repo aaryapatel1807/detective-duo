@@ -1,0 +1,122 @@
+/* ============================================================
+ * CIPHER DUEL — puzzle-hunt codebreaker paper, Bulls & Cows.
+ * Two cipher strips racing: digit tiles + Mastermind-style
+ * bull/cow pegs. The strip whose detective is guessing is lit.
+ * Base = dark palette; [data-theme='light'] = light palette.
+ * Kit chrome (TurnBanner, GameButton, ResultModal, ManilaFolder)
+ * stays noir.
+ * Unlayered CSS, hex fallbacks, explicit @media, mobile-first.
+ * ============================================================ */
+
+.cd-race {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.cd-strip {
+  border-radius: 12px;
+  padding: 0.85rem 1rem 1rem;
+  background: #161616;
+  border: 2px solid #3a3a3c;
+  min-width: 0;
+}
+
+.cd-strip--active { border-color: #d9a441; }
+
+.cd-strip-name {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #a3a3a3;
+  margin-bottom: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cd-strip--active .cd-strip-name { color: #d9a441; }
+
+.cd-strip-target {
+  font-size: 0.72rem;
+  color: #8a8a8a;
+  margin-bottom: 0.5rem;
+}
+
+.cd-guesses { display: flex; flex-direction: column; gap: 0.35rem; }
+
+.cd-guess {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.cd-digits { display: flex; gap: 4px; }
+
+.cd-digit {
+  width: 2.1rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #1e1e1e;
+  border: 2px solid #3a3a3c;
+  color: #f8f8f8;
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.cd-pegs { display: flex; gap: 5px; align-items: center; }
+
+.cd-peg {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #3a3a3c;
+}
+
+.cd-peg--bull { background: #538d4e; box-shadow: 0 0 6px rgba(83, 141, 78, 0.7); }
+.cd-peg--cow { background: #b59f3b; box-shadow: 0 0 6px rgba(181, 159, 59, 0.7); }
+
+.cd-score {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #a3a3a3;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cd-none { font-size: 0.8rem; color: #8a8a8a; text-align: center; padding: 0.5rem 0; }
+
+.cd-code {
+  display: flex;
+  gap: 4px;
+  margin-top: 0.4rem;
+}
+
+/* ---------- light theme ---------- */
+
+[data-theme='light'] .cd-strip { background: #ffffff; border-color: #d3d6da; }
+[data-theme='light'] .cd-strip--active { border-color: #a5691a; }
+[data-theme='light'] .cd-strip-name { color: #6b7280; }
+[data-theme='light'] .cd-strip--active .cd-strip-name { color: #a5691a; }
+[data-theme='light'] .cd-strip-target { color: #9ca3af; }
+[data-theme='light'] .cd-digit { background: #f4f4f5; border-color: #d3d6da; color: #1a1a1b; }
+[data-theme='light'] .cd-peg { background: #d3d6da; }
+[data-theme='light'] .cd-peg--bull { background: #6aaa64; box-shadow: none; }
+[data-theme='light'] .cd-peg--cow { background: #c9b458; box-shadow: none; }
+[data-theme='light'] .cd-score { color: #6b7280; }
+[data-theme='light'] .cd-none { color: #9ca3af; }
+
+@media (min-width: 640px) {
+  .cd-race { grid-template-columns: 1fr 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cd-guess { transition: none; }
+}
