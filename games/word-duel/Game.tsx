@@ -21,17 +21,18 @@ import { randomWord } from '../../lib/content/words';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
-import { Typewriter } from '../../components/Typewriter';
 import { ManilaFolder } from '../../components/props';
+import '../ui-kit/kit.css';
+import { GameButton, GameCard, ScoreHUD, ResultModal, SectionTitle } from '../ui-kit';
 
 const SLUG = 'word-duel';
 const HOUSE = 'house';
 const KEYBOARD = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
 
-const MARK_STYLE: Record<LetterMark, string> = {
-  correct: 'bg-[var(--amber-glow)] text-black border-[var(--amber-glow)]',
-  present: 'bg-[rgba(232,163,61,0.35)] text-[var(--ink)] border-[var(--brass)]',
-  absent: 'bg-[rgba(0,0,0,0.45)] text-[var(--ink-faint)] border-transparent',
+const MARK_CARD: Record<LetterMark, 'correct' | 'misplaced' | 'absent'> = {
+  correct: 'correct',
+  present: 'misplaced',
+  absent: 'absent',
 };
 
 function playerName(room: GameProps['room'], pid: string | null | undefined): string {
@@ -126,10 +127,9 @@ export default function WordDuelGame({ room }: GameProps) {
   const outOfTries = myGuesses.length >= WORD_DUEL_TRIES && !solved;
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="gk-root mx-auto max-w-xl">
       <div className="mb-4 text-center">
-        <div className="eyebrow">Case file № 12 — Word & Code Duels</div>
-        <Typewriter as="h2" text="WORD DUEL" className="type-heading mt-1 text-3xl" />
+        <SectionTitle eyebrow="Case file № 12 — Word & Code Duels" title="Word Duel" />
         <p className="mt-1 text-sm text-[var(--ink-dim)]">
           Seal a secret 5-letter word. Crack {room.peer ? 'your partner\u2019s' : 'the house\u2019s'} in{' '}
           {WORD_DUEL_TRIES} tries — fewer tries wins.
@@ -161,9 +161,9 @@ export default function WordDuelGame({ room }: GameProps) {
                 maxLength={5}
                 className="noir-input w-36 text-center font-type text-xl tracking-[0.3em]"
               />
-              <button onClick={sealSecret} disabled={!validSecret(secretInput)} className="noir-btn">
+              <GameButton variant="primary" onClick={sealSecret} disabled={!validSecret(secretInput)}>
                 🔏 Seal it
-              </button>
+              </GameButton>
             </div>
           )}
         </ManilaFolder>
@@ -171,14 +171,15 @@ export default function WordDuelGame({ room }: GameProps) {
 
       {phase === 'play' && (
         <GlassCard className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="eyebrow">
-              Target: {playerName(room, opponentId)}&rsquo;s word
-            </div>
-            <div className="eyebrow">
-              Try {Math.min(myGuesses.length + 1, WORD_DUEL_TRIES)} / {WORD_DUEL_TRIES}
-            </div>
-          </div>
+          <ScoreHUD
+            leftLabel={`TARGET: ${playerName(room, opponentId).toUpperCase()}`}
+            leftValue={Math.min(myGuesses.length + 1, WORD_DUEL_TRIES)}
+            leftSub={`try ${Math.min(myGuesses.length + 1, WORD_DUEL_TRIES)} of ${WORD_DUEL_TRIES}`}
+            rightLabel="Tries left"
+            rightValue={WORD_DUEL_TRIES - myGuesses.length}
+            rightSub={`${WORD_DUEL_LENGTH} letters`}
+            record="none"
+          />
 
           {/* guess grid */}
           <div className="mt-4 space-y-1.5">
@@ -193,14 +194,13 @@ export default function WordDuelGame({ room }: GameProps) {
                       initial={g ? { rotateX: 90 } : false}
                       animate={{ rotateX: 0 }}
                       transition={{ delay: g ? c * 0.08 : 0 }}
-                      className={
-                        'flex h-11 w-11 items-center justify-center rounded-md border font-type text-xl ' +
-                        (marks
-                          ? MARK_STYLE[marks[c]]
-                          : 'border-[var(--glass-border)] bg-[rgba(255,255,255,0.03)] text-[var(--ink)]')
-                      }
                     >
-                      {g ? g[c] : ''}
+                      <GameCard
+                        state={marks ? MARK_CARD[marks[c]] : 'default'}
+                        className="!h-11 !w-11 !min-h-0 !min-w-0 !rounded-md !p-0 !text-xl"
+                      >
+                        {g ? g[c] : ''}
+                      </GameCard>
                     </motion.div>
                   ))}
                 </div>
@@ -228,31 +228,28 @@ export default function WordDuelGame({ room }: GameProps) {
                   maxLength={5}
                   className="noir-input w-36 text-center font-type text-xl tracking-[0.3em]"
                 />
-                <button
+                <GameButton
+                  variant="primary"
                   onClick={submitGuess}
                   disabled={!/^[A-Za-z]{5}$/.test(guessInput)}
-                  className="noir-btn"
                 >
                   🔍 Guess
-                </button>
+                </GameButton>
               </div>
               {/* keyboard */}
               <div className="mt-4 space-y-1.5">
                 {KEYBOARD.map((row, i) => (
                   <div key={i} className="flex justify-center gap-1">
                     {row.split('').map((L) => (
-                      <button
+                      <GameCard
                         key={L}
+                        state={keyState[L] ? MARK_CARD[keyState[L]] : 'default'}
                         onClick={() => setGuessInput((p) => (p + L).slice(0, 5))}
-                        className={
-                          'h-9 w-7 rounded border font-type text-xs ' +
-                          (keyState[L]
-                            ? MARK_STYLE[keyState[L]]
-                            : 'border-[var(--glass-border)] bg-[rgba(255,255,255,0.04)] text-[var(--ink)]')
-                        }
+                        ariaLabel={`Type ${L}`}
+                        className="!h-9 !w-7 !min-h-0 !min-w-0 !rounded-md !p-0 !text-xs"
                       >
                         {L}
-                      </button>
+                      </GameCard>
                     ))}
                   </div>
                 ))}
@@ -270,37 +267,49 @@ export default function WordDuelGame({ room }: GameProps) {
       )}
 
       {phase === 'over' && (
-        <ManilaFolder className="p-6 text-center">
-          <div className="type-heading text-2xl">
-            {winner === 'draw'
-              ? '🤝 Both cases went cold — draw'
-              : winner === room.me.id
-                ? '🏆 You cracked it first!'
-                : `🕵️ ${playerName(room, winner)} cracked it first`}
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 text-left">
-            {ids.map((pid) => {
-              const other = pid === room.me.id ? opponentId : room.me.id;
-              const targetWord = secrets[other] ?? '?????';
-              const pg = guesses[pid] ?? [];
-              const idx = pg.findIndex((g) => g === targetWord);
-              return (
-                <div key={pid} className="glass-card !rounded-2xl p-3">
-                  <div className="eyebrow">{playerName(room, pid)} guessed</div>
-                  <div className="type-heading mt-1 text-2xl tracking-[0.2em]">{targetWord}</div>
-                  <div className="text-xs text-[var(--ink-dim)]">
-                    {idx === -1
-                      ? 'unsolved'
-                      : `solved in ${idx + 1} ${idx === 0 ? 'try' : 'tries'}`}
+        <div className="gk-modal-scope">
+          <ManilaFolder className="p-6 text-center">
+            <div className="grid grid-cols-2 gap-3 text-left">
+              {ids.map((pid) => {
+                const other = pid === room.me.id ? opponentId : room.me.id;
+                const targetWord = secrets[other] ?? '?????';
+                const pg = guesses[pid] ?? [];
+                const idx = pg.findIndex((g) => g === targetWord);
+                return (
+                  <div key={pid} className="glass-card !rounded-2xl p-3">
+                    <div className="eyebrow">{playerName(room, pid)} guessed</div>
+                    <div className="type-heading mt-1 text-2xl tracking-[0.2em]">{targetWord}</div>
+                    <div className="text-xs text-[var(--ink-dim)]">
+                      {idx === -1
+                        ? 'unsolved'
+                        : `solved in ${idx + 1} ${idx === 0 ? 'try' : 'tries'}`}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-          <button onClick={reset} className="noir-btn mt-5">
-            🔁 New duel
-          </button>
-        </ManilaFolder>
+                );
+              })}
+            </div>
+            <div className="mt-5">
+              <GameButton variant="primary" onClick={reset}>
+                🔁 New duel
+              </GameButton>
+            </div>
+          </ManilaFolder>
+          <ResultModal
+            open
+            eyebrow="Duel over"
+            headline={
+              winner === 'draw'
+                ? 'Both cases went cold — draw'
+                : winner === room.me.id
+                  ? 'You cracked it first'
+                  : `${playerName(room, winner)} cracked it first`
+            }
+            stat={`${guesses[room.me.id]?.length ?? 0} tries used · ${WORD_DUEL_TRIES} max`}
+            tone={winner === 'draw' ? 'draw' : winner === room.me.id ? 'win' : 'lose'}
+            primaryLabel="🔁 New duel"
+            onPrimary={reset}
+          />
+        </div>
       )}
     </div>
   );
