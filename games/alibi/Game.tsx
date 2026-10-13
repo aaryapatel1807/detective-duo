@@ -26,6 +26,8 @@ import ChatBox from './ChatBox';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import { GlassCard } from '../../components/GlassCard';
+import '../ui-kit/kit.css';
+import { GameButton, ScoreHUD, TimerChip, ResultModal, SectionTitle } from '../ui-kit';
 
 export default function AlibiGame({ room }: GameProps) {
   const gs: AlibiShared = room.shared?.games?.['alibi'] ?? {};
@@ -139,14 +141,20 @@ export default function AlibiGame({ room }: GameProps) {
   );
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="gk-root mx-auto max-w-2xl">
       <div className="mb-5 text-center">
-        <div className="eyebrow">Suspect room · best of {TOTAL_ROUNDS}</div>
-        <h2 className="type-heading mt-1 text-2xl">Alibi</h2>
+        <SectionTitle eyebrow={`Suspect room · best of ${TOTAL_ROUNDS}`} title="Alibi" />
         {round > 0 && phase !== 'over' && phase !== 'lobby' && (
-          <div className="mt-2 text-xs text-[var(--ink-dim)]">
-            {scoreLine(room.me.id)} — {peerId ? scoreLine(peerId) : ''}
-            {' · '} Suspect: <b className="text-[var(--blood-bright)]">{isCriminal ? 'YOU' : room.peer?.name ?? '—'}</b>
+          <div className="mx-auto mt-3 max-w-sm">
+            <ScoreHUD
+              leftLabel="YOU"
+              leftValue={scores[room.me.id] ?? 0}
+              leftSub={isCriminal ? 'suspect' : 'interrogator'}
+              rightLabel={peerId ? (room.peer?.name ?? 'PARTNER').toUpperCase().slice(0, 12) : 'DESK'}
+              rightValue={peerId ? (scores[peerId] ?? 0) : 0}
+              rightSub={isCriminal ? 'interrogator' : 'suspect'}
+              record="none"
+            />
           </div>
         )}
       </div>
@@ -160,9 +168,9 @@ export default function AlibiGame({ room }: GameProps) {
             Finally: <b className="text-[var(--blood-bright)]">BUSTED</b> or <b className="text-[#7ee787]">CLEAN</b>.
             Roles swap every round — best of {TOTAL_ROUNDS} wins.
           </p>
-          <button onClick={startMatch} className="noir-btn mt-6" disabled={!peerId}>
+          <GameButton variant="primary" onClick={startMatch} className="mt-6" disabled={!peerId}>
             🚨 Draw a crime & start
-          </button>
+          </GameButton>
           {!peerId && <p className="mt-3 text-xs italic text-[var(--ink-faint)]">Waiting for your partner…</p>}
         </GlassCard>
       )}
@@ -185,9 +193,9 @@ export default function AlibiGame({ room }: GameProps) {
                 placeholder="I was at…"
                 className="noir-input w-full"
               />
-              <button onClick={submitAlibi} className="noir-btn mt-3 w-full" disabled={!validAlibi(alibiDraft)}>
+              <GameButton variant="primary" onClick={submitAlibi} className="mt-3 w-full" disabled={!validAlibi(alibiDraft)}>
                 📨 Submit alibi ({alibiDraft.trim().length}/{20} min chars)
-              </button>
+              </GameButton>
             </GlassCard>
           ) : (
             <GlassCard className="p-8 text-center">
@@ -210,8 +218,10 @@ export default function AlibiGame({ room }: GameProps) {
           {timedQ && remaining > 0 && (
             <div className="rounded-2xl border border-[var(--blood-bright)] bg-[rgba(211,58,44,0.1)] p-4 text-center">
               <div className="eyebrow !text-[var(--blood-bright)]">⏱️ Timed question on the clock</div>
-              <div className="type-heading mt-1 text-3xl text-[var(--blood-bright)]">{remaining}s</div>
-              <p className="mt-1 text-sm">“{timedQ.text}”</p>
+              <div className="mt-2 flex justify-center">
+                <TimerChip seconds={remaining} />
+              </div>
+              <p className="mt-2 text-sm">“{timedQ.text}”</p>
             </div>
           )}
           {timedQ && remaining === 0 && (
@@ -234,13 +244,13 @@ export default function AlibiGame({ room }: GameProps) {
                   className="noir-input flex-1"
                   maxLength={200}
                 />
-                <button onClick={askTimed} className="noir-btn" disabled={!timedDraft.trim()}>
+                <GameButton variant="primary" onClick={askTimed} disabled={!timedDraft.trim()}>
                   ⏱️ Ask
-                </button>
+                </GameButton>
               </div>
-              <button onClick={() => { sounds.stampThud(); patch({ phase: 'judgment', timedQ: null }); }} className="noir-btn-ghost mt-4 w-full">
+              <GameButton variant="ghost" onClick={() => { sounds.stampThud(); patch({ phase: 'judgment', timedQ: null }); }} className="mt-4 w-full">
                 ⚖️ Enough — deliver the verdict
-              </button>
+              </GameButton>
             </GlassCard>
           )}
           {isCriminal && (
@@ -258,13 +268,13 @@ export default function AlibiGame({ room }: GameProps) {
           <GlassCard className="p-8 text-center">
             <div className="type-heading text-xl">The interrogator deliberates…</div>
             {isInterrogator ? (
-              <div className="mt-6 flex justify-center gap-4">
-                <button onClick={() => judge('busted')} className="noir-btn !border-[var(--blood-bright)] !text-[var(--blood-bright)]">
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                <GameButton variant="danger" onClick={() => judge('busted')}>
                   🚨 BUSTED
-                </button>
-                <button onClick={() => judge('clean')} className="noir-btn !border-[#7ee787] !text-[#7ee787]">
+                </GameButton>
+                <GameButton variant="ghost" onClick={() => judge('clean')}>
                   ✅ CLEAN
-                </button>
+                </GameButton>
               </div>
             ) : (
               <p className="mt-4 text-sm italic text-[var(--ink-dim)]">Sweat, suspect. The gavel is falling.</p>
@@ -275,44 +285,66 @@ export default function AlibiGame({ room }: GameProps) {
 
       {/* ---- round verdict ---- */}
       {phase === 'roundEnd' && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <GlassCard className="p-8 text-center">
-            <div className="wax-seal mx-auto mb-3" />
-            <div className={`type-heading text-2xl ${verdict === 'busted' ? 'text-[var(--blood-bright)]' : 'text-[#7ee787]'}`}>
-              {verdict === 'busted' ? '🚨 BUSTED!' : '✅ CLEAN — WALKS FREE'}
-            </div>
-            <p className="mt-3 text-sm text-[var(--ink-dim)]">
-              {verdict === 'busted'
-                ? 'The alibi cracked under pressure. Point to the interrogator.'
-                : 'The story held. Point to the suspect.'}
-            </p>
-            <p className="mt-2 text-sm">{scoreLine(room.me.id)} — {peerId ? scoreLine(peerId) : ''}</p>
-            <button onClick={nextRound} className="noir-btn mt-5">
-              {isLastRound(round) ? '🏁 Final verdict' : '➡️ Next round — roles swap'}
-            </button>
-          </GlassCard>
-        </motion.div>
+        <div className="gk-modal-scope">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <GlassCard className="p-8 text-center">
+              <p className="mt-2 text-sm">
+                {verdict === 'busted'
+                  ? 'The alibi cracked under pressure. Point to the interrogator.'
+                  : 'The story held. Point to the suspect.'}
+              </p>
+              <p className="mt-2 text-sm">{scoreLine(room.me.id)} — {peerId ? scoreLine(peerId) : ''}</p>
+              <div className="mt-5">
+                <GameButton variant="primary" onClick={nextRound}>
+                  {isLastRound(round) ? '🏁 Final verdict' : '➡️ Next round — roles swap'}
+                </GameButton>
+              </div>
+            </GlassCard>
+          </motion.div>
+          <ResultModal
+            open
+            eyebrow={`Round ${round} verdict`}
+            headline={verdict === 'busted' ? 'BUSTED!' : 'CLEAN — walks free'}
+            stat={`${scoreLine(room.me.id)} — ${peerId ? scoreLine(peerId) : ''}`}
+            tone={verdict === 'busted' ? 'lose' : 'win'}
+            primaryLabel={isLastRound(round) ? '🏁 Final verdict' : '➡️ Next round — roles swap'}
+            onPrimary={nextRound}
+          />
+        </div>
       )}
 
       {/* ---- match over ---- */}
       {phase === 'over' && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <GlassCard className="p-8 text-center">
-            <div className="wax-seal mx-auto mb-3" />
-            <div className="type-heading text-xl text-[var(--amber-glow)]">📁 CASE CLOSED</div>
-            <p className="mt-2 text-sm text-[var(--ink-dim)]">{scoreLine(room.me.id)} — {peerId ? scoreLine(peerId) : ''}</p>
-            <p className="mt-3 text-lg">
-              Winner: <b className="text-[var(--amber-glow)]">
-                {winner === null ? 'A perfect tie — both walked.' : winner === room.me.id ? 'YOU' : room.peer?.name ?? 'Partner'}
-              </b>
-              {' · '} +{XP_AWARDS.duoWin} XP
-            </p>
-            <div className="mt-5 flex justify-center gap-3">
-              <button onClick={startMatch} className="noir-btn">🔄 Rematch</button>
-              <button onClick={reset} className="noir-btn-ghost">Lobby</button>
-            </div>
-          </GlassCard>
-        </motion.div>
+        <div className="gk-modal-scope">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <GlassCard className="p-8 text-center">
+              <div className="wax-seal mx-auto mb-3" />
+              <div className="type-heading text-xl text-[var(--amber-glow)]">📁 CASE CLOSED</div>
+              <p className="mt-2 text-sm text-[var(--ink-dim)]">{scoreLine(room.me.id)} — {peerId ? scoreLine(peerId) : ''}</p>
+              <p className="mt-3 text-lg">
+                Winner: <b className="text-[var(--amber-glow)]">
+                  {winner === null ? 'A perfect tie — both walked.' : winner === room.me.id ? 'YOU' : room.peer?.name ?? 'Partner'}
+                </b>
+                {' · '} +{XP_AWARDS.duoWin} XP
+              </p>
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <GameButton variant="primary" onClick={startMatch}>🔄 Rematch</GameButton>
+                <GameButton variant="ghost" onClick={reset}>Lobby</GameButton>
+              </div>
+            </GlassCard>
+          </motion.div>
+          <ResultModal
+            open
+            eyebrow="Case closed"
+            headline={winner === null ? 'A perfect tie' : winner === room.me.id ? 'You won the interrogation' : `${room.peer?.name ?? 'Partner'} won`}
+            stat={`${scoreLine(room.me.id)} — ${peerId ? scoreLine(peerId) : ''}`}
+            tone={winner === null ? 'draw' : winner === room.me.id ? 'win' : 'lose'}
+            primaryLabel="🔄 Rematch"
+            onPrimary={startMatch}
+            secondaryLabel="Lobby"
+            onSecondary={reset}
+          />
+        </div>
       )}
     </div>
   );
