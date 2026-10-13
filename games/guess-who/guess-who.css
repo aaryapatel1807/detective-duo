@@ -1,0 +1,194 @@
+/* ============================================================
+ * GUESS WHO — the real board game.
+ * A bright blue plastic tray holds the face tiles; tapping a tile
+ * flips it DOWN like the physical game. Red/blue, chunky, toy-like.
+ * Unlayered custom CSS, hex fallbacks, mobile-first.
+ * ============================================================ */
+
+/* The blue plastic board tray. */
+.gw-board {
+  border-radius: 18px;
+  padding: 16px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 3px, transparent 3px 12px),
+    linear-gradient(165deg, #2f6fd0 0%, #245cb4 55%, #1a4486 100%);
+  border: 1px solid #12305e;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -4px 10px rgba(10, 30, 80, 0.5),
+    0 14px 30px rgba(20, 50, 120, 0.4);
+}
+
+.gw-board__label {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 12px;
+  text-shadow: 0 1px 2px rgba(10, 30, 80, 0.6);
+}
+
+/* A face tile — flips down on eliminate, like the real thing. */
+.gw-tile {
+  perspective: 500px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  min-height: 96px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.gw-tile:focus-visible {
+  outline: 3px solid #ffe9b0;
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+.gw-tile__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 96px;
+  transform-style: preserve-3d;
+  transition: transform 0.38s cubic-bezier(0.35, 0.1, 0.25, 1);
+}
+
+.gw-tile--down .gw-tile__inner {
+  transform: rotateX(-168deg);
+}
+
+.gw-tile__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 10px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.gw-tile__face--front {
+  background: linear-gradient(180deg, #ffffff 0%, #eef1f8 100%);
+  border: 2px solid #d5dcea;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 1),
+    0 4px 8px rgba(10, 30, 80, 0.35);
+}
+
+.gw-tile__face--back {
+  transform: rotateX(180deg);
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 55%),
+    linear-gradient(165deg, #3f7fdd 0%, #2a5faf 100%);
+  border: 2px solid #1a4486;
+  box-shadow: inset 0 -4px 8px rgba(10, 30, 80, 0.5);
+}
+
+.gw-tile__mug {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.gw-tile__name {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #2b3a5e;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.gw-tile:hover .gw-tile__inner {
+  transform: translateY(-3px);
+}
+
+.gw-tile--down:hover .gw-tile__inner {
+  transform: rotateX(-168deg) translateY(-3px);
+}
+
+.gw-tile:active .gw-tile__inner {
+  transform: scale(0.96);
+}
+
+.gw-tile--down:active .gw-tile__inner {
+  transform: rotateX(-168deg) scale(0.96);
+}
+
+/* The secret-pick tray in setup — same tiles, red tray for "your card". */
+.gw-board--red {
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 3px, transparent 3px 12px),
+    linear-gradient(165deg, #d05252 0%, #b03a3a 55%, #862626 100%);
+  border-color: #5e1a1a;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -4px 10px rgba(80, 15, 15, 0.5),
+    0 14px 30px rgba(120, 30, 30, 0.4);
+}
+
+/* Accusation chips — little suspect tokens. */
+.gw-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 2px solid #d5dcea;
+  background: linear-gradient(180deg, #ffffff 0%, #eef1f8 100%);
+  color: #2b3a5e;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #b9c4e8, 0 5px 10px rgba(20, 50, 120, 0.2);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.gw-chip:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #b9c4e8, 0 2px 5px rgba(20, 50, 120, 0.2);
+}
+
+.gw-chip:focus-visible {
+  outline: 3px solid #4a63d8;
+  outline-offset: 2px;
+}
+
+@media (min-width: 640px) {
+  .gw-board {
+    padding: 22px;
+  }
+  .gw-tile,
+  .gw-tile__inner {
+    min-height: 110px;
+  }
+  .gw-tile__mug {
+    font-size: 2.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gw-tile__inner {
+    transition: none;
+  }
+  .gw-tile--down .gw-tile__inner {
+    transform: rotateX(-168deg);
+  }
+  .gw-tile:hover .gw-tile__inner,
+  .gw-tile:active .gw-tile__inner {
+    transform: none;
+  }
+  .gw-tile--down:hover .gw-tile__inner,
+  .gw-tile--down:active .gw-tile__inner {
+    transform: rotateX(-168deg);
+  }
+}
