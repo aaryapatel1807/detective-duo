@@ -6,6 +6,15 @@
 
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import '../ui-kit/kit.css';
+import {
+  GameButton,
+  ScoreHUD,
+  TurnBanner,
+  ResultModal,
+  GameCard,
+  SectionTitle,
+} from '../ui-kit';
 import type { GameProps } from '../types';
 import type { C4Shared } from './types';
 import { COLS, ROUNDS, WINS_NEEDED, drop, emptyBoard, isFull, winnerOf } from './logic';
@@ -84,67 +93,61 @@ export default function Connect4Game({ room }: GameProps) {
   const roundOver = roundWinner !== null;
   const playable = !roundOver && turn === me && peer !== null;
   const boardEmpty = board.every((row) => row.every((c) => c === null));
+  const inLobby = boardEmpty && turn === null;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 style={{ fontFamily: 'var(--font-type)' }} className="text-xl tracking-wide">
-          🔴 CONNECT 4
-        </h2>
-        <div className="text-sm opacity-80" style={{ fontFamily: 'var(--font-type)' }}>
-          ROUND {round}/{ROUNDS} · {GLYPH[myChip]} {nameOf(me)} {scores[me] ?? 0} — {scores[peer?.id ?? ''] ?? 0} {nameOf(peer?.id ?? null)}
-        </div>
-      </div>
+    <div className="gk-root space-y-4">
+      <SectionTitle
+        eyebrow={`ROUND ${round} OF ${ROUNDS} · FIRST TO ${WINS_NEEDED}`}
+        title="🔴 Connect 4"
+      />
+      <ScoreHUD
+        leftLabel="YOU"
+        leftValue={scores[me] ?? 0}
+        rightLabel="OPPONENT"
+        rightValue={scores[peer?.id ?? ''] ?? 0}
+      />
 
       {!peer && (
-        <div className="glass-card p-4 text-sm" style={{ fontFamily: 'var(--font-type)' }}>
+        <div className="glass-card p-4 text-sm">
           ⏳ Waiting for your partner… (code <span className="font-bold">{room.roomCode ?? '—'}</span>)
         </div>
       )}
 
       <div className="mx-auto max-w-md">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-5">
-          {roundOver ? (
-            <div className="flex flex-col items-center gap-3 py-6">
-              <div className="text-4xl">
-                {matchWinner ? (matchWinner === me ? '🏆' : '🕯️') : roundWinner === 'draw' ? '🤝' : GLYPH[chipOf(roundWinner ?? '')]}
-              </div>
-              <p className="text-center text-sm" style={{ fontFamily: 'var(--font-type)' }}>
-                {matchWinner
-                  ? `Case closed — ${nameOf(matchWinner)} connects the win.`
-                  : roundWinner === 'draw'
-                    ? 'Board full — nobody connects.'
-                    : `${nameOf(roundWinner)} takes round ${round}.`}
-              </p>
-              <button className="noir-btn" onClick={matchWinner ? startMatch : nextRound}>
-                {matchWinner ? '🔁 New match' : '➡️ Next round'}
-              </button>
-            </div>
-          ) : boardEmpty && turn === null ? (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card gk-modal-scope p-5"
+        >
+          {inLobby ? (
             <div className="flex flex-col items-center gap-3 py-8">
-              <p className="text-sm opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
+              <p className="text-sm opacity-70">
                 Drop the chips — connect four to close the round. Best of {ROUNDS}.
               </p>
-              <button className="noir-btn" onClick={startMatch} disabled={!peer}>
+              <GameButton onClick={startMatch} disabled={!peer}>
                 📁 Open the case
-              </button>
+              </GameButton>
             </div>
           ) : (
             <>
-              <p className="mb-3 text-center text-sm opacity-80" style={{ fontFamily: 'var(--font-type)' }}>
-                {turn === me ? `Your drop — ${GLYPH[myChip]}` : `${nameOf(turn)} is dropping…`}
-              </p>
+              {!roundOver && (
+                <TurnBanner
+                  isYourTurn={turn === me}
+                  yourText={`Your drop — ${GLYPH[myChip]}`}
+                  theirText={`${nameOf(turn)} is dropping…`}
+                />
+              )}
               <div className="grid gap-1 rounded-xl bg-[#1a1410]/80 p-2" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}>
                 {Array.from({ length: COLS }, (_, c) => (
-                  <button
+                  <GameCard
                     key={c}
                     onClick={() => playCol(c)}
                     disabled={!playable}
-                    className="rounded-t-lg border border-white/10 bg-white/5 py-1 text-lg hover:border-amber-300/60 hover:bg-amber-300/10 disabled:cursor-default"
-                    title={`Drop in column ${c + 1}`}
+                    ariaLabel={`Drop in column ${c + 1}`}
                   >
                     ⬇️
-                  </button>
+                  </GameCard>
                 ))}
                 {board.map((row, r) =>
                   row.map((cell, c) => (
@@ -157,9 +160,27 @@ export default function Connect4Game({ room }: GameProps) {
                   )),
                 )}
               </div>
-              <p className="mt-2 text-center text-xs opacity-60" style={{ fontFamily: 'var(--font-type)' }}>
+              <p className="mt-2 text-center text-xs opacity-60">
                 Tap ⬇️ above a column to drop your chip.
               </p>
+              <ResultModal
+                open={!!matchWinner}
+                eyebrow={matchWinner === me ? 'CASE FILE CLOSED' : 'CASE GONE COLD'}
+                headline={matchWinner === me ? 'Case closed' : 'Connection broken'}
+                tone={matchWinner === me ? 'win' : 'lose'}
+                stat={`FINAL SCORE — YOU ${scores[me] ?? 0} · OPPONENT ${scores[peer?.id ?? ''] ?? 0}`}
+                primaryLabel="🔁 New match"
+                onPrimary={startMatch}
+              />
+              <ResultModal
+                open={roundOver && !matchWinner}
+                eyebrow={`ROUND ${round} DECIDED`}
+                headline={roundWinner === 'draw' ? 'Board full' : `${nameOf(roundWinner)} connects`}
+                tone={roundWinner === 'draw' ? 'draw' : roundWinner === me ? 'win' : 'lose'}
+                stat={`YOU ${scores[me] ?? 0} — ${scores[peer?.id ?? ''] ?? 0} OPPONENT`}
+                primaryLabel="➡️ Next round"
+                onPrimary={nextRound}
+              />
             </>
           )}
         </motion.div>

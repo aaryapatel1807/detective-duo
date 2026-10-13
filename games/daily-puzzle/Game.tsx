@@ -9,7 +9,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { GameProps } from '../types';
 import { GlassCard } from '../../components/GlassCard';
-import { Typewriter } from '../../components/Typewriter';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { readJSON, writeJSON } from '../../lib/store';
 import { sounds } from '../../lib/sound';
@@ -22,6 +21,8 @@ import {
   type DailyPuzzle,
 } from './logic';
 import type { DailyStreak } from './types';
+import '../ui-kit/kit.css';
+import { GameCard, ProgressBar, SectionTitle, TimerChip } from '../ui-kit';
 
 const STREAK_KEY = 'dd-daily-streak';
 const DONE_KEY = 'dd-daily-done';
@@ -106,39 +107,50 @@ export default function DailyPuzzleGame({ room }: GameProps) {
   });
 
   const allFound = found.length >= puzzle.words.length;
+  const countdown = Math.max(0, Math.floor(msUntilMidnight(new Date(now)) / 1000));
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="gk-root mx-auto max-w-md">
       <div className="mb-4 text-center">
-        <Typewriter text={`Daily Puzzle — ${today}`} as="h2" className="text-xl" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+        <SectionTitle eyebrow={`DAILY FILE · ${today}`} title="Daily Puzzle" />
+        <p className="mt-2 text-sm text-[var(--ink-dim)]">
           Find the {puzzle.words.length} hidden words. Tap a start cell, then an end cell.
         </p>
-        <p className="mt-1 font-type text-xs tracking-[0.14em] uppercase text-[var(--ink-dim)]">
-          🔥 streak {streak.streak} · next case in {formatCountdown(msUntilMidnight(new Date(now)))}
-        </p>
+      </div>
+
+      <div className="mb-4 flex items-center justify-center gap-3">
+        <span className="font-type text-xs tracking-[0.18em] uppercase text-[var(--ink-dim)]">
+          🔥 streak {streak.streak}
+        </span>
+        <TimerChip seconds={countdown} label="Next case" />
       </div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <GlassCard className="p-4">
+          <div className="mb-4">
+            <ProgressBar
+              label="WORDS ON FILE"
+              value={found.length}
+              max={puzzle.words.length}
+              showNumbers={false}
+            />
+          </div>
+
           <div className="grid grid-cols-5 gap-1.5 select-none">
             {puzzle.letters.map((ch, i) => {
               const isFound = foundCells.has(i);
               const isAnchor = anchor === i;
+              const state = isFound ? 'correct' : isAnchor ? 'active' : 'default';
               return (
-                <button
+                <GameCard
                   key={i}
+                  state={state}
                   onClick={() => tapCell(i)}
-                  className={`flex aspect-square items-center justify-center rounded-lg border text-xl font-bold ${
-                    isFound
-                      ? 'border-[var(--amber-glow)] bg-[rgba(232,163,61,0.3)] text-[var(--ink)]'
-                      : isAnchor
-                        ? 'border-[var(--blood)] bg-[rgba(160,40,40,0.3)] text-[var(--ink)]'
-                        : 'border-[var(--glass-border)] bg-[rgba(0,0,0,0.25)] text-[var(--ink)] hover:bg-[rgba(232,163,61,0.15)]'
-                  }`}
+                  ariaLabel={`Cell ${i + 1}, letter ${ch}`}
+                  className="aspect-square !text-xl"
                 >
                   {ch}
-                </button>
+                </GameCard>
               );
             })}
           </div>
@@ -171,7 +183,7 @@ export default function DailyPuzzleGame({ room }: GameProps) {
                 🎉 Case closed — streak at {streak.streak}!
               </div>
               <p className="mt-1 text-sm text-[var(--ink-dim)]">
-                +{XP_AWARDS.soloWin} XP filed. Fresh puzzle at midnight.
+                +{XP_AWARDS.soloWin} XP filed. Fresh puzzle in {formatCountdown(msUntilMidnight(new Date(now)))}.
               </p>
             </div>
           )}

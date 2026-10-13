@@ -8,6 +8,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import '../ui-kit/kit.css';
+import {
+  GameButton,
+  ScoreHUD,
+  TurnBanner,
+  ResultModal,
+  TimerChip,
+  SectionTitle,
+} from '../ui-kit';
 import type { GameProps } from '../types';
 import type { DrawShared, Stroke, StrokePoint } from './types';
 import { randomWord } from './words';
@@ -271,32 +280,33 @@ export default function DrawGuessGame({ room }: GameProps) {
   const wordMask = word.replace(/[^\s]/g, '_ ').trim();
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 style={{ fontFamily: 'var(--font-type)' }} className="text-xl tracking-wide">
-          ✏️ DRAW & GUESS
-        </h2>
-        <div className="text-sm opacity-80" style={{ fontFamily: 'var(--font-type)' }}>
-          ROUND {round}/{ROUNDS} · {nameOf(me)} {scores[me] ?? 0} — {scores[peer?.id ?? ''] ?? 0} {nameOf(peer?.id ?? null)}
-          {phase === 'drawing' && <span className="ml-3 text-amber-200">⏱ {left}s</span>}
-        </div>
-      </div>
+    <div className="gk-root space-y-4">
+      <SectionTitle
+        eyebrow={`ROUND ${round} OF ${ROUNDS} · ${DRAW_SECONDS}S ON THE CLOCK`}
+        title="✏️ Draw & Guess"
+      />
+      <ScoreHUD
+        leftLabel="YOU"
+        leftValue={scores[me] ?? 0}
+        rightLabel="OPPONENT"
+        rightValue={scores[peer?.id ?? ''] ?? 0}
+      />
 
       {!peer && (
-        <div className="glass-card p-4 text-sm" style={{ fontFamily: 'var(--font-type)' }}>
+        <div className="glass-card p-4 text-sm">
           ⏳ Waiting for your partner… (code <span className="font-bold">{room.roomCode ?? '—'}</span>)
         </div>
       )}
 
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card gk-modal-scope p-4">
         {phase === 'lobby' && (
           <div className="flex flex-col items-center gap-3 py-8">
-            <p className="text-center text-sm opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
+            <p className="text-center text-sm opacity-70">
               Sketch the secret word before the clock runs out — then swap the pencil.
             </p>
-            <button className="noir-btn" onClick={startMatch} disabled={!peer}>
+            <GameButton onClick={startMatch} disabled={!peer}>
               📁 Open the case
-            </button>
+            </GameButton>
           </div>
         )}
 
@@ -304,18 +314,18 @@ export default function DrawGuessGame({ room }: GameProps) {
           <div className="flex flex-col items-center gap-3 py-8">
             {isDrawer ? (
               <>
-                <p className="text-xs tracking-widest opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
+                <p className="text-xs tracking-widest opacity-70">
                   YOUR SECRET WORD — hide it from your partner
                 </p>
-                <p className="text-3xl font-bold text-amber-200" style={{ fontFamily: 'var(--font-type)' }}>
+                <p className="text-3xl font-bold text-amber-200">
                   {word}
                 </p>
-                <button className="noir-btn mt-2" onClick={beginDrawing}>
+                <GameButton className="mt-2" onClick={beginDrawing}>
                   ✏️ Start drawing (60s)
-                </button>
+                </GameButton>
               </>
             ) : (
-              <p className="text-sm opacity-70" style={{ fontFamily: 'var(--font-type)' }}>
+              <p className="text-sm opacity-70">
                 {nameOf(drawer)} is studying their secret word…
               </p>
             )}
@@ -325,30 +335,41 @@ export default function DrawGuessGame({ room }: GameProps) {
         {(phase === 'drawing' || phase === 'roundEnd') && (
           <>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm" style={{ fontFamily: 'var(--font-type)' }}>
+              <p className="text-sm">
                 {isDrawer ? (
                   <>Draw: <span className="font-bold text-amber-200">{word}</span></>
                 ) : (
                   <>Guess the sketch: <span className="tracking-[0.3em]">{wordMask}</span></>
                 )}
               </p>
-              {isDrawer && phase === 'drawing' && (
-                <div className="flex items-center gap-2">
-                  {CHALK.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setColor(c)}
-                      className={`h-6 w-6 rounded-full border-2 ${color === c ? 'border-amber-300' : 'border-white/20'}`}
-                      style={{ background: c }}
-                      title="chalk color"
-                    />
-                  ))}
-                  <button className="noir-btn noir-btn-ghost ml-2" onClick={clearBoard}>
-                    🧹 Clear
-                  </button>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                {phase === 'drawing' && <TimerChip seconds={left} label="TIME" />}
+                {isDrawer && phase === 'drawing' && (
+                  <>
+                    {CHALK.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setColor(c)}
+                        className={`h-9 w-9 rounded-full border-2 ${color === c ? 'border-amber-300' : 'border-white/20'}`}
+                        style={{ background: c }}
+                        title="chalk color"
+                        aria-label="chalk color"
+                      />
+                    ))}
+                    <GameButton variant="ghost" size="sm" className="ml-1" onClick={clearBoard}>
+                      🧹 Clear
+                    </GameButton>
+                  </>
+                )}
+              </div>
             </div>
+
+            {phase === 'drawing' && (
+              <TurnBanner
+                isYourTurn
+                yourText={isDrawer ? '✏️ Your sketch — draw' : '🕵️ Your guess — study the sketch'}
+              />
+            )}
 
             <canvas
               ref={canvasRef}
@@ -372,30 +393,28 @@ export default function DrawGuessGame({ room }: GameProps) {
                   placeholder="Type your guess…"
                   maxLength={40}
                 />
-                <button className="noir-btn" onClick={submitGuess}>
+                <GameButton onClick={submitGuess}>
                   🕵️ Guess
-                </button>
+                </GameButton>
               </div>
             )}
             {hint && isGuesser && phase === 'drawing' && (
-              <p className="mt-1 text-xs text-amber-200/80" style={{ fontFamily: 'var(--font-type)' }}>{hint}</p>
+              <p className="mt-1 text-xs text-amber-200/80">{hint}</p>
             )}
 
-            {phase === 'roundEnd' && (
-              <div className="mt-3 flex flex-col items-center gap-2">
-                <p className="text-center text-sm" style={{ fontFamily: 'var(--font-type)' }}>
-                  {reason === 'guessed'
-                    ? `🎯 ${nameOf(roundWinner)} cracked it — the word was "${word}".`
-                    : `⏱ Time! The word was "${word}".`}
-                  {matchWinner && (
-                    <> Case closed — <span className="font-bold">{nameOf(matchWinner)}</span> takes the sketchbook. 🏆</>
-                  )}
-                </p>
-                <button className="noir-btn" onClick={matchWinner ? startMatch : nextRound}>
-                  {matchWinner ? '🔁 New match' : '➡️ Next round'}
-                </button>
-              </div>
-            )}
+            <ResultModal
+              open={phase === 'roundEnd'}
+              eyebrow={matchWinner ? 'SKETCHBOOK DECIDED' : `ROUND ${round} CLOSED`}
+              headline={
+                reason === 'guessed'
+                  ? `${nameOf(roundWinner)} cracked it`
+                  : "Time's up"
+              }
+              tone={reason === 'guessed' && roundWinner === me ? 'win' : reason === 'guessed' ? 'lose' : 'draw'}
+              stat={`THE WORD WAS "${word.toUpperCase()}"`}
+              primaryLabel={matchWinner ? '🔁 New match' : '➡️ Next round'}
+              onPrimary={matchWinner ? startMatch : nextRound}
+            />
           </>
         )}
       </motion.div>
