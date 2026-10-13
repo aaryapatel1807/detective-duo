@@ -10,6 +10,14 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import '../ui-kit/kit.css';
+import {
+  GameButton,
+  DifficultyBadge,
+  ProgressBar,
+  ResultModal,
+  type Difficulty,
+} from '../ui-kit';
 import type { GameProps } from '../types';
 import type { RoomApi } from '../../lib/realtime/useRoom';
 import type { HeistMap, HeistPhase, HeistRole, HeistShared, XY } from './types';
@@ -109,7 +117,7 @@ export default function HeistPlannerGame({ room }: GameProps) {
   };
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="gk-root gk-modal-scope mx-auto max-w-6xl">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="type-heading text-2xl">🏦 Heist Planner</h2>
@@ -127,13 +135,9 @@ export default function HeistPlannerGame({ room }: GameProps) {
             <span className="font-type text-sm text-[var(--ink-dim)]">
               TICK <span className="text-[var(--amber-glow)]">{gs.tick ?? 0}</span>
             </span>
-            <span className="text-sm" title="Alarms">
-              {Array.from({ length: MAX_ALARMS }).map((_, i) => (
-                <span key={i} className={i < (gs.alarms ?? 0) ? '' : 'opacity-25'}>
-                  🚨
-                </span>
-              ))}
-            </span>
+            <div className="w-32">
+              <ProgressBar label="ALARMS" value={gs.alarms ?? 0} max={MAX_ALARMS} />
+            </div>
           </div>
         )}
       </div>
@@ -158,12 +162,18 @@ export default function HeistPlannerGame({ room }: GameProps) {
       )}
 
       {myRole && (phase === 'won' || phase === 'failed') && (
-        <EndView
-          phase={phase}
-          alarms={gs.alarms ?? 0}
-          tick={gs.tick ?? 0}
-          mapName={map.name}
-          onReset={reset}
+        <ResultModal
+          open
+          eyebrow={map.name.toUpperCase()}
+          headline={phase === 'won' ? 'The score is ours' : 'Busted'}
+          tone={phase === 'won' ? 'win' : 'lose'}
+          stat={
+            phase === 'won'
+              ? `CRACKED IN ${gs.tick ?? 0} TICKS · ${gs.alarms ?? 0} ALARMS`
+              : `${MAX_ALARMS} ALARMS — THE CREW IS IN THE WIND`
+          }
+          primaryLabel={phase === 'won' ? 'Plan the next score' : 'Replan the heist'}
+          onPrimary={reset}
         />
       )}
     </div>
@@ -228,17 +238,7 @@ function MapSelect({ map, onSelectMap }: { map: HeistMap; onSelectMap: (id: stri
         >
           <div className="flex items-center justify-between">
             <span className="type-heading text-sm">{m.name}</span>
-            <span
-              className={`eyebrow rounded-full px-2 py-0.5 ${
-                m.difficulty === 'Easy'
-                  ? 'bg-[rgba(61,220,116,0.15)] text-[#3ddc74]'
-                  : m.difficulty === 'Medium'
-                    ? 'bg-[rgba(232,163,61,0.15)] text-[var(--amber-glow)]'
-                    : 'bg-[rgba(179,38,30,0.2)] text-[var(--blood-bright)]'
-              }`}
-            >
-              {m.difficulty}
-            </span>
+            <DifficultyBadge difficulty={m.difficulty.toLowerCase() as Difficulty} />
           </div>
           <p className="mt-1 text-xs text-[var(--ink-dim)]">{m.blurb}</p>
         </button>
@@ -401,13 +401,14 @@ function PlanPhase({
           {solo && (
             <div className="flex gap-2">
               {(['mastermind', 'lookout'] as HeistRole[]).map((r) => (
-                <button
+                <GameButton
                   key={r}
+                  size="sm"
+                  variant={myRole === r ? 'primary' : 'ghost'}
                   onClick={() => onChoose(r)}
-                  className={`noir-btn-ghost !py-1.5 text-xs ${myRole === r ? '!border-[var(--amber-glow)]' : ''}`}
                 >
                   {r === 'mastermind' ? '🗺️ Map view' : '🔭 Patrol view'}
-                </button>
+                </GameButton>
               ))}
             </div>
           )}
@@ -425,20 +426,22 @@ function PlanPhase({
               onCell={clickCell} interactive
             />
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <button
+              <GameButton
+                size="sm"
+                variant="ghost"
                 onClick={() => { sounds.typewriterClick(); patch(room, { plan: plan.slice(0, -1), ready: {} }); }}
                 disabled={plan.length === 0}
-                className="noir-btn-ghost !py-1.5 text-xs disabled:opacity-40"
               >
                 ↩ Undo
-              </button>
-              <button
+              </GameButton>
+              <GameButton
+                size="sm"
+                variant="ghost"
                 onClick={() => { sounds.paperShuffle(); patch(room, { plan: [], ready: {} }); }}
                 disabled={plan.length === 0}
-                className="noir-btn-ghost !py-1.5 text-xs disabled:opacity-40"
               >
                 🗑 Clear
-              </button>
+              </GameButton>
               <span className="ml-auto text-xs text-[var(--ink-dim)]">
                 Click tiles to plot the route · click the last pin to remove it
               </span>
@@ -472,23 +475,24 @@ function PlanPhase({
                 <span>{room.peer.name}: {ready[room.peer.id] ? '✅ ready' : '⏳ …'}</span>
               )}
             </div>
-            <button
+            <GameButton
               onClick={() => {
                 sounds.stampThud();
                 patch(room, { ready: { ...ready, [room.me.id]: !ready[room.me.id] } });
               }}
               disabled={plan.length === 0 || !endsAtVault}
-              className={`noir-btn mt-3 w-full !py-3 disabled:opacity-40 ${ready[room.me.id] ? '!border-[var(--brass)]' : ''}`}
+              className="mt-3 w-full"
             >
               {ready[room.me.id] ? '✅ Plan locked — waiting on partner' : '🔒 LOCK IN THE PLAN'}
-            </button>
+            </GameButton>
             {!room.peer && plan.length > 0 && endsAtVault && (
-              <button
+              <GameButton
+                variant="ghost"
                 onClick={() => patch(room, { phase: 'execute', stepIdx: 0, tick: 0, alarms: 0, log: ['🎬 Solo run — execution begins.'] })}
-                className="noir-btn-ghost mt-2 w-full !py-2 text-sm"
+                className="mt-2 w-full"
               >
                 ▶ Solo practice: run it
-              </button>
+              </GameButton>
             )}
           </GlassCard>
         </div>
@@ -589,13 +593,14 @@ function ExecutePhase({
         {!room.peer && (
           <div className="flex gap-2">
             {(['mastermind', 'lookout'] as HeistRole[]).map((r) => (
-              <button
+              <GameButton
                 key={r}
+                size="sm"
+                variant={myRole === r ? 'primary' : 'ghost'}
                 onClick={() => onChoose(r)}
-                className={`noir-btn-ghost !py-1.5 text-xs ${myRole === r ? '!border-[var(--amber-glow)]' : ''}`}
               >
                 {r === 'mastermind' ? '🗺️ Map view' : '🔭 Patrol view'}
-              </button>
+              </GameButton>
             ))}
           </div>
         )}
@@ -612,13 +617,14 @@ function ExecutePhase({
             map={map} role={myRole} plan={plan} stepIdx={stepIdx} tick={tick}
             onCell={() => {}} interactive={false}
           />
-          <button
+          <GameButton
             onClick={step}
             disabled={finished}
-            className="noir-btn mt-4 w-full !py-4 !text-base disabled:opacity-40"
+            size="lg"
+            className="mt-4 w-full"
           >
             {finished ? '⛔ Route complete — vault not reached' : '👣 STEP THE CREW →'}
-          </button>
+          </GameButton>
           {finished && (
             <p className="mt-2 text-center text-xs text-[var(--blood-bright)]">
               The plan ended before the vault. Abort and replan — or add the vault as the final waypoint next time.
@@ -641,48 +647,14 @@ function ExecutePhase({
           title="Execution radio"
           quickPhrases={['Hold…', 'Now!', 'Guard close', 'Abort?']}
         />
-        <button
+        <GameButton
+          variant="ghost"
           onClick={() => { sounds.paperShuffle(); patch(room, { phase: 'plan', ready: {} }); }}
-          className="noir-btn-ghost w-full !py-2 text-sm"
+          className="w-full"
         >
           ↩ Abort run — back to planning
-        </button>
+        </GameButton>
       </div>
     </div>
-  );
-}
-
-/* ---------------- end ---------------- */
-
-function EndView({
-  phase, alarms, tick, mapName, onReset,
-}: {
-  phase: HeistPhase; alarms: number; tick: number; mapName: string; onReset: () => void;
-}) {
-  const won = phase === 'won';
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.96 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="glass-card-strong mx-auto max-w-xl p-10 text-center"
-    >
-      <div className="text-6xl">{won ? '💰' : '🚔'}</div>
-      <h3 className="type-heading mt-4 text-3xl">
-        {won ? 'THE SCORE IS OURS' : 'BUSTED'}
-      </h3>
-      <p className="mt-2 text-sm text-[var(--ink-dim)]">
-        {won
-          ? `${mapName} cracked in ${tick} ticks with ${alarms} alarm${alarms === 1 ? '' : 's'}. Clean work, crew.`
-          : `Three alarms at ${mapName}. The crew is in the wind — plan a quieter route and go again.`}
-      </p>
-      {won && (
-        <div className="eyebrow mt-3 text-[var(--amber-glow)]">
-          +{XP_AWARDS.coopWin} XP each · love-notes surprise unlocked 💌
-        </div>
-      )}
-      <button onClick={onReset} className="noir-btn mt-6 !px-10 !py-3">
-        {won ? 'Plan the next score' : 'Replan the heist'}
-      </button>
-    </motion.div>
   );
 }
