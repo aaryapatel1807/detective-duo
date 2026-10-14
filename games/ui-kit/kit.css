@@ -36,16 +36,23 @@
 }
 
 .gk-root {
-  --gk-bg: var(--hub-bg, #0a0f1a);
-  --gk-panel: var(--hub-panel, rgba(13, 20, 36, 0.66));
-  --gk-panel-2: var(--hub-panel-2, #111a2e);
-  --gk-border: var(--hub-border, #1f2a3d);
-  --gk-gold: var(--hub-gold, #d9a441);
-  --gk-gold-soft: var(--hub-gold-soft, rgba(217, 164, 65, 0.14));
-  --gk-green: var(--hub-green, #3ddc84);
-  --gk-red: var(--hub-red, #b3261e);
-  --gk-ink: var(--hub-ink, #ece7d9);
-  --gk-ink-dim: var(--hub-ink-dim, #8b95a8);
+  /* Kit color tokens are PINNED to noir values and deliberately do NOT
+   * follow the hub's light "case file" theme: every game renders inside
+   * the play page's always-dark evidence-board panel (bg #161316, both
+   * themes), so hub-derived ink would turn dark-on-dark and unreadable.
+   * Tile faces / play surfaces carry their own explicit per-theme
+   * palettes (see the light-theme Wordle block below). */
+  --gk-bg: #0a0f1a;
+  --gk-panel: rgba(13, 20, 36, 0.66);
+  --gk-panel-2: #111a2e;
+  --gk-border: #33415e;
+  --gk-gold: #d9a441;
+  --gk-gold-soft: rgba(217, 164, 65, 0.14);
+  --gk-green: #3ddc84;
+  --gk-red: #b3261e;
+  --gk-ink: #ece7d9;
+  --gk-ink-dim: #a9b4c7;
+  --gk-ink-faint: rgba(236, 231, 217, 0.42);
   --gk-font-display: var(--hub-display, Cinzel, Georgia, serif);
   --gk-font-mono: var(--hub-mono, JetBrains Mono, ui-monospace, monospace);
   --gk-font-body: var(--hub-body, Inter, system-ui, sans-serif);
@@ -414,7 +421,53 @@ button.gk-card:active { transform: scale(0.94); }
 .gk-card--absent {
   background: #232c42;
   border-color: #232c42;
-  color: rgba(236, 231, 217, 0.55);
+  color: rgba(236, 231, 217, 0.72);
+}
+
+/* ---------------- light "case file" theme: Wordle-spec tile faces -----
+ * The real Wordle light palette at full saturation, so letter tiles and
+ * tile-buttons stay crisp when the hub is in light mode. (Kit ink tokens
+ * stay noir-lit above because the board behind the tiles is always dark.) */
+[data-theme='light'] .gk-card {
+  background: #ffffff;
+  border: 2px solid #d3d6da;
+  color: #1a1a1b;
+  box-shadow: none;
+}
+
+[data-theme='light'] .gk-card--empty {
+  background: #ffffff;
+  border: 2px solid #d3d6da;
+  color: transparent;
+  box-shadow: none;
+}
+
+[data-theme='light'] .gk-card--active {
+  background: #ffffff;
+  border: 2px solid #87898c;
+  color: #1a1a1b;
+  box-shadow: none;
+}
+
+[data-theme='light'] .gk-card--correct {
+  background: #6aaa64;
+  border: 2px solid #6aaa64;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+[data-theme='light'] .gk-card--misplaced {
+  background: #c9b458;
+  border: 2px solid #c9b458;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+[data-theme='light'] .gk-card--absent {
+  background: #787c7e;
+  border: 2px solid #787c7e;
+  color: #ffffff;
+  box-shadow: none;
 }
 
 /* ============================================================

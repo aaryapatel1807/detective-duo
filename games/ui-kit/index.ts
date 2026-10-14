@@ -42,4 +42,16 @@ export type { DifficultyOption, DifficultySelectProps } from './DifficultySelect
 export { SectionTitle } from './SectionTitle';
 export type { SectionTitleProps } from './SectionTitle';
 
+export { PlayingCard } from './PlayingCard';
+export type { PlayingCardSize, PlayingCardProps } from './PlayingCard';
+
+export { Die } from './Die';
+export type { DieProps } from './Die';
+
+export { suitGlyph, suitColor, pipLayout } from './realism-helpers';
+export type { CardSuit } from './realism-helpers';
+
+export { LetterTile } from './LetterTile';
+export type { LetterTileState, LetterTileSize, LetterTileProps } from './LetterTile';
+
 export { formatClock, formatNumber, clamp01, pctOf, isNewRecord, pad3 } from './helpers';

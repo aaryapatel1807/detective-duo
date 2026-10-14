@@ -8,12 +8,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './trivia-battle.css';
 import {
   GameButton,
   ScoreHUD,
   TurnBanner,
   ResultModal,
-  GameCard,
   TimerChip,
   ProgressBar,
   SectionTitle,
@@ -41,6 +42,7 @@ export default function TriviaBattleGame({ room }: GameProps) {
   const startedAt = gs.startedAt ?? 0;
   const correct = gs.correct ?? null;
   const earned = gs.earned ?? 0;
+  const revealedPick = gs.pick ?? null; // shared mc pick for the dramatic reveal
   const scores = gs.scores ?? {};
   const matchWinner = gs.matchWinner ?? null;
   const me = room.me.id;
@@ -160,7 +162,7 @@ export default function TriviaBattleGame({ room }: GameProps) {
         </div>
       )}
 
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card gk-modal-scope p-5">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="tb-stage gk-spotlight gk-modal-scope p-5">
         {phase === 'lobby' && (
           <div className="flex flex-col items-center gap-3 py-8">
             <p className="text-center text-sm opacity-70">
@@ -176,7 +178,7 @@ export default function TriviaBattleGame({ room }: GameProps) {
         {(phase === 'question' || phase === 'reveal') && q && (
           <div className="mx-auto max-w-xl">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs tracking-widest text-amber-200/80">
+              <span className="tb-category">
                 {q.category.toUpperCase()}
               </span>
               {phase === 'question' && <TimerChip seconds={left} label="TIME" />}
@@ -196,18 +198,18 @@ export default function TriviaBattleGame({ room }: GameProps) {
             {phase === 'question' ? (
               isAnswerer ? (
                 q.kind === 'mc' && q.options ? (
-                  <div className="grid gap-2">
+                  <div className="grid gap-3">
                     {q.options.map((opt, i) => (
-                      <GameCard
+                      <button
                         key={i}
+                        type="button"
                         onClick={() => submit(String(i))}
-                        ariaLabel={`Option ${'ABCD'[i]}: ${opt}`}
-                        className="w-full"
+                        aria-label={`Option ${'ABCD'[i]}: ${opt}`}
+                        className={`tb-option tb-option--${'abcd'[i]}`}
                       >
-                        <span className="text-left">
-                          <span className="opacity-60">{'ABCD'[i]}.</span> {opt}
-                        </span>
-                      </GameCard>
+                        <span className="tb-option__key" aria-hidden>{'▲◆●■'[i]}</span>
+                        <span>{opt}</span>
+                      </button>
                     ))}
                   </div>
                 ) : (
@@ -231,13 +233,42 @@ export default function TriviaBattleGame({ room }: GameProps) {
                 </p>
               )
             ) : (
-              <div className="flex flex-col items-center gap-3 py-2">
-                <div className="text-3xl">{correct ? '✅' : '❌'}</div>
-                <p className="text-center text-sm">
-                  {correct
-                    ? `${nameOf(answerer)} nails it — +${earned} pts.`
-                    : `The answer was "${q.answerText}".`}
-                </p>
+              <div className="flex flex-col items-center gap-4 py-2">
+                <div className={`tb-stamp ${correct ? 'tb-stamp--correct' : 'tb-stamp--wrong'}`}>
+                  {correct ? 'Correct' : 'Wrong'}
+                </div>
+                {q.kind === 'mc' && q.options ? (
+                  <div className="grid w-full gap-3">
+                    {q.options.map((opt, i) => {
+                      const isAnswer = opt === q.answerText;
+                      const pickedWrong = String(i) === revealedPick && !correct;
+                      const cls = [
+                        'tb-option',
+                        `tb-option--${'abcd'[i]}`,
+                        isAnswer ? 'tb-option--correct' : pickedWrong ? 'tb-option--wrong' : 'tb-option--dim',
+                      ].join(' ');
+                      return (
+                        <div key={i} className={cls} aria-label={`Option ${'ABCD'[i]}: ${opt}${isAnswer ? ' (correct answer)' : ''}`}>
+                          <span className="tb-option__key" aria-hidden>{'▲◆●■'[i]}</span>
+                          <span>{opt}{isAnswer && <span className="ml-2">✓</span>}{pickedWrong && <span className="ml-2">✗</span>}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-center text-sm">
+                    {correct
+                      ? `${nameOf(answerer)} nails it — +${earned} pts.`
+                      : <>The answer was <span className="tb-answertext">“{q.answerText}”</span>.</>}
+                  </p>
+                )}
+                {q.kind === 'mc' && (
+                  <p className="text-center text-sm">
+                    {correct
+                      ? `${nameOf(answerer)} nails it — +${earned} pts.`
+                      : `${nameOf(answerer)} buzzed wrong — the answer was “${q.answerText}”.`}
+                  </p>
+                )}
                 <GameButton onClick={nextQuestion}>
                   {idx + 1 >= deck.length ? '🏁 See results' : '➡️ Next question'}
                 </GameButton>
