@@ -10,11 +10,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './mind-meld.css';
 import {
   GameButton,
   ScoreHUD,
   ResultModal,
   SectionTitle,
+  LetterTile,
 } from '../ui-kit';
 import type { GameProps } from '../types';
 import type { RoomApi } from '../../lib/realtime/useRoom';
@@ -128,7 +131,7 @@ export default function MindMeldGame({ room }: GameProps) {
         <GlassCard className="p-10 text-center">
           <div className="text-5xl">🔮</div>
           <h2 className="type-heading mt-4 text-2xl">Mind Meld</h2>
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">
+          <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
             A meld needs two minds. Create a room from the hub and invite your
             partner — then try to think the same word at the same instant.
           </p>
@@ -155,12 +158,14 @@ export default function MindMeldGame({ room }: GameProps) {
       </div>
 
       {/* theme card */}
-      <div className="manila-folder p-6 text-center">
-        <SectionTitle
-          eyebrow={theme ? `🎲 THEME ${themeIdx + 1}/${MIND_THEMES.length} — ${theme.label}` : '🌀 AFTERMATH ROUND'}
-          title={theme ? theme.prompt : (gs.customTheme || `${(gs.prevA ?? '').toUpperCase()} + ${(gs.prevB ?? '').toUpperCase()}`)}
-        />
-        <p className="mt-2 text-sm italic text-[var(--ink-dim)]">
+      <div className="mm-theme">
+        <div className="mm-theme__eyebrow">
+          {theme ? `🎲 Theme ${themeIdx + 1}/${MIND_THEMES.length} — ${theme.label}` : '🌀 Aftermath round'}
+        </div>
+        <div className="mm-theme__title">
+          {theme ? theme.prompt : (gs.customTheme || `${(gs.prevA ?? '').toUpperCase()} + ${(gs.prevB ?? '').toUpperCase()}`)}
+        </div>
+        <p className="mm-theme__hint">
           {theme
             ? theme.hint
             : 'No match last round — your word must relate to BOTH of these.'}
@@ -168,74 +173,66 @@ export default function MindMeldGame({ room }: GameProps) {
       </div>
 
       {/* the two minds */}
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <MindCard
-          label={`🧠 ${room.me.name} (you)`}
-          state={myWord ? 'sealed' : 'input'}
-          word={myWord}
-          revealed={revealed}
-        >
-          {!myWord && !revealed && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                submit();
-              }}
-              className="mt-3 flex gap-2"
-            >
-              <input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="One word…"
-                maxLength={24}
-                autoFocus
-                className="noir-input min-w-0 flex-1 text-center font-type text-lg tracking-[0.2em]"
-              />
-              <GameButton type="submit" disabled={!draft.trim()}>
-                Seal
-              </GameButton>
-            </form>
-          )}
-        </MindCard>
-        <MindCard
-          label={`🧠 ${room.peer.name}`}
-          state={peerWord ? 'sealed' : 'waiting'}
-          word={peerWord}
-          revealed={revealed}
-        />
+      <div className="mm-table mt-4">
+        <div className="grid gap-8 sm:grid-cols-2 sm:gap-4">
+          <MindCard
+            label={`🧠 ${room.me.name} (you)`}
+            state={myWord ? 'sealed' : 'input'}
+            word={myWord}
+            revealed={revealed}
+          >
+            {!myWord && !revealed && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submit();
+                }}
+                className="mt-3 flex gap-2"
+              >
+                <input
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder="One word…"
+                  maxLength={24}
+                  autoFocus
+                  className="noir-input min-w-0 flex-1 text-center font-type text-lg tracking-[0.2em]"
+                />
+                <GameButton type="submit" disabled={!draft.trim()}>
+                  Seal
+                </GameButton>
+              </form>
+            )}
+          </MindCard>
+          <MindCard
+            label={`🧠 ${room.peer.name}`}
+            state={peerWord ? 'sealed' : 'waiting'}
+            word={peerWord}
+            revealed={revealed}
+          />
+        </div>
       </div>
 
-      {/* reveal */}
+      {/* reveal — the two thoughts merge */}
       {revealed && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`glass-card-strong mt-4 p-6 text-center ${
-            match ? '!border-[var(--amber-glow)]' : ''
-          }`}
+          className={`mm-merge mt-4 ${match ? 'mm-merge--match' : ''}`}
         >
-          {match ? (
-            <>
-              <div className="text-4xl">⚡</div>
-              <div className="type-heading mt-2 text-3xl text-[var(--amber-glow)]">
-                MELD! “{normalizeWord(myWord).toUpperCase()}”
-              </div>
-              <p className="mt-1 text-sm text-[var(--ink-dim)]">
-                Same wavelength. +{XP_AWARDS.clueSolved} XP each · {MIND_WIN_MATCHES - matches - 1} to
-                go.
-              </p>
-            </>
-          ) : (
-            <>
-              <div className="text-4xl">🌫️</div>
-              <div className="type-heading mt-2 text-2xl">
-                “{normalizeWord(myWord).toUpperCase()}” ≠ “{normalizeWord(peerWord!).toUpperCase()}”
-              </div>
-              <p className="mt-1 text-sm text-[var(--ink-dim)]">
-                So close. Next round your words must bridge both of these.
-              </p>
-            </>
-          )}
+          <div className="text-4xl" aria-hidden>{match ? '⚡' : '🌫️'}</div>
+          <div className="mm-theme__eyebrow mt-2">
+            {match ? 'Meld!' : 'Not quite'}
+          </div>
+          <div className="mm-merge__words">
+            <WordTiles word={myWord ?? ''} />
+            <span className="mm-vs" aria-hidden>{match ? '=' : '≠'}</span>
+            <WordTiles word={peerWord ?? ''} />
+          </div>
+          <p className="mt-3 text-sm text-[#6b6355]">
+            {match
+              ? `Same wavelength. +${XP_AWARDS.clueSolved} XP each · ${MIND_WIN_MATCHES - matches - 1} to go.`
+              : 'So close. Next round your words must bridge both of these.'}
+          </p>
           <GameButton onClick={nextRound} className="mt-4">
             {match && matches + 1 >= MIND_WIN_MATCHES ? '✨ Complete the meld' : '▶ Next round'}
           </GameButton>
@@ -243,12 +240,12 @@ export default function MindMeldGame({ room }: GameProps) {
       )}
 
       {!revealed && myWord && (
-        <p className="mt-4 text-center font-type text-sm text-[var(--ink-dim)]">
+        <p className="mt-4 text-center font-type text-sm text-[var(--gk-ink-dim)]">
           🔒 Your word is sealed… waiting for {room.peer.name}.
         </p>
       )}
       {!revealed && !myWord && (
-        <p className="mt-4 text-center font-type text-sm text-[var(--ink-dim)]">
+        <p className="mt-4 text-center font-type text-sm text-[var(--gk-ink-dim)]">
           Type one word and seal it — neither of you sees the other's until both are in.
         </p>
       )}
@@ -262,6 +259,17 @@ export default function MindMeldGame({ room }: GameProps) {
         primaryLabel="Meld again"
         onPrimary={reset}
       />
+    </div>
+  );
+}
+
+function WordTiles({ word }: { word: string }) {
+  const letters = normalizeWord(word).toUpperCase().split('');
+  return (
+    <div className="mm-tiles" role="img" aria-label={`Word: ${letters.join('')}`}>
+      {letters.map((ch, i) => (
+        <LetterTile key={i} letter={ch} size="sm" />
+      ))}
     </div>
   );
 }
@@ -280,29 +288,28 @@ function MindCard({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="glass-card !rounded-2xl p-5 text-center">
-      <div className="eyebrow">{label}</div>
-      <div className="mt-3 flex min-h-[4.5rem] items-center justify-center">
+    <div className="mm-bubble">
+      <div className="mm-bubble__label">{label}</div>
+      <div className="mm-bubble__word">
         {revealed && word ? (
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="type-heading text-4xl tracking-[0.12em] text-[var(--amber-glow)]"
           >
-            {normalizeWord(word).toUpperCase()}
+            <WordTiles word={word} />
           </motion.div>
         ) : state === 'sealed' ? (
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-3xl">✉️</span>
-            <span className="font-type text-xs text-[var(--ink-dim)]">sealed</span>
+          <div className="mm-sealed">
+            <span className="mm-sealed__icon" aria-hidden>✉️</span>
+            <span>sealed</span>
           </div>
         ) : state === 'waiting' ? (
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-3xl opacity-40">💭</span>
-            <span className="font-type text-xs text-[var(--ink-faint)]">thinking…</span>
+          <div className="mm-sealed">
+            <span className="mm-sealed__icon opacity-40" aria-hidden>💭</span>
+            <span>thinking…</span>
           </div>
         ) : (
-          <span className="font-type text-xs text-[var(--ink-faint)]">your mind, below</span>
+          <span className="text-xs text-[#8a8474]">your mind, below</span>
         )}
       </div>
       {children}

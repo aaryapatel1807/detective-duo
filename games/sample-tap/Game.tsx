@@ -12,7 +12,9 @@ import { TAP_TARGET, tapWinner } from './logic';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
 import '../ui-kit/kit.css';
-import { GameButton, ResultModal, ScoreHUD, SectionTitle } from '../ui-kit';
+import '../ui-kit/realism.css';
+import './sample-tap.css';
+import { ResultModal, ScoreHUD, SectionTitle } from '../ui-kit';
 
 interface TapShared {
   taps?: Record<string, number>;
@@ -60,13 +62,13 @@ export default function TapDuelGame({ room }: GameProps) {
 
   return (
     <div className="gk-root gk-modal-scope mx-auto max-w-xl">
-      <div className="mb-4 rounded-xl border border-dashed border-[var(--amber-glow)] bg-[rgba(232,163,61,0.08)] px-4 py-2 text-center font-type text-[0.72rem] tracking-[0.18em] uppercase text-[var(--ink-dim)]">
-        ⚠ Sample game — proves the registry + realtime contract
+      <div className="mb-4 rounded-xl border border-dashed border-[var(--amber-glow)] bg-[rgba(232,163,61,0.08)] px-4 py-2 text-center font-type text-[0.72rem] tracking-[0.18em] uppercase text-[var(--gk-ink-dim)]">
+        🕹️ Practice cabinet — warm up your tapping finger
       </div>
 
       <div className="mb-5 text-center">
         <SectionTitle eyebrow="DUO PRACTICE" title="Tap Duel" />
-        <p className="mt-2 text-sm text-[var(--ink-dim)]">
+        <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
           First detective to {TAP_TARGET} taps cracks the case.
         </p>
       </div>
@@ -74,18 +76,27 @@ export default function TapDuelGame({ room }: GameProps) {
       <ScoreHUD leftLabel="You" leftValue={myTaps} rightLabel={peerName} rightValue={peerTaps} />
 
       {!winner && (
-        <>
-          <div className="mt-6 text-center">
-            <GameButton variant="primary" size="lg" onClick={tap} className="w-full sm:w-auto sm:!px-14">
-              👆 Tap
-            </GameButton>
+        <div className="st-cabinet mt-6">
+          <span className="st-marquee">First to {TAP_TARGET}</span>
+          <div>
+            <button
+              type="button"
+              onClick={tap}
+              className="st-button"
+              aria-label={`Tap! ${myTaps} of ${TAP_TARGET}`}
+            >
+              TAP
+            </button>
+          </div>
+          <div>
+            <span className="st-score" aria-hidden>{myTaps}</span>
           </div>
           {!room.roomCode && (
-            <p className="mt-4 text-center text-xs text-[var(--ink-faint)]">
+            <p className="mt-4 text-center text-xs text-white/60">
               Solo practice — create a room from the hub to duel live.
             </p>
           )}
-        </>
+        </div>
       )}
 
       <ResultModal

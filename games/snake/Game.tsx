@@ -23,6 +23,8 @@ import {
   type Vec,
 } from './logic';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './game.css';
 import {
   DifficultySelect,
   GameButton,
@@ -150,10 +152,10 @@ export default function SnakeGame({ room }: GameProps) {
     if (!ctx) return;
     const W = COLS * CELL;
     const H = ROWS * CELL;
-    ctx.fillStyle = '#14100c';
+    ctx.fillStyle = '#0b0e0a';
     ctx.fillRect(0, 0, W, H);
     // faint grid
-    ctx.strokeStyle = 'rgba(232,163,61,0.07)';
+    ctx.strokeStyle = 'rgba(120,200,120,0.09)';
     ctx.lineWidth = 1;
     for (let x = 1; x < COLS; x++) {
       ctx.beginPath();
@@ -167,20 +169,39 @@ export default function SnakeGame({ room }: GameProps) {
       ctx.lineTo(W, y * CELL);
       ctx.stroke();
     }
-    // food: the evidence dossier
-    ctx.fillStyle = '#c0392b';
+    // food: the classic red apple, glowing
+    const fx = state.food.x * CELL + CELL / 2;
+    const fy = state.food.y * CELL + CELL / 2;
+    ctx.save();
+    ctx.shadowColor = 'rgba(255,64,40,0.95)';
+    ctx.shadowBlur = 18;
+    const glow = ctx.createRadialGradient(fx, fy, 1, fx, fy, CELL / 2 - 2);
+    glow.addColorStop(0, '#ff7a5e');
+    glow.addColorStop(0.55, '#d63d28');
+    glow.addColorStop(1, '#8e1f12');
+    ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(state.food.x * CELL + CELL / 2, state.food.y * CELL + CELL / 2, CELL / 2 - 3, 0, Math.PI * 2);
+    ctx.arc(fx, fy, CELL / 2 - 3, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = 'rgba(232,163,61,0.9)';
-    ctx.fillRect(state.food.x * CELL + CELL / 2 - 1.5, state.food.y * CELL + 5, 3, CELL - 10);
-    // snake
+    ctx.restore();
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.arc(fx - 3, fy - 3, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    // snake — glossy classic green segments with a top highlight
     state.snake.forEach((seg, i) => {
       const t = 1 - i / Math.max(1, state.snake.length);
-      ctx.fillStyle = i === 0 ? '#e8a33d' : `rgba(200,140,50,${0.35 + 0.55 * t})`;
+      ctx.fillStyle = i === 0 ? '#9ccc65' : `rgba(104,159,56,${0.4 + 0.6 * t})`;
       const pad = i === 0 ? 1 : 2.5;
+      const sx = seg.x * CELL + pad;
+      const sy = seg.y * CELL + pad;
+      const ss = CELL - pad * 2;
       ctx.beginPath();
-      ctx.roundRect(seg.x * CELL + pad, seg.y * CELL + pad, CELL - pad * 2, CELL - pad * 2, 5);
+      ctx.roundRect(sx, sy, ss, ss, 5);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.20)';
+      ctx.beginPath();
+      ctx.roundRect(sx + 3, sy + 2.5, ss - 6, Math.max(2, ss * 0.22), 3);
       ctx.fill();
     });
     if (state.dead) {
@@ -212,8 +233,8 @@ export default function SnakeGame({ room }: GameProps) {
     <div className="gk-root gk-modal-scope mx-auto max-w-md">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="THE GETAWAY" title="Snake" />
-        <p className="mt-2 text-sm text-[var(--ink-dim)]">
-          Arrows, WASD, or swipe. Eat the red dossiers (+10). New record = +{XP_AWARDS.soloWin} XP.
+        <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
+          Arrows, WASD, or swipe. Eat the red apples (+10). New record = +{XP_AWARDS.soloWin} XP.
         </p>
       </div>
 
@@ -239,7 +260,7 @@ export default function SnakeGame({ room }: GameProps) {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <GlassCard className="p-3">
           <div
-            className="touch-none select-none"
+            className={`snk-frame touch-none select-none${state.dead ? ' snk-frame--dead' : ''}`}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
           >
@@ -247,7 +268,7 @@ export default function SnakeGame({ room }: GameProps) {
               ref={canvasRef}
               width={COLS * CELL}
               height={ROWS * CELL}
-              className="mx-auto w-full max-w-[400px] rounded-xl"
+              className="snk-canvas mx-auto w-full max-w-[400px]"
             />
           </div>
 
