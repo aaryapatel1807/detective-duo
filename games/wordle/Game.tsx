@@ -7,7 +7,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { GameProps } from '../types';
-import { GlassCard } from '../../components/GlassCard';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { readJSON, writeJSON } from '../../lib/store';
 import { sounds } from '../../lib/sound';
@@ -22,19 +21,14 @@ import {
 } from './logic';
 import type { WordleRow, WordleStats } from './types';
 import '../ui-kit/kit.css';
-import { GameButton, ProgressBar, ResultModal, SectionTitle, type GameCardState } from '../ui-kit';
+import './wordle.css';
+import { ProgressBar, ResultModal, SectionTitle } from '../ui-kit';
 
 const STATS_KEY = 'dd-solo-wordle';
 
-const MARK_BG: Record<LetterMark, string> = {
-  correct: 'rgba(106,170,100,0.85)',
-  present: 'rgba(232,163,61,0.8)',
-  absent: 'rgba(90,90,100,0.55)',
-};
-
-const MARK_STATE: Record<LetterMark, GameCardState> = {
+const MARK_TILE: Record<LetterMark, 'correct' | 'present' | 'absent'> = {
   correct: 'correct',
-  present: 'misplaced',
+  present: 'present',
   absent: 'absent',
 };
 
@@ -154,7 +148,7 @@ export default function WordleGame({ room }: GameProps) {
     <div className="gk-root gk-modal-scope mx-auto max-w-md">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="CODE WORD" title="Wordle" />
-        <p className="mt-2 text-sm text-[var(--ink-dim)]">
+        <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
           Guess the 5-letter code word in {MAX_TRIES} tries. Streak: {stats.streak} 🔥
         </p>
       </div>
@@ -163,76 +157,71 @@ export default function WordleGame({ room }: GameProps) {
         <ProgressBar label="ATTEMPTS" value={rows.length} max={MAX_TRIES} showNumbers={false} />
       </div>
 
-      <GlassCard className="p-4">
-        <div className="grid gap-1.5">
-          {gridRows.map((row, ri) => (
-            <div key={ri} className="grid grid-cols-5 gap-1.5">
-              {Array.from({ length: WORD_LEN }, (_, ci) => {
-                const letter = row ? row.word[ci] : ri === rows.length ? current[ci] ?? '' : '';
-                const mark = row ? row.marks[ci] : null;
-                const gkState: GameCardState = mark
-                  ? MARK_STATE[mark]
-                  : letter
-                    ? 'active'
-                    : 'empty';
-                return (
-                  <motion.div
-                    key={ci}
-                    initial={row ? { rotateX: 90 } : false}
-                    animate={{ rotateX: 0 }}
-                    transition={{ delay: row ? ci * 0.08 : 0, duration: 0.3 }}
-                    className={`gk-card gk-card--${gkState} aspect-square !text-2xl`}
-                  >
-                    {letter}
-                  </motion.div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
+      <div className="wl-board" role="grid" aria-label="Guess grid">
+        {gridRows.map((row, ri) => (
+          <div key={ri} className="wl-row" role="row">
+            {Array.from({ length: WORD_LEN }, (_, ci) => {
+              const letter = row ? row.word[ci] : ri === rows.length ? current[ci] ?? '' : '';
+              const mark = row ? row.marks[ci] : null;
+              const state = mark ? MARK_TILE[mark] : letter ? 'filled' : 'empty';
+              return (
+                <motion.div
+                  key={ci}
+                  role="gridcell"
+                  aria-label={letter ? `Letter ${letter}` : 'Empty'}
+                  initial={row ? { rotateX: 90 } : false}
+                  animate={{ rotateX: 0 }}
+                  transition={{ delay: row ? ci * 0.08 : 0, duration: 0.3 }}
+                  className={`wl-tile wl-tile--${state}`}
+                >
+                  {letter}
+                </motion.div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
 
-        {error && status === 'playing' && (
-          <p className="mt-2 text-center text-sm text-[var(--blood-bright)]">{error}</p>
-        )}
-      </GlassCard>
+      <p className="wl-error mt-2" aria-live="polite">
+        {error && status === 'playing' ? error : ''}
+      </p>
 
-      <div className="mt-4 space-y-1.5">
+      <div className="wl-kb mt-2" role="group" aria-label="On-screen keyboard">
         {KEY_ROWS.map((kr) => (
-          <div key={kr} className="flex justify-center gap-1.5">
+          <div key={kr} className="wl-kb-row">
             {kr === 'ZXCVBNM' && (
-              <GameButton
-                variant="ghost"
-                size="sm"
-                onClick={() => press('ENTER')}
-                ariaLabel="Enter"
-                className="flex-none !px-2.5 !min-h-[44px]"
-              >
-                ⏎
-              </GameButton>
-            )}
-            {kr.split('').map((ch) => (
               <button
-                key={ch}
-                onClick={() => press(ch)}
-                className="flex h-11 min-w-0 flex-1 items-center justify-center rounded-xl border border-[var(--glass-border)] text-lg font-bold"
-                style={{
-                  background: keyMarks[ch] ? MARK_BG[keyMarks[ch]] : 'rgba(255,255,255,0.06)',
-                  color: keyMarks[ch] ? '#14100c' : 'var(--ink)',
-                }}
+                type="button"
+                onClick={() => press('ENTER')}
+                aria-label="Enter"
+                className="wl-key wl-key--wide"
               >
-                {ch}
+                Enter
               </button>
-            ))}
+            )}
+            {kr.split('').map((ch) => {
+              const km = keyMarks[ch];
+              return (
+                <button
+                  key={ch}
+                  type="button"
+                  onClick={() => press(ch)}
+                  aria-label={`Letter ${ch}`}
+                  className={`wl-key${km ? ` wl-key--${MARK_TILE[km]}` : ''}`}
+                >
+                  {ch}
+                </button>
+              );
+            })}
             {kr === 'ZXCVBNM' && (
-              <GameButton
-                variant="ghost"
-                size="sm"
+              <button
+                type="button"
                 onClick={() => press('BACK')}
-                ariaLabel="Backspace"
-                className="flex-none !px-2.5 !min-h-[44px]"
+                aria-label="Backspace"
+                className="wl-key wl-key--wide"
               >
                 ⌫
-              </GameButton>
+              </button>
             )}
           </div>
         ))}

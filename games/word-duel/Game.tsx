@@ -20,19 +20,26 @@ import {
 import { randomWord } from '../../lib/content/words';
 import { awardXP, syncXpToRoom, XP_AWARDS } from '../../lib/xp';
 import { sounds } from '../../lib/sound';
-import { GlassCard } from '../../components/GlassCard';
 import { ManilaFolder } from '../../components/props';
 import '../ui-kit/kit.css';
-import { GameButton, GameCard, ScoreHUD, ResultModal, SectionTitle } from '../ui-kit';
+import './word-duel.css';
+import { GameButton, ResultModal, SectionTitle } from '../ui-kit';
 
 const SLUG = 'word-duel';
 const HOUSE = 'house';
 const KEYBOARD = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
 
-const MARK_CARD: Record<LetterMark, 'correct' | 'misplaced' | 'absent'> = {
+const MARK_CARD: Record<LetterMark, 'correct' | 'present' | 'absent'> = {
   correct: 'correct',
-  present: 'misplaced',
+  present: 'present',
   absent: 'absent',
+};
+
+/** Scrabble point values, printed on every tile (Words With Friends feel). */
+const POINTS: Record<string, number> = {
+  A: 1, B: 3, C: 3, D: 2, E: 1, F: 4, G: 2, H: 4, I: 1, J: 8, K: 5,
+  L: 1, M: 3, N: 1, O: 1, P: 3, Q: 10, R: 1, S: 1, T: 1, U: 1,
+  V: 4, W: 4, X: 8, Y: 4, Z: 2,
 };
 
 function playerName(room: GameProps['room'], pid: string | null | undefined): string {
@@ -130,7 +137,7 @@ export default function WordDuelGame({ room }: GameProps) {
     <div className="gk-root mx-auto max-w-xl">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="Case file № 12 — Word & Code Duels" title="Word Duel" />
-        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+        <p className="mt-1 text-sm text-[var(--gk-ink-dim)]">
           Seal a secret 5-letter word. Crack {room.peer ? 'your partner\u2019s' : 'the house\u2019s'} in{' '}
           {WORD_DUEL_TRIES} tries — fewer tries wins.
         </p>
@@ -139,7 +146,7 @@ export default function WordDuelGame({ room }: GameProps) {
       {phase === 'setup' && (
         <ManilaFolder className="p-6 text-center">
           <div className="type-heading text-xl">Seal Your Word</div>
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">
+          <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
             Type a 5-letter word. Your partner will try to crack it — and you theirs.
           </p>
           {mySecret ? (
@@ -170,39 +177,58 @@ export default function WordDuelGame({ room }: GameProps) {
       )}
 
       {phase === 'play' && (
-        <GlassCard className="p-6">
-          <ScoreHUD
-            leftLabel={`TARGET: ${playerName(room, opponentId).toUpperCase()}`}
-            leftValue={Math.min(myGuesses.length + 1, WORD_DUEL_TRIES)}
-            leftSub={`try ${Math.min(myGuesses.length + 1, WORD_DUEL_TRIES)} of ${WORD_DUEL_TRIES}`}
-            rightLabel="Tries left"
-            rightValue={WORD_DUEL_TRIES - myGuesses.length}
-            rightSub={`${WORD_DUEL_LENGTH} letters`}
-            record="none"
-          />
+        <div>
+          {/* duel bar — two tile racks facing each other */}
+          <div className="wdu-duelbar" role="group" aria-label="Duel scoreboard">
+            <div className="wdu-rack">
+              <div className="wdu-rack-name">You</div>
+              <div className="wdu-rack-tries">
+                {myGuesses.length}<span className="text-sm font-bold">/{WORD_DUEL_TRIES}</span>
+              </div>
+              <div className="wdu-rack-sub">{solved ? '🎯 cracked it' : 'tries used'}</div>
+            </div>
+            <div className="wdu-vs" aria-hidden>VS</div>
+            <div className="wdu-rack">
+              <div className="wdu-rack-name">{playerName(room, opponentId)}</div>
+              <div className="wdu-rack-tries">
+                {(guesses[opponentId] ?? []).length}
+                <span className="text-sm font-bold">/{WORD_DUEL_TRIES}</span>
+              </div>
+              <div className="wdu-rack-sub">
+                {(guesses[opponentId] ?? []).includes(mySecret) ? '🎯 cracked it' : 'tries used'}
+              </div>
+            </div>
+          </div>
 
-          {/* guess grid */}
-          <div className="mt-4 space-y-1.5">
+          {/* guess grid — wooden tiles with points */}
+          <div className="wdu-grid" role="grid" aria-label="Your guesses">
             {Array.from({ length: WORD_DUEL_TRIES }).map((_, r) => {
               const g = myGuesses[r];
               const marks = g ? wordleFeedback(target, g) : null;
               return (
-                <div key={r} className="flex justify-center gap-1.5">
-                  {Array.from({ length: WORD_DUEL_LENGTH }).map((_, c) => (
-                    <motion.div
-                      key={c}
-                      initial={g ? { rotateX: 90 } : false}
-                      animate={{ rotateX: 0 }}
-                      transition={{ delay: g ? c * 0.08 : 0 }}
-                    >
-                      <GameCard
-                        state={marks ? MARK_CARD[marks[c]] : 'default'}
-                        className="!h-11 !w-11 !min-h-0 !min-w-0 !rounded-md !p-0 !text-xl"
+                <div key={r} className="wdu-gridrow" role="row">
+                  {Array.from({ length: WORD_DUEL_LENGTH }).map((_, c) => {
+                    const ch = g ? g[c] : '';
+                    const state = marks ? MARK_CARD[marks[c]] : null;
+                    return (
+                      <motion.div
+                        key={c}
+                        role="gridcell"
+                        aria-label={ch ? `Letter ${ch}` : 'Empty'}
+                        initial={g ? { rotateX: 90 } : false}
+                        animate={{ rotateX: 0 }}
+                        transition={{ delay: g ? c * 0.08 : 0, duration: 0.3 }}
+                        className={`wdu-tile${state ? ` wdu-tile--${state}` : g ? '' : ' wdu-tile--slot'}`}
                       >
-                        {g ? g[c] : ''}
-                      </GameCard>
-                    </motion.div>
-                  ))}
+                        {ch && (
+                          <>
+                            <span aria-hidden>{ch}</span>
+                            <span className="wdu-tile__pts" aria-hidden>{POINTS[ch] ?? 1}</span>
+                          </>
+                        )}
+                      </motion.div>
+                    );
+                  })}
                 </div>
               );
             })}
@@ -236,34 +262,37 @@ export default function WordDuelGame({ room }: GameProps) {
                   🔍 Guess
                 </GameButton>
               </div>
-              {/* keyboard */}
-              <div className="mt-4 space-y-1.5">
-                {KEYBOARD.map((row, i) => (
-                  <div key={i} className="flex justify-center gap-1">
-                    {row.split('').map((L) => (
-                      <GameCard
-                        key={L}
-                        state={keyState[L] ? MARK_CARD[keyState[L]] : 'default'}
-                        onClick={() => setGuessInput((p) => (p + L).slice(0, 5))}
-                        ariaLabel={`Type ${L}`}
-                        className="!h-9 !w-7 !min-h-0 !min-w-0 !rounded-md !p-0 !text-xs"
-                      >
-                        {L}
-                      </GameCard>
-                    ))}
-                  </div>
-                ))}
+              {/* keyboard — wooden tiles on a rack */}
+              <div className="wdu-kbrack">
+                <div className="wdu-kb" role="group" aria-label="Letter keyboard">
+                  {KEYBOARD.map((row, i) => (
+                    <div key={i} className="wdu-kb-row">
+                      {row.split('').map((L) => (
+                        <button
+                          key={L}
+                          type="button"
+                          onClick={() => setGuessInput((p) => (p + L).slice(0, 5))}
+                          aria-label={`Type ${L}`}
+                          className={`wdu-key${keyState[L] ? ` wdu-key--${MARK_CARD[keyState[L]]}` : ''}`}
+                        >
+                          <span aria-hidden>{L}</span>
+                          <span className="wdu-tile__pts" aria-hidden>{POINTS[L] ?? 1}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </div>
             </>
           )}
 
           {room.peer && (
-            <div className="mt-4 text-center text-xs text-[var(--ink-dim)]">
+            <div className="wdu-sub mt-4 text-center text-xs">
               {playerName(room, opponentId)} has made {(guesses[opponentId] ?? []).length}{' '}
               {((guesses[opponentId] ?? []).length === 1) ? 'guess' : 'guesses'}
             </div>
           )}
-        </GlassCard>
+        </div>
       )}
 
       {phase === 'over' && (
@@ -276,10 +305,17 @@ export default function WordDuelGame({ room }: GameProps) {
                 const pg = guesses[pid] ?? [];
                 const idx = pg.findIndex((g) => g === targetWord);
                 return (
-                  <div key={pid} className="glass-card !rounded-2xl p-3">
-                    <div className="eyebrow">{playerName(room, pid)} guessed</div>
-                    <div className="type-heading mt-1 text-2xl tracking-[0.2em]">{targetWord}</div>
-                    <div className="text-xs text-[var(--ink-dim)]">
+                  <div key={pid} className="wdu-result">
+                    <div className="wdu-rack-name">{playerName(room, pid)}</div>
+                    <div className="wdu-result-word" aria-label={`Word: ${targetWord}`}>
+                      {targetWord.split('').map((ch, i) => (
+                        <div key={i} className="wdu-tile">
+                          <span aria-hidden>{ch}</span>
+                          <span className="wdu-tile__pts" aria-hidden>{POINTS[ch] ?? 1}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="wdu-rack-sub mt-2">
                       {idx === -1
                         ? 'unsolved'
                         : `solved in ${idx + 1} ${idx === 0 ? 'try' : 'tries'}`}

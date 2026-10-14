@@ -1,0 +1,172 @@
+/* ============================================================
+ * WORDLE — faithful to the real Wordle play surface.
+ * Flat crisp tiles + keyboard in Wordle's own light/dark palettes.
+ * Base = Wordle dark mode; [data-theme='light'] = Wordle light mode.
+ * (Noir lives only in the kit chrome: SectionTitle, ProgressBar,
+ * ResultModal. The board behind is the play page's dark panel.)
+ * Unlayered CSS, hex fallbacks, explicit @media, mobile-first.
+ * ============================================================ */
+
+.wl-board {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+.wl-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+}
+
+.wl-tile {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  border: 2px solid #3a3a3c;
+  background: #121213;
+  color: #f8f8f8;
+}
+
+.wl-tile--filled {
+  border-color: #565758;
+  color: #f8f8f8;
+}
+
+.wl-tile--correct {
+  background: #538d4e;
+  border-color: #538d4e;
+  color: #f8f8f8;
+}
+
+.wl-tile--present {
+  background: #b59f3b;
+  border-color: #b59f3b;
+  color: #f8f8f8;
+}
+
+.wl-tile--absent {
+  background: #3a3a3c;
+  border-color: #3a3a3c;
+  color: #f8f8f8;
+}
+
+/* ---------- keyboard ---------- */
+
+.wl-kb {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.wl-kb-row {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.wl-key {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: #818384;
+  color: #f8f8f8;
+  font-family: 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  text-transform: uppercase;
+}
+
+.wl-key:active { filter: brightness(1.15); }
+.wl-key:focus-visible { outline: 2px solid #d9a441; outline-offset: 2px; }
+
+.wl-key--wide { flex: 1.5 1 0; font-size: 0.75rem; }
+
+.wl-key--correct { background: #538d4e; color: #f8f8f8; }
+.wl-key--present { background: #b59f3b; color: #f8f8f8; }
+.wl-key--absent { background: #3a3a3c; color: #f8f8f8; }
+
+.wl-error {
+  min-height: 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #f0857a;
+}
+
+/* ---------- light theme: the real Wordle light mode ---------- */
+
+[data-theme='light'] .wl-tile {
+  background: #ffffff;
+  border-color: #d3d6da;
+  color: #1a1a1b;
+}
+
+[data-theme='light'] .wl-tile--filled {
+  border-color: #87898c;
+  color: #1a1a1b;
+}
+
+[data-theme='light'] .wl-tile--correct {
+  background: #6aaa64;
+  border-color: #6aaa64;
+  color: #ffffff;
+}
+
+[data-theme='light'] .wl-tile--present {
+  background: #c9b458;
+  border-color: #c9b458;
+  color: #ffffff;
+}
+
+[data-theme='light'] .wl-tile--absent {
+  background: #787c7e;
+  border-color: #787c7e;
+  color: #ffffff;
+}
+
+[data-theme='light'] .wl-key {
+  background: #d3d6da;
+  color: #1a1a1b;
+}
+
+[data-theme='light'] .wl-key--correct { background: #6aaa64; color: #ffffff; }
+[data-theme='light'] .wl-key--present { background: #c9b458; color: #ffffff; }
+[data-theme='light'] .wl-key--absent { background: #787c7e; color: #ffffff; }
+
+[data-theme='light'] .wl-error { color: #a3231a; }
+
+/* ---------- small phones ---------- */
+
+@media (max-width: 380px) {
+  .wl-tile { font-size: 1.75rem; }
+  .wl-key { height: 52px; font-size: 0.8rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-tile, .wl-key { transition: none; }
+}
