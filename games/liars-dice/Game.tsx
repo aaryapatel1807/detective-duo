@@ -8,12 +8,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './game.css';
 import {
+  Die,
   GameButton,
   ScoreHUD,
   TurnBanner,
   ResultModal,
-  GameCard,
   SectionTitle,
 } from '../ui-kit';
 import type { GameProps } from '../types';
@@ -44,6 +46,15 @@ export default function LiarsDiceGame({ room }: GameProps) {
 
   const [qty, setQty] = useState(1);
   const [face, setFace] = useState(2);
+  const [rolling, setRolling] = useState(false);
+
+  // Brief shake while the dice settle at the start of each round.
+  useEffect(() => {
+    if (phase !== 'bidding') return;
+    setRolling(true);
+    const t = window.setTimeout(() => setRolling(false), 650);
+    return () => window.clearTimeout(t);
+  }, [phase, round]);
 
   const set = (patch: Partial<LiarsShared>) =>
     room.setShared({ games: { 'liars-dice': patch } });
@@ -159,32 +170,30 @@ export default function LiarsDiceGame({ room }: GameProps) {
 
       <div className="grid gap-4 md:grid-cols-2">
         {/* My hand */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-4">
-          <h3 className="mb-2 text-sm tracking-widest opacity-80">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="gk-felt ld-panel">
+          <h3 className="mb-2 text-sm tracking-widest text-[var(--gk-ink-dim)]">
             YOUR HAND — {nameOf(me).toUpperCase()}
           </h3>
-          <div className="flex flex-wrap gap-2">
+          <div className="ld-dice">
             {myDice.length === 0 && phase !== 'lobby' ? (
               <span className="text-sm opacity-60">No dice left.</span>
             ) : (
               myDice.map((d, i) => (
-                <GameCard key={i} ariaLabel={`Die showing ${d}`}>
-                  <span style={{ fontSize: '2rem' }}>{dieGlyph(d)}</span>
-                </GameCard>
+                <Die key={i} value={d} size={52} rolling={rolling} ariaLabel={`Your die ${i + 1} showing ${d}`} />
               ))
             )}
           </div>
-          <h3 className="mb-2 mt-4 text-sm tracking-widest opacity-80">
+          <h3 className="mb-2 mt-4 text-sm tracking-widest text-[var(--gk-ink-dim)]">
             {peer ? nameOf(peer.id).toUpperCase() + "'S HAND" : 'PARTNER'}
           </h3>
-          <div className="flex flex-wrap gap-2 opacity-90">
-            {peerDice.map((d, i) => (
-              <GameCard key={i} ariaLabel={phase === 'revealed' || phase === 'over' ? `Die showing ${d}` : 'Hidden die'}>
-                <span style={{ fontSize: '2rem' }}>
-                  {phase === 'revealed' || phase === 'over' ? dieGlyph(d) : '🎴'}
-                </span>
-              </GameCard>
-            ))}
+          <div className="ld-dice opacity-90">
+            {peerDice.map((d, i) =>
+              phase === 'revealed' || phase === 'over' ? (
+                <Die key={i} value={d} size={52} ariaLabel={`Revealed die showing ${d}`} />
+              ) : (
+                <Die key={i} value={0} size={52} className="ld-hidden" ariaLabel="Hidden die" />
+              ),
+            )}
             {peerDice.length === 0 && phase !== 'lobby' && (
               <span className="text-sm opacity-60">No dice left.</span>
             )}
@@ -192,7 +201,7 @@ export default function LiarsDiceGame({ room }: GameProps) {
         </motion.div>
 
         {/* Table */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card gk-modal-scope p-4">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="gk-felt ld-panel gk-modal-scope">
           {phase === 'lobby' ? (
             <div className="flex flex-col items-center gap-3 py-8">
               <p className="text-sm opacity-70">
@@ -214,11 +223,11 @@ export default function LiarsDiceGame({ room }: GameProps) {
               <h3 className="mb-2 text-sm tracking-widest opacity-80">
                 CURRENT BID
               </h3>
-              <div className="mb-4 text-2xl">
+              <div className="mb-4">
                 {bid ? (
-                  <span>
-                    {bid.qty} × {dieGlyph(bid.face)}{' '}
-                    <span className="text-sm opacity-70">by {nameOf(bid.by)}</span>
+                  <span className="ld-bid">
+                    {bid.qty} × <Die value={bid.face} size={30} ariaLabel={`Bid face ${bid.face}`} />{' '}
+                    <span className="text-sm font-normal opacity-70">by {nameOf(bid.by)}</span>
                   </span>
                 ) : (
                   <span className="text-sm opacity-60">No bid yet — open the bidding.</span>

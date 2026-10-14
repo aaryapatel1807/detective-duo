@@ -8,6 +8,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './game.css';
 import {
   GameButton,
   ScoreHUD,
@@ -126,42 +128,37 @@ export default function BattleshipGame({ room }: GameProps) {
   const renderCell = (
     cell: number,
     opts: { own: boolean },
-  ): { label: string; cls: string; onClick?: () => void } => {
+  ): { label: string; cls: string; aria: string; onClick?: () => void } => {
+    const base = 'bs-cell';
     if (opts.own) {
       const isShip = myTaken.has(cell);
       const s = peerShots[cell];
+      const state = s === 'hit' ? 'bs-hit' : s === 'miss' ? 'bs-miss' : isShip ? 'bs-ship' : '';
       return {
-        label: s === 'hit' ? '💥' : s === 'miss' ? '🌊' : isShip ? '🚢' : '',
-        cls: s === 'hit'
-          ? 'bg-red-500/30 border-red-400'
-          : isShip
-            ? 'bg-emerald-600/30 border-emerald-400/70'
-            : 'bg-white/5 border-white/10',
+        label: '',
+        cls: `${base} ${state}`.trim(),
+        aria: s === 'hit' ? `Red peg — hit on your ship at cell ${cell + 1}` : s === 'miss' ? `White peg — miss at cell ${cell + 1}` : isShip ? `Your ship at cell ${cell + 1}` : `Open water, cell ${cell + 1}`,
       };
     }
     const s = myShots[cell];
     const clickable = phase === 'battle' && turn === me && !s && !winner;
+    const state = s === 'hit' ? 'bs-hit' : s === 'miss' ? 'bs-miss' : clickable ? 'bs-target' : '';
     return {
-      label: s === 'hit' ? '💥' : s === 'miss' ? '🌊' : '',
-      cls: s
-        ? s === 'hit'
-          ? 'bg-red-500/30 border-red-400'
-          : 'bg-sky-500/20 border-sky-400/50'
-        : clickable
-          ? 'bg-white/5 border-white/10 hover:border-amber-300/70 hover:bg-amber-300/10 cursor-pointer'
-          : 'bg-white/5 border-white/10',
+      label: '',
+      cls: `${base} ${state}`.trim(),
+      aria: s === 'hit' ? `Red peg — hit at cell ${cell + 1}` : s === 'miss' ? `White peg — miss at cell ${cell + 1}` : `Target cell ${cell + 1}`,
       onClick: clickable ? () => fire(cell) : undefined,
     };
   };
 
   const grid = (own: boolean, title: string) => (
     <div>
-      <h3 className="mb-2 text-sm tracking-widest opacity-80">
+      <h3 className="bs-title mb-2 text-sm opacity-80">
         {title}
       </h3>
-      <div className="grid gap-0.5" style={{ gridTemplateColumns: `repeat(${GRID}, minmax(0, 1fr))` }}>
+      <div className="bs-board grid gap-1" style={{ gridTemplateColumns: `repeat(${GRID}, minmax(0, 1fr))` }}>
         {Array.from({ length: GRID * GRID }, (_, cell) => {
-          const { label, cls, onClick } = renderCell(cell, { own });
+          const { label, cls, aria, onClick } = renderCell(cell, { own });
           const placeable =
             own && phase === 'place' && !ready[me] && nextSize !== null &&
             canPlace(myShips, cell, nextSize, horizontal);
@@ -170,8 +167,8 @@ export default function BattleshipGame({ room }: GameProps) {
               key={cell}
               onClick={own ? (placeable ? () => placeAt(cell) : undefined) : onClick}
               disabled={own ? !placeable : !onClick}
-              aria-label={label ? `${label} at cell ${cell + 1}` : `Cell ${cell + 1}`}
-              className={`flex aspect-square min-h-[40px] items-center justify-center rounded border text-sm transition-all ${cls} ${
+              aria-label={aria}
+              className={`${cls} ${
                 placeable ? 'cursor-pointer ring-1 ring-amber-300/50' : ''
               }`}
             >
@@ -276,7 +273,7 @@ export default function BattleshipGame({ room }: GameProps) {
 
       {phase === 'battle' && (
         <p className="text-center text-xs opacity-70">
-          💥 hit · 🌊 miss · sink all {SHIP_SIZES.length} enemy ships to win.
+          🔴 red peg = hit · ⚪ white peg = miss · sink all {SHIP_SIZES.length} enemy ships to win.
         </p>
       )}
     </div>

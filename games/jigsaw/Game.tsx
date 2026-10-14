@@ -26,6 +26,8 @@ import {
 } from './logic';
 import type { JigSource } from './types';
 import '../ui-kit/kit.css';
+import '../ui-kit/realism.css';
+import './game.css';
 import { GameButton, ProgressBar, ResultModal, SectionTitle } from '../ui-kit';
 
 const FALLBACK_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'><defs><linearGradient id='sky' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#33291a'/><stop offset='1' stop-color='#12100c'/></linearGradient></defs><rect width='600' height='600' fill='url(#sky)'/><circle cx='470' cy='105' r='72' fill='#e8d9b0' opacity='0.14'/><circle cx='470' cy='105' r='50' fill='#e8d9b0' opacity='0.92'/><rect x='15' y='310' width='95' height='290' fill='#1d1812'/><rect x='120' y='225' width='115' height='375' fill='#251e15'/><rect x='245' y='340' width='85' height='260' fill='#1d1812'/><rect x='340' y='185' width='125' height='415' fill='#2a2118'/><rect x='475' y='290' width='105' height='310' fill='#1d1812'/><g fill='#e8a33d' opacity='0.85'><rect x='140' y='250' width='18' height='24'/><rect x='168' y='250' width='18' height='24'/><rect x='196' y='250' width='18' height='24'/><rect x='140' y='290' width='18' height='24'/><rect x='196' y='290' width='18' height='24'/><rect x='360' y='215' width='20' height='26'/><rect x='392' y='215' width='20' height='26'/><rect x='424' y='215' width='20' height='26'/><rect x='360' y='258' width='20' height='26'/><rect x='424' y='258' width='20' height='26'/><rect x='360' y='301' width='20' height='26'/><rect x='392' y='301' width='20' height='26'/></g><path d='M0 430 L600 370' stroke='#a03030' stroke-width='4'/><circle cx='140' cy='416' r='9' fill='#c8a24a'/><circle cx='430' cy='387' r='9' fill='#c8a24a'/><circle cx='290' cy='401' r='9' fill='#c8a24a'/></svg>`;
@@ -145,7 +147,7 @@ export default function JigsawGame({ room }: GameProps) {
     <div className="gk-root gk-modal-scope mx-auto max-w-lg">
       <div className="mb-4 text-center">
         <SectionTitle eyebrow="EVIDENCE PHOTO" title="Jigsaw" />
-        <p className="mt-2 text-sm text-[var(--ink-dim)]">
+        <p className="mt-2 text-sm text-[var(--gk-ink-dim)]">
           Drag pieces from the tray onto the board. They snap when close to home.
         </p>
       </div>
@@ -161,7 +163,7 @@ export default function JigsawGame({ room }: GameProps) {
             {sizeOpt}×{sizeOpt}
           </GameButton>
         ))}
-        <span className="mx-1 hidden self-center text-[var(--ink-faint)] sm:inline">|</span>
+        <span className="mx-1 hidden self-center text-[var(--gk-ink-faint)] sm:inline">|</span>
         {(
           [
             ['pattern', '🌃 Noir'],
@@ -193,7 +195,7 @@ export default function JigsawGame({ room }: GameProps) {
 
           <div
             ref={areaRef}
-            className="relative w-full touch-none overflow-hidden rounded-xl border border-[var(--glass-border)] bg-[rgba(0,0,0,0.3)] select-none"
+            className="jg-table relative w-full touch-none overflow-hidden select-none"
             style={{ aspectRatio: `1 / ${AREA_H}` }}
           >
             {/* board outline */}
@@ -208,10 +210,10 @@ export default function JigsawGame({ room }: GameProps) {
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
                 onPointerCancel={onPointerUp}
-                className={`absolute rounded-[4px] border ${
+                className={`jg-piece absolute ${
                   p.placed
-                    ? 'pointer-events-none border-transparent'
-                    : 'cursor-grab border-[rgba(0,0,0,0.5)] shadow-lg active:cursor-grabbing'
+                    ? 'jg-placed pointer-events-none'
+                    : 'cursor-grab active:cursor-grabbing'
                 }`}
                 style={{
                   left: `${p.fx * 100}%`,
