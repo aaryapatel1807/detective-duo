@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Courier_Prime, Cinzel, Inter, JetBrains_Mono, Caveat } from 'next/font/google';
+import { Courier_Prime, Cinzel, Inter, JetBrains_Mono, Caveat, Nunito } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '../components/theme';
 import { Sidebar } from '../components/Sidebar';
@@ -46,6 +46,15 @@ const hubHand = Caveat({
   display: 'swap',
 });
 
+// Duo Blue theme font: rounded friendly sans, used only under [data-theme='duo-blue'].
+const duoFont = Nunito({
+  weight: ['400', '600', '700', '800', '900'],
+  subsets: ['latin'],
+  variable: '--font-duo',
+  fallback: ['system-ui', 'sans-serif'],
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'Detective Duo — Case Hub',
   description: 'A two-player noir-detective games hub.',
@@ -53,7 +62,7 @@ export const metadata: Metadata = {
 
 // Runs before paint: applies the saved theme, no flash.
 const themeInit = `
-(function(){try{var t=localStorage.getItem('dd-theme');document.documentElement.dataset.theme=(t==='light'||t==='dark')?t:'dark';}catch(e){document.documentElement.dataset.theme='dark';}})();
+(function(){try{var t=localStorage.getItem('dd-theme');document.documentElement.dataset.theme=(t==='light'||t==='dark'||t==='duo-blue')?t:'dark';}catch(e){document.documentElement.dataset.theme='dark';}})();
 `;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -63,7 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
       <body
-        className={`${courierPrime.variable} ${hubDisplay.variable} ${hubBody.variable} ${hubMono.variable} ${hubHand.variable} min-h-screen`}
+        className={`${courierPrime.variable} ${hubDisplay.variable} ${hubBody.variable} ${hubMono.variable} ${hubHand.variable} ${duoFont.variable} min-h-screen`}
       >
         <ThemeProvider>
           <AudioUnlocker />

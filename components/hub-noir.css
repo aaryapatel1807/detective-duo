@@ -45,6 +45,29 @@
   --hub-input-bg: rgba(255, 255, 255, 0.7);
 }
 
+/* Duo Blue — bright CRYPDINO blue: white cards, deep-navy ink.
+   --hub-ink-dim is a solid slate-navy so secondary text stays
+   ≥3:1 on white cards AND on the blue page backdrop. */
+[data-theme='duo-blue'] {
+  --hub-bg: #5b8def;
+  --hub-panel: #ffffff;
+  --hub-panel-2: #141d4d;
+  --hub-border: rgba(20, 29, 77, 0.14);
+  --hub-gold: #b57e10;
+  --hub-gold-soft: rgba(255, 201, 60, 0.28);
+  --hub-green: #178a43;
+  --hub-red: #c22f24;
+  --hub-ink: #141d4d;
+  --hub-ink-dim: #26336b;
+  --hub-glass-blur: blur(18px) saturate(1.4);
+  --hub-line: rgba(20, 29, 77, 0.1);
+  --hub-line-2: rgba(20, 29, 77, 0.08);
+  --hub-shadow: 0 18px 40px rgba(20, 41, 110, 0.28);
+  --hub-silver: #8b93a8;
+  --hub-bronze: #c07a3e;
+  --hub-input-bg: #eef3ff;
+}
+
 /* ---------- page shell ---------- */
 
 .hub-page {
@@ -702,4 +725,145 @@ a.hub-game-card:hover .hub-open-file {
 }
 .hub-icon-btn:hover {
   color: #e06455;
+}
+
+/* ============================================================
+   DUO BLUE flourishes — gated on [data-theme='duo-blue'] so the
+   noir + case-file themes are untouched. Chunky radius, Nunito
+   rounded type, navy pills, white rows, navy podium plinths.
+   ============================================================ */
+
+[data-theme='duo-blue'] .hub-display {
+  font-family: var(--font-duo, 'Nunito', sans-serif);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+[data-theme='duo-blue'] .hub-eyebrow,
+[data-theme='duo-blue'] .hub-btn,
+[data-theme='duo-blue'] .hub-btn-ghost,
+[data-theme='duo-blue'] .hub-badge,
+[data-theme='duo-blue'] .hub-row-label,
+[data-theme='duo-blue'] .hub-row-value,
+[data-theme='duo-blue'] .hub-note-date,
+[data-theme='duo-blue'] .hub-rankbar-rank,
+[data-theme='duo-blue'] .hub-rankbar-nums,
+[data-theme='duo-blue'] .hub-plinth-place,
+[data-theme='duo-blue'] .hub-plinth-xp,
+[data-theme='duo-blue'] .hub-rank-num,
+[data-theme='duo-blue'] .hub-rank-xp {
+  font-family: var(--font-duo, 'Nunito', sans-serif);
+}
+
+[data-theme='duo-blue'] .hub-glass {
+  border-radius: 28px;
+}
+[data-theme='duo-blue'] .hub-glass-strong {
+  /* panel-2 is deep navy in Duo Blue; keep strong cards white so
+     navy ink stays readable — the navy shows up on pills/plinths */
+  background: var(--hub-panel);
+  border-radius: 28px;
+}
+
+/* Primary action = deep-navy pill (CRYPDINO "OPEN CASE" / "Lobby") */
+[data-theme='duo-blue'] .hub-btn {
+  border-color: #141d4d;
+  background: #141d4d;
+  color: #ffffff;
+  border-radius: 9999px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  box-shadow: 0 8px 20px rgba(20, 29, 77, 0.35);
+}
+[data-theme='duo-blue'] .hub-btn:hover {
+  box-shadow: 0 12px 28px rgba(20, 29, 77, 0.42);
+}
+
+[data-theme='duo-blue'] .hub-btn-ghost {
+  border-color: rgba(20, 29, 77, 0.12);
+  background: #ffffff;
+  color: var(--hub-ink-dim);
+  border-radius: 9999px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+[data-theme='duo-blue'] .hub-btn-ghost:hover {
+  border-color: #141d4d;
+  color: var(--hub-ink);
+}
+
+[data-theme='duo-blue'] .hub-badge {
+  background: #eef3ff;
+  border-color: rgba(20, 29, 77, 0.08);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+[data-theme='duo-blue'] .hub-pill-hard {
+  color: #c22f24;
+}
+
+[data-theme='duo-blue'] .hub-input {
+  border-radius: 16px;
+}
+
+/* XP track: light groove on white cards (fill gradient unchanged) */
+[data-theme='duo-blue'] .hub-xp-track {
+  background: rgba(20, 29, 77, 0.14);
+  box-shadow: inset 0 1px 3px rgba(20, 29, 77, 0.18);
+}
+
+/* Game-card cover well: light periwinkle instead of noir gradient */
+[data-theme='duo-blue'] .hub-cover {
+  background: linear-gradient(140deg, #dbe7ff 0%, #bcd4ff 55%, #cfe0ff 100%);
+}
+[data-theme='duo-blue'] a.hub-game-card:hover {
+  box-shadow: 0 24px 48px rgba(20, 41, 110, 0.32), 0 0 0 1px var(--hub-gold-soft);
+}
+
+/* Podium: solid navy plinths (like the reference's navy podium
+   card) with white text, sitting on the white scoreboard card */
+[data-theme='duo-blue'] .hub-plinth {
+  background: #141d4d;
+  border-color: rgba(20, 29, 77, 0.45);
+}
+[data-theme='duo-blue'] .hub-plinth-1 {
+  border-color: rgba(255, 201, 60, 0.65);
+  box-shadow: 0 -10px 30px rgba(255, 201, 60, 0.25);
+}
+[data-theme='duo-blue'] .hub-plinth-name {
+  color: #ffffff;
+}
+[data-theme='duo-blue'] .hub-plinth-avatar {
+  /* initials sit on the avatar's dark navy gradient in every theme */
+  color: #ece7d9;
+}
+[data-theme='duo-blue'] .hub-plinth-xp {
+  color: rgba(255, 255, 255, 0.75);
+}
+[data-theme='duo-blue'] .hub-plinth-place {
+  color: rgba(255, 255, 255, 0.65);
+}
+[data-theme='duo-blue'] .hub-plinth-1 .hub-plinth-place {
+  color: #ffc93c;
+}
+[data-theme='duo-blue'] .hub-plinth-vacant .hub-plinth-avatar {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* Leaderboard rows: white cards on the blue backdrop */
+[data-theme='duo-blue'] .hub-rank-row {
+  background: #ffffff;
+}
+[data-theme='duo-blue'] .hub-rank-row-you {
+  box-shadow: 0 0 0 1px var(--hub-gold-soft), 0 10px 26px rgba(20, 41, 110, 0.3);
+}
+[data-theme='duo-blue'] .hub-rank-num-2 {
+  /* silver token is ~3:1 on the white rows — deepen just the numeral */
+  color: #66738f;
+}
+
+[data-theme='duo-blue'] .hub-icon-btn:hover {
+  color: #c22f24;
 }
