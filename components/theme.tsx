@@ -2,8 +2,19 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-type Theme = 'dark' | 'light';
+export type Theme = 'dark' | 'light' | 'duo-blue';
+
+/** Toggle order: noir desk → case-file paper → Duo Blue → back to noir. */
+const THEME_ORDER: Theme[] = ['dark', 'light', 'duo-blue'];
 const THEME_KEY = 'dd-theme';
+
+export function isTheme(v: unknown): v is Theme {
+  return v === 'dark' || v === 'light' || v === 'duo-blue';
+}
+
+export function nextTheme(t: Theme): Theme {
+  return THEME_ORDER[(THEME_ORDER.indexOf(t) + 1) % THEME_ORDER.length];
+}
 
 const ThemeCtx = createContext<{ theme: Theme; toggle: () => void; setTheme: (t: Theme) => void }>({
   theme: 'dark',
@@ -15,14 +26,14 @@ export function useTheme() {
   return useContext(ThemeCtx);
 }
 
-/** Dark-first; light = "case-file paper". Persisted in localStorage. */
+/** Dark-first; light = "case-file paper"; duo-blue = bright CRYPDINO blue. Persisted in localStorage. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('dark');
 
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(THEME_KEY);
-      if (saved === 'light' || saved === 'dark') setThemeState(saved);
+      if (isTheme(saved)) setThemeState(saved);
     } catch {}
   }, []);
 
@@ -34,7 +45,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   const setTheme = (t: Theme) => setThemeState(t);
-  const toggle = () => setThemeState((t) => (t === 'dark' ? 'light' : 'dark'));
+  const toggle = () => setThemeState((t) => nextTheme(t));
 
   return <ThemeCtx.Provider value={{ theme, toggle, setTheme }}>{children}</ThemeCtx.Provider>;
 }
