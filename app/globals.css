@@ -1106,3 +1106,363 @@ body {
   border-color: rgba(20, 29, 77, 0.08);
   box-shadow: none;
 }
+
+/* ============================================================
+   DUO CANDY — warm cream edu-playful theme
+   Fourth theme alongside noir (dark), case-file (light) and
+   Duo Blue. Everything below is gated on [data-theme='duo-candy'],
+   so the other three themes render exactly as before. Play
+   surfaces are untouched: the game panel keeps its pinned
+   always-dark kit tokens (--gk-*) in every theme.
+   Look: warm cream (#fff6e9) backdrop with soft pastel blob
+   washes, chunky white cards (28px radius, soft plum shadow),
+   color-coded sections — coral #f96d7b, teal #0b6e63,
+   mustard #ffb703, lavender #a78bfa, mint #5ec8b4 — deep
+   plum-brown ink (#2e2a38), Baloo 2 display type + Nunito body.
+   Spec: docs/ui-reference/duo-candy/SPEC.md
+   ============================================================ */
+
+[data-theme='duo-candy'] {
+  /* surfaces — solid white cards on warm cream */
+  --glass-bg: rgba(255, 255, 255, 0.92);
+  --glass-bg-strong: #ffffff;
+  --glass-border: rgba(46, 42, 56, 0.1);
+  --glass-shadow: 0 10px 24px rgba(46, 42, 56, 0.12);
+
+  /* ink — deep plum-brown (dim is a solid plum-gray so secondary
+     text stays ≥4.5:1 on cream AND on white cards) */
+  --ink: #2e2a38;
+  --ink-dim: rgba(46, 42, 56, 0.72);
+  --ink-faint: rgba(46, 42, 56, 0.5);
+
+  /* accents — candy palette; "deep" variants carry text duty */
+  --amber-glow: #ffc93c;
+  --amber-deep: #8a5e00;
+  --blood: #c24352;
+  --blood-bright: #f96d7b;
+  --brass: #ffb703;
+  --brass-deep: #8a5e00;
+
+  /* noir props — kept identical to the dark theme so physical
+     props (corkboard, manila, paper) never change with theme */
+  --cork: #a97c4f;
+  --cork-deep: #7d5830;
+  --manila: #d9c49b;
+  --manila-deep: #b89f6f;
+  --paper: #efe6cf;
+
+  /* page backdrop */
+  --bg-base: #fff6e9;
+
+  /* hub tokens — Duo Candy values */
+  --hub-bg: #fff6e9;
+  --hub-panel: #ffffff;
+  --hub-panel-2: #2e2a38;
+  --hub-border: rgba(46, 42, 56, 0.12);
+  --hub-gold: #8a5e00;
+  --hub-gold-soft: rgba(255, 183, 3, 0.3);
+  --hub-green: #0e6b57;
+  --hub-red: #c24352;
+  --hub-ink: #2e2a38;
+  --hub-ink-dim: #57506b;
+  --hub-glass-blur: blur(14px) saturate(1.2);
+}
+
+/* Warm cream + soft pastel blob washes in the corners */
+[data-theme='duo-candy'] body {
+  background-color: #fff6e9;
+  background-image:
+    radial-gradient(560px 420px at 108% -6%, rgba(167, 139, 250, 0.35), transparent 62%),
+    radial-gradient(640px 480px at -10% 4%, rgba(249, 109, 123, 0.22), transparent 62%),
+    radial-gradient(700px 520px at 96% 104%, rgba(255, 183, 3, 0.3), transparent 62%),
+    radial-gradient(520px 420px at -6% 96%, rgba(94, 200, 180, 0.26), transparent 62%),
+    linear-gradient(165deg, #fff8ec 0%, #fff6e9 55%, #ffedd6 100%);
+  background-attachment: fixed;
+}
+
+[data-theme='duo-candy'] ::selection {
+  background: rgba(255, 183, 3, 0.5);
+}
+
+[data-theme='duo-candy'] *::-webkit-scrollbar-thumb {
+  background: rgba(46, 42, 56, 0.3);
+}
+
+/* ---------- Duo Candy: Baloo 2 display + Nunito body ---------- */
+
+[data-theme='duo-candy'] body {
+  font-family: var(--font-duo), 'Nunito', var(--font-sans);
+}
+
+[data-theme='duo-candy'] .hub-display {
+  font-family: var(--font-candy), 'Baloo 2', var(--font-duo), sans-serif;
+  font-weight: 800;
+}
+
+[data-theme='duo-candy'] .hub-eyebrow,
+[data-theme='duo-candy'] .hub-btn,
+[data-theme='duo-candy'] .hub-btn-ghost,
+[data-theme='duo-candy'] .hub-navlink,
+[data-theme='duo-candy'] .hub-badge,
+[data-theme='duo-candy'] .hub-tab-label,
+[data-theme='duo-candy'] .noir-btn,
+[data-theme='duo-candy'] .noir-btn-ghost,
+[data-theme='duo-candy'] .eyebrow,
+[data-theme='duo-candy'] .type-heading {
+  font-family: var(--font-candy), 'Baloo 2', var(--font-duo), sans-serif;
+}
+
+/* ---------- Duo Candy: chunky cards ---------- */
+
+[data-theme='duo-candy'] .glass-card,
+[data-theme='duo-candy'] .glass-card-strong {
+  border-radius: 28px;
+  box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+}
+
+[data-theme='duo-candy'] .hub-glass {
+  border-color: rgba(46, 42, 56, 0.08);
+  border-radius: 28px;
+  box-shadow: 0 10px 24px rgba(46, 42, 56, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* ---------- Duo Candy: coral primary, lavender ghost ---------- */
+
+[data-theme='duo-candy'] .hub-btn {
+  border-color: #f26071;
+  background: #f26071;
+  color: #ffffff;
+  border-radius: 9999px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  box-shadow: 0 8px 20px rgba(249, 109, 123, 0.4);
+}
+[data-theme='duo-candy'] .hub-btn:hover {
+  box-shadow: 0 12px 26px rgba(249, 109, 123, 0.5);
+}
+
+[data-theme='duo-candy'] .hub-btn-ghost {
+  border-color: rgba(46, 42, 56, 0.1);
+  background: #a78bfa;
+  color: #2e2a38;
+  border-radius: 9999px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+[data-theme='duo-candy'] .hub-btn-ghost:hover {
+  color: #2e2a38;
+  border-color: #a78bfa;
+  box-shadow: 0 8px 20px rgba(167, 139, 250, 0.45);
+}
+
+[data-theme='duo-candy'] .hub-badge {
+  background: #ffffff;
+  border-color: rgba(46, 42, 56, 0.1);
+  color: var(--hub-ink-dim);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+[data-theme='duo-candy'] .noir-btn {
+  border-color: #f26071;
+  background: #f26071;
+  color: #ffffff;
+  border-radius: 9999px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 20px rgba(249, 109, 123, 0.4);
+}
+[data-theme='duo-candy'] .noir-btn:hover {
+  box-shadow: 0 12px 26px rgba(249, 109, 123, 0.5);
+}
+
+[data-theme='duo-candy'] .noir-btn-ghost {
+  border-color: rgba(46, 42, 56, 0.12);
+  background: #ffffff;
+  color: var(--hub-ink-dim);
+  border-radius: 9999px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+[data-theme='duo-candy'] .noir-btn-ghost:hover {
+  color: var(--hub-ink);
+  border-color: #2e2a38;
+}
+
+/* cream-filled chunky inputs */
+[data-theme='duo-candy'] .noir-input {
+  background: #fff6e9;
+  border-color: rgba(46, 42, 56, 0.16);
+  color: var(--ink);
+  border-radius: 18px;
+}
+[data-theme='duo-candy'] .noir-input:focus {
+  border-color: #f96d7b;
+  box-shadow: 0 0 0 3px rgba(249, 109, 123, 0.25);
+}
+
+/* ---------- Duo Candy: sidebar — peach panel, color pills ---------- */
+
+/* The sidebar shell itself: peach-tinted panel with blob washes
+   (overrides the white .hub-glass; nested cards handled below). */
+[data-theme='duo-candy'] .hub-sidebar {
+  background:
+    radial-gradient(300px 220px at 115% -4%, rgba(167, 139, 250, 0.4), transparent 65%),
+    radial-gradient(280px 240px at -18% 88%, rgba(255, 183, 3, 0.35), transparent 65%),
+    linear-gradient(170deg, #fde9dc 0%, #fbdcc9 100%);
+  border-color: rgba(46, 42, 56, 0.08);
+}
+
+/* Logo badge circle: mustard chip (inline gradient uses --hub-gold,
+   which is the deep text mustard here — repaint it bright). */
+[data-theme='duo-candy'] .hub-sidebar > div:first-child > div:first-child > div:first-child {
+  background: linear-gradient(135deg, #ffc93c, #ffb703) !important;
+  box-shadow: 0 6px 16px rgba(255, 183, 3, 0.45) !important;
+}
+
+/* Nav pills: white chunky pills, icon in a section-colored circle
+   chip; the ACTIVE pill fills with its section color (white text).
+   Order: 1 Case Hub coral · 2 Solo Files teal · 3 Love Notes
+   lavender · 4 Scoreboard mustard · 5 Settings mint. */
+[data-theme='duo-candy'] .hub-navlink {
+  border-radius: 9999px;
+  border-color: rgba(46, 42, 56, 0.06);
+  background: #ffffff;
+  color: var(--hub-ink);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  box-shadow: 0 6px 14px rgba(46, 42, 56, 0.1);
+}
+[data-theme='duo-candy'] .hub-navlink:hover {
+  border-color: rgba(46, 42, 56, 0.16);
+  color: var(--hub-ink);
+}
+[data-theme='duo-candy'] .hub-navlink > span:first-child {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 9999px;
+  font-size: 1rem;
+  background: #f96d7b;
+}
+[data-theme='duo-candy'] .hub-navlink:nth-child(2) > span:first-child {
+  background: #5ec8b4;
+}
+[data-theme='duo-candy'] .hub-navlink:nth-child(3) > span:first-child {
+  background: #b8a9e8;
+}
+[data-theme='duo-candy'] .hub-navlink:nth-child(4) > span:first-child {
+  background: #ffc93c;
+}
+[data-theme='duo-candy'] .hub-navlink:nth-child(5) > span:first-child {
+  background: #a7e8d8;
+}
+[data-theme='duo-candy'] .hub-navlink.active {
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(46, 42, 56, 0.2);
+}
+[data-theme='duo-candy'] .hub-navlink.active > span:first-child {
+  background: rgba(255, 255, 255, 0.9);
+}
+[data-theme='duo-candy'] .hub-navlink:nth-child(1).active {
+  background: #f26071;
+  border-color: #f26071;
+}
+[data-theme='duo-candy'] .hub-navlink:nth-child(2).active {
+  background: #0b6e63;
+  border-color: #0b6e63;
+}
+[data-theme='duo-candy'] .hub-navlink:nth-child(3).active {
+  background: #a78bfa;
+  border-color: #a78bfa;
+  color: #2e2a38;
+}
+[data-theme='duo-candy'] .hub-navlink:nth-child(4).active {
+  background: #ffb703;
+  border-color: #ffb703;
+  color: #2e2a38;
+}
+[data-theme='duo-candy'] .hub-navlink:nth-child(5).active {
+  background: #5ec8b4;
+  border-color: #5ec8b4;
+  color: #2e2a38;
+}
+
+/* Nested sidebar cards: status = teal tint, sync = lavender tint
+   (the two .hub-glass cards after the nav, in DOM order). */
+[data-theme='duo-candy'] .hub-sidebar .hub-glass {
+  border-color: rgba(46, 42, 56, 0.07);
+  box-shadow: none;
+}
+[data-theme='duo-candy'] .hub-sidebar > .hub-glass:nth-of-type(2) {
+  background: #bfe8df;
+}
+[data-theme='duo-candy'] .hub-sidebar > .hub-glass:nth-of-type(3) {
+  background: #e4def9;
+}
+
+/* Sidebar footer pills: sound = mustard tint; theme = deep teal
+   with a lavender tag chip (matches the hub reference). */
+[data-theme='duo-candy'] .hub-sidebar .noir-btn-ghost {
+  border-color: rgba(46, 42, 56, 0.08);
+}
+[data-theme='duo-candy'] .hub-sidebar > div:last-child .noir-btn-ghost:first-child {
+  background: #ffe9b8;
+  color: var(--hub-ink);
+}
+[data-theme='duo-candy'] .hub-sidebar > div:last-child .noir-btn-ghost:last-child {
+  background: #0b6e63;
+  border-color: #0b6e63;
+  color: #fff6e9;
+}
+[data-theme='duo-candy'] .hub-sidebar > div:last-child .noir-btn-ghost:last-child > span:last-child {
+  background: #a78bfa;
+  color: #2e2a38;
+  border-radius: 9999px;
+  padding: 0.15rem 0.55rem;
+}
+
+[data-theme='duo-candy'] .hub-icon-btn {
+  background: #ffffff;
+  border-color: rgba(46, 42, 56, 0.08);
+  color: var(--hub-ink-dim);
+  box-shadow: 0 6px 14px rgba(46, 42, 56, 0.12);
+}
+[data-theme='duo-candy'] .hub-icon-btn:hover {
+  color: var(--hub-ink);
+  border-color: rgba(46, 42, 56, 0.2);
+}
+
+/* ---------- Duo Candy: bottom nav — white bar, plum pill ---------- */
+
+[data-theme='duo-candy'] .hub-bottomnav-inner {
+  background: #ffffff;
+  border-color: rgba(46, 42, 56, 0.08);
+  border-radius: 32px;
+  box-shadow: 0 10px 24px rgba(46, 42, 56, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+[data-theme='duo-candy'] .hub-tab {
+  border-radius: 24px;
+}
+[data-theme='duo-candy'] .hub-tab.active {
+  background: #2e2a38;
+  border-color: #2e2a38;
+  color: #ffffff;
+}
+
+/* XP track: cream groove on white cards; fill turns coral
+   (the home XP bar in the references fills coral on cream). */
+[data-theme='duo-candy'] .xp-track {
+  background: #ffedd6;
+  box-shadow: inset 0 1px 3px rgba(46, 42, 56, 0.14);
+}
+[data-theme='duo-candy'] .xp-fill {
+  background: linear-gradient(90deg, #f96d7b, #ff6b81);
+  box-shadow: 0 0 10px rgba(249, 109, 123, 0.45);
+}

@@ -1027,3 +1027,331 @@
 :global([data-theme='duo-blue']) .briefWrap :global([class*='dossier']):hover {
   box-shadow: 0 22px 44px rgba(20, 41, 110, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
+
+/* ================= Duo Candy theme =================
+ * Gated on the global [data-theme='duo-candy'] — noir, case-file
+ * and Duo Blue rendering above is untouched. Warm cream base,
+ * teal masthead with a layered blob, mustard profile card,
+ * light-coral channel panel, Baloo 2 instead of Cinzel/Mono.
+ * Spec: docs/ui-reference/duo-candy/SPEC.md */
+
+/* ---------- type: Baloo 2 display, no serif/mono leak ---------- */
+
+:global([data-theme='duo-candy']) .avatar,
+:global([data-theme='duo-candy']) .detectiveName,
+:global([data-theme='duo-candy']) .partnerAvatar,
+:global([data-theme='duo-candy']) .roomCode,
+:global([data-theme='duo-candy']) .sectionTitle,
+:global([data-theme='duo-candy']) .featTitle,
+:global([data-theme='duo-candy']) .coverTitle,
+:global([data-theme='duo-candy']) .statNum,
+:global([data-theme='duo-candy']) .agencyTitle {
+  font-family: var(--font-candy), 'Baloo 2', sans-serif;
+  font-weight: 800;
+}
+
+:global([data-theme='duo-candy']) .xpNum,
+:global([data-theme='duo-candy']) .sectionNote,
+:global([data-theme='duo-candy']) .rankLine,
+:global([data-theme='duo-candy']) .agencySub,
+:global([data-theme='duo-candy']) .chip,
+:global([data-theme='duo-candy']) .featOpen,
+:global([data-theme='duo-candy']) .featTag,
+:global([data-theme='duo-candy']) .openFile,
+:global([data-theme='duo-candy']) .rarity,
+:global([data-theme='duo-candy']) .modeBadge,
+:global([data-theme='duo-candy']) .missionProg,
+:global([data-theme='duo-candy']) .missionXp,
+:global([data-theme='duo-candy']) .missionTitle,
+:global([data-theme='duo-candy']) .statName,
+:global([data-theme='duo-candy']) .footNote,
+:global([data-theme='duo-candy']) .coverCat,
+:global([data-theme='duo-candy']) .roomTip,
+:global([data-theme='duo-candy']) .agencyKicker {
+  font-family: var(--font-candy), 'Baloo 2', sans-serif;
+}
+
+:global([data-theme='duo-candy']) .agencyTitle {
+  letter-spacing: 0.03em;
+  text-transform: none;
+  color: #fff6e9;
+}
+:global([data-theme='duo-candy']) .agencyTitle .gold {
+  color: #ffc93c;
+}
+:global([data-theme='duo-candy']) .agencyKicker {
+  color: rgba(255, 246, 233, 0.85);
+}
+:global([data-theme='duo-candy']) .agencySub {
+  color: rgba(255, 246, 233, 0.75);
+  letter-spacing: 0.18em;
+}
+:global([data-theme='duo-candy']) .sectionTitle {
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+/* ---------- masthead: teal panel + layered offset blob ---------- */
+
+:global([data-theme='duo-candy']) .hero {
+  overflow: visible;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+:global([data-theme='duo-candy']) .masthead {
+  position: relative;
+  background: linear-gradient(155deg, #0e7c7b 0%, #0b6e63 70%);
+  border-radius: 32px;
+  padding: 1.9rem 1.5rem 1.6rem;
+  box-shadow: 0 14px 30px rgba(11, 110, 99, 0.35);
+  overflow: hidden;
+}
+/* mustard blob peeking from behind the teal panel, top-right */
+:global([data-theme='duo-candy']) .masthead::before {
+  content: '';
+  position: absolute;
+  top: -46px;
+  right: -30px;
+  width: 190px;
+  height: 190px;
+  border-radius: 46% 54% 58% 42% / 52% 44% 56% 48%;
+  background: rgba(255, 183, 3, 0.55);
+  box-shadow: 26px 30px 0 -8px rgba(255, 183, 3, 0.85);
+}
+/* lavender blob, bottom-left */
+:global([data-theme='duo-candy']) .masthead::after {
+  content: '';
+  position: absolute;
+  left: -34px;
+  bottom: -52px;
+  width: 150px;
+  height: 150px;
+  border-radius: 54% 46% 42% 58% / 46% 56% 44% 54%;
+  background: rgba(167, 139, 250, 0.45);
+}
+:global([data-theme='duo-candy']) .masthead > * {
+  position: relative;
+  z-index: 1;
+}
+:global([data-theme='duo-candy']) .heroStrings {
+  display: none;
+}
+
+/* ---------- profile: mustard card + mint-teal partner ---------- */
+
+/* profile + partner are separate cards in the reference (mustard
+   card beside a mint-teal card), not one shared panel */
+:global([data-theme='duo-candy']) .profileRow {
+  background: transparent;
+  border: none;
+  padding-top: 0;
+}
+:global([data-theme='duo-candy']) .meRow {
+  background: #ffc93c;
+  border-radius: 28px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 10px 24px rgba(255, 183, 3, 0.4);
+}
+:global([data-theme='duo-candy']) .avatar {
+  background: #2e2a38;
+  border-color: #fff6e9;
+  color: #fff6e9;
+  box-shadow: 0 6px 14px rgba(46, 42, 56, 0.3);
+}
+:global([data-theme='duo-candy']) .detectiveName {
+  color: #2e2a38;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+:global([data-theme='duo-candy']) .rankLine {
+  color: #2e2a38;
+  opacity: 0.72;
+}
+:global([data-theme='duo-candy']) .xpNum {
+  color: #2e2a38;
+}
+:global([data-theme='duo-candy']) .partnerRow {
+  background: #bfe8df;
+  border-color: rgba(11, 110, 99, 0.18);
+  border-radius: 28px;
+}
+:global([data-theme='duo-candy']) .partnerAvatar {
+  background: #0e7c7b;
+  border-color: #ffffff;
+  color: #fff6e9;
+}
+:global([data-theme='duo-candy']) .partnerName {
+  color: #2e2a38;
+  font-weight: 700;
+}
+:global([data-theme='duo-candy']) .resourceRow {
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+/* hero badges: XP = white/mustard chip, rank = lavender chip */
+:global([data-theme='duo-candy']) .resourceRow :global(.hub-badge):first-child {
+  background: #ffffff;
+  border-color: rgba(46, 42, 56, 0.08);
+  color: #2e2a38;
+}
+:global([data-theme='duo-candy']) .resourceRow :global(.hub-badge):nth-child(2) {
+  background: #a78bfa;
+  border-color: #a78bfa;
+  color: #2e2a38;
+}
+:global([data-theme='duo-candy']) .gearLink {
+  background: #ffffff;
+  border-color: rgba(46, 42, 56, 0.08);
+}
+:global([data-theme='duo-candy']) .gearLink:hover {
+  color: #2e2a38;
+  border-color: #2e2a38;
+}
+
+/* ---------- channel panel: light coral ---------- */
+
+:global([data-theme='duo-candy']) .roomPanel {
+  background: #f8a5a5;
+  border-color: rgba(194, 67, 82, 0.22);
+  border-radius: 28px;
+  box-shadow: 0 12px 26px rgba(249, 109, 123, 0.32);
+}
+:global([data-theme='duo-candy']) .roomErr {
+  color: #7c1a26;
+  font-weight: 700;
+}
+:global([data-theme='duo-candy']) .roomTip {
+  display: inline-block;
+  background: #e4def9;
+  border-radius: 9999px;
+  padding: 0.35rem 0.8rem;
+  color: #2e2a38;
+}
+:global([data-theme='duo-candy']) .roomCode {
+  color: #c24352;
+  letter-spacing: 0.18em;
+}
+
+/* ---------- featured: coral / teal / lavender frames ---------- */
+
+:global([data-theme='duo-candy']) .featCard {
+  background: #ffffff;
+  border: 3px solid #f96d7b;
+  border-radius: 28px;
+  box-shadow: 0 10px 24px rgba(46, 42, 56, 0.14);
+}
+:global([data-theme='duo-candy']) .featCard:nth-child(2) {
+  border-color: #0e7c7b;
+}
+:global([data-theme='duo-candy']) .featCard:nth-child(3) {
+  border-color: #a78bfa;
+}
+:global([data-theme='duo-candy']) .featTitle {
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+:global([data-theme='duo-candy']) .featOpen {
+  color: #c24352;
+}
+
+/* ---------- filter chips: outlined pills, plum active ---------- */
+
+:global([data-theme='duo-candy']) .chip {
+  background: #ffffff;
+  border: 2px solid #2e2a38;
+  color: #2e2a38;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+:global([data-theme='duo-candy']) .chip:hover {
+  border-color: #f96d7b;
+  color: #2e2a38;
+}
+:global([data-theme='duo-candy']) .chipActive,
+:global([data-theme='duo-candy']) .chipActive:hover {
+  color: #ffffff;
+  background: #2e2a38;
+  border-color: #2e2a38;
+  box-shadow: 0 6px 16px rgba(46, 42, 56, 0.3);
+}
+
+/* ---------- game cards + stats: white chunky ---------- */
+
+:global([data-theme='duo-candy']) .card {
+  background: #ffffff;
+  border-color: rgba(46, 42, 56, 0.08);
+  border-radius: 26px;
+  box-shadow: 0 10px 24px rgba(46, 42, 56, 0.12);
+}
+:global([data-theme='duo-candy']) .card:hover {
+  border-color: rgba(255, 183, 3, 0.8);
+  box-shadow: 0 16px 32px rgba(46, 42, 56, 0.16), 0 0 0 1px rgba(255, 183, 3, 0.5);
+}
+:global([data-theme='duo-candy']) .coverTitle {
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+:global([data-theme='duo-candy']) .openFile {
+  background: #2e2a38;
+  border-color: #2e2a38;
+  color: #fff6e9;
+  border-radius: 9999px;
+}
+:global([data-theme='duo-candy']) .card:hover .openFile {
+  background: #f96d7b;
+  border-color: #f96d7b;
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(249, 109, 123, 0.4);
+}
+:global([data-theme='duo-candy']) .rarity {
+  background: #2e2a38;
+  border-color: #2e2a38;
+  color: #fff6e9;
+}
+:global([data-theme='duo-candy']) .modeBadge {
+  background: #2e2a38;
+  border-color: #2e2a38;
+  color: #fff6e9;
+}
+:global([data-theme='duo-candy']) .stat {
+  background: #ffffff;
+  border-color: rgba(46, 42, 56, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 10px 24px rgba(46, 42, 56, 0.12);
+}
+:global([data-theme='duo-candy']) .statNum {
+  color: #c24352;
+}
+
+/* ---------- daily briefing: white card, tinted mission rows ---- */
+
+:global([data-theme='duo-candy']) .mission {
+  background: #fff6e9;
+  border-color: rgba(46, 42, 56, 0.07);
+  border-radius: 20px;
+}
+:global([data-theme='duo-candy']) .missionIcon {
+  background: #ffe9b8;
+  border-color: rgba(255, 183, 3, 0.4);
+  border-radius: 9999px;
+}
+:global([data-theme='duo-candy']) .missionXp {
+  color: #8a5e00;
+}
+
+/* Daily Briefing folder: same trick as Duo Blue — only the HOME
+ * briefing instance becomes a white card; the shared .dossier prop
+ * (game surfaces) keeps its own styling. */
+:global([data-theme='duo-candy']) .briefWrap :global([class*='dossier']) {
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(46, 42, 56, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+:global([data-theme='duo-candy']) .briefWrap :global([class*='dossier'])::before {
+  background: linear-gradient(180deg, #ffffff, #fff6e9);
+}
+:global([data-theme='duo-candy']) .briefWrap :global([class*='dossier']):hover {
+  box-shadow: 0 16px 32px rgba(46, 42, 56, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
