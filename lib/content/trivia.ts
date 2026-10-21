@@ -8,6 +8,8 @@
  * are merged in by the game via getAllTrivia().
  */
 
+import { MILLIONAIRE_TRIVIA, QUIZMANIA_TRIVIA } from './trivia-extracted';
+
 export interface TriviaQuestion {
   id: string;
   category: string;
@@ -23,7 +25,7 @@ export interface CustomTrivia {
 
 export const CUSTOM_TRIVIA_KEY = 'dd-custom-trivia';
 
-export const TRIVIA: TriviaQuestion[] = [
+const ORIGINAL_TRIVIA: TriviaQuestion[] = [
   {
     id: 't-1',
     category: 'Detective Lore',
@@ -94,6 +96,15 @@ export const TRIVIA: TriviaQuestion[] = [
     options: ['Small', 'Short', 'Brief', 'Tiny'],
     answer: 1,
   },
+];
+
+/* The full bank = the original hand-written questions above + real game data
+ * extracted from portal trivia games (see trivia-extracted.ts for sources:
+ * Quizmania: Trivia Game and Millionaire Quiz on CrazyGames). */
+export const TRIVIA: TriviaQuestion[] = [
+  ...ORIGINAL_TRIVIA,
+  ...QUIZMANIA_TRIVIA,
+  ...MILLIONAIRE_TRIVIA,
 ];
 
 export function readCustomTrivia(): CustomTrivia[] {
