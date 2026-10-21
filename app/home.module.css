@@ -913,124 +913,9 @@
   }
 }
 
-/* ================= Duo Blue theme =================
- * Gated on the global [data-theme='duo-blue'] — noir + case-file
- * rendering above is untouched. White chunky cards, navy pills,
- * Nunito instead of Cinzel/JetBrains Mono. */
-
-:global([data-theme='duo-blue']) .avatar,
-:global([data-theme='duo-blue']) .detectiveName,
-:global([data-theme='duo-blue']) .partnerAvatar,
-:global([data-theme='duo-blue']) .roomCode,
-:global([data-theme='duo-blue']) .sectionTitle,
-:global([data-theme='duo-blue']) .featTitle,
-:global([data-theme='duo-blue']) .coverTitle,
-:global([data-theme='duo-blue']) .statNum {
-  font-family: var(--font-duo), 'Nunito', sans-serif;
-  font-weight: 800;
-}
-
-:global([data-theme='duo-blue']) .xpNum,
-:global([data-theme='duo-blue']) .sectionNote,
-:global([data-theme='duo-blue']) .chip,
-:global([data-theme='duo-blue']) .featOpen,
-:global([data-theme='duo-blue']) .openFile,
-:global([data-theme='duo-blue']) .rarity,
-:global([data-theme='duo-blue']) .modeBadge,
-:global([data-theme='duo-blue']) .missionProg,
-:global([data-theme='duo-blue']) .missionXp,
-:global([data-theme='duo-blue']) .statName,
-:global([data-theme='duo-blue']) .footNote,
-:global([data-theme='duo-blue']) .coverCat {
-  font-family: var(--font-duo), 'Nunito', sans-serif;
-}
-
-:global([data-theme='duo-blue']) .agencyTitle {
-  letter-spacing: 0.02em;
-  text-transform: none;
-  font-weight: 800;
-}
-
-:global([data-theme='duo-blue']) .sectionTitle {
-  letter-spacing: 0.02em;
-  text-transform: none;
-}
-
-/* filter chips: white pills; active = navy pill */
-:global([data-theme='duo-blue']) .chip {
-  background: #ffffff;
-}
-:global([data-theme='duo-blue']) .chipActive,
-:global([data-theme='duo-blue']) .chipActive:hover {
-  color: #ffffff;
-  background: #141d4d;
-  border-color: #141d4d;
-  box-shadow: 0 6px 18px rgba(20, 29, 77, 0.35);
-}
-
-/* partner strip + mission rows: light periwinkle insets on white */
-:global([data-theme='duo-blue']) .partnerRow {
-  background: #eef3ff;
-}
-:global([data-theme='duo-blue']) .partnerAvatar {
-  color: #ffffff;
-}
-:global([data-theme='duo-blue']) .mission {
-  background: rgba(91, 141, 239, 0.13);
-}
-:global([data-theme='duo-blue']) .modeBadge {
-  background: #eef3ff;
-}
-
-/* featured cards + game cards + stats: white, soft blue shadow */
-:global([data-theme='duo-blue']) .featCard {
-  background: #ffffff;
-  border-color: rgba(20, 29, 77, 0.08);
-  box-shadow: 0 18px 40px rgba(20, 41, 110, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  border-radius: 26px;
-}
-:global([data-theme='duo-blue']) .card {
-  border-color: rgba(20, 29, 77, 0.08);
-  border-radius: 24px;
-  box-shadow: 0 16px 36px rgba(20, 41, 110, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-:global([data-theme='duo-blue']) .card:hover {
-  border-color: rgba(255, 201, 60, 0.7);
-  box-shadow: 0 22px 44px rgba(20, 41, 110, 0.32), 0 0 0 1px var(--hub-gold-soft);
-}
-:global([data-theme='duo-blue']) .stat {
-  border-color: rgba(20, 29, 77, 0.08);
-  border-radius: 24px;
-  box-shadow: 0 16px 36px rgba(20, 41, 110, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-
-:global([data-theme='duo-blue']) .card:hover .openFile {
-  background: rgba(255, 201, 60, 0.45);
-}
-
-:global([data-theme='duo-blue']) .rarityHard {
-  color: #c22f24;
-}
-
-/* Daily Briefing folder: hub-chrome's .dossier is a dark-navy prop
- * (shared with game surfaces, which keep it). Only the HOME briefing
- * instance — inside .briefWrap — becomes a white card in Duo Blue so
- * its navy ink stays readable. The hashed module class is matched by
- * substring because CSS modules never emit the bare class name. */
-:global([data-theme='duo-blue']) .briefWrap :global([class*='dossier']) {
-  background: #ffffff;
-  box-shadow: 0 18px 40px rgba(20, 41, 110, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-:global([data-theme='duo-blue']) .briefWrap :global([class*='dossier'])::before {
-  background: linear-gradient(180deg, #ffffff, #eef3ff);
-}
-:global([data-theme='duo-blue']) .briefWrap :global([class*='dossier']):hover {
-  box-shadow: 0 22px 44px rgba(20, 41, 110, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-
 /* ================= Duo Candy theme =================
- * Gated on the global [data-theme='duo-candy'] — noir, case-file
- * and Duo Blue rendering above is untouched. Warm cream base,
+ * Gated on the global [data-theme='duo-candy'] — noir and
+ * case-file rendering above is untouched. Warm cream base,
  * teal masthead with a layered blob, mustard profile card,
  * light-coral channel panel, Baloo 2 instead of Cinzel/Mono.
  * Spec: docs/ui-reference/duo-candy/SPEC.md */
@@ -1354,7 +1239,7 @@
   color: #8a5e00;
 }
 
-/* Daily Briefing folder: same trick as Duo Blue — only the HOME
+/* Daily Briefing folder: only the HOME
  * briefing instance becomes a white card; the shared .dossier prop
  * (game surfaces) keeps its own styling. */
 :global([data-theme='duo-candy']) .briefWrap :global([class*='dossier']) {

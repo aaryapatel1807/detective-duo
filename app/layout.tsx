@@ -56,7 +56,8 @@ const candyFont = Baloo_2({
   display: 'swap',
 });
 
-// Duo Blue theme font: rounded friendly sans, used only under [data-theme='duo-blue'].
+// Rounded friendly sans (Nunito): Duo Candy's body font — candy display
+// type is Baloo 2 (--font-candy); its body text uses this via --font-duo.
 const duoFont = Nunito({
   weight: ['400', '600', '700', '800', '900'],
   subsets: ['latin'],
@@ -72,7 +73,7 @@ export const metadata: Metadata = {
 
 // Runs before paint: applies the saved theme, no flash.
 const themeInit = `
-(function(){try{var t=localStorage.getItem('dd-theme');document.documentElement.dataset.theme=(t==='light'||t==='dark'||t==='duo-blue'||t==='duo-candy')?t:'dark';}catch(e){document.documentElement.dataset.theme='dark';}})();
+(function(){try{var t=localStorage.getItem('dd-theme');document.documentElement.dataset.theme=(t==='light'||t==='dark'||t==='duo-candy')?t:'dark';}catch(e){document.documentElement.dataset.theme='dark';}})();
 `;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
