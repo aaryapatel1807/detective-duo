@@ -970,6 +970,13 @@ a.hub-game-card:hover .hub-open-file {
   color: #fff6e9;
 }
 
+/* The partner-XP hint sits directly on the teal page panel (no
+   card behind it), where its plum-gray --hub-ink-dim is ~1.9:1 —
+   cream it like the title/sub above (≥4.5:1 on the teal stops). */
+[data-theme='duo-candy'] .hub-page:has(.hub-podium) > div > p.hub-mono {
+  color: #fff6e9;
+}
+
 /* ---------- type: Baloo 2 everywhere, Nunito body ---------- */
 
 [data-theme='duo-candy'] .hub-page {
@@ -1008,6 +1015,7 @@ a.hub-game-card:hover .hub-open-file {
 [data-theme='duo-candy'] .hub-rankbar-rank,
 [data-theme='duo-candy'] .hub-rankbar-nums,
 [data-theme='duo-candy'] .hub-plinth-place,
+[data-theme='duo-candy'] .hub-plinth-name,
 [data-theme='duo-candy'] .hub-plinth-xp,
 [data-theme='duo-candy'] .hub-rank-num,
 [data-theme='duo-candy'] .hub-rank-xp,

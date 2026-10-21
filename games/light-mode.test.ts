@@ -148,4 +148,41 @@ describe('duo-candy theme guard', () => {
     expect(contrast(ink, '#ffc93c'), 'plum on the mustard profile card').toBeGreaterThanOrEqual(4.5);
     expect(contrast('#fff6e9', '#0b6e63'), 'cream on the teal masthead').toBeGreaterThanOrEqual(4.5);
   });
+
+  /* Regression (live QA, 2026-10-21): the Love Notes composer card
+   * rendered dark slate under Duo Candy. Root cause: the theme
+   * never defined the --lg-* liquid-glass tokens, so .hub-glass
+   * surfaces fell back to the :root DARK tints; the composer is a
+   * plain .hub-glass with no explicit candy background override.
+   * The labels on it are --hub-ink-dim plum — they must read on the
+   * warm-white glass tint the tokens now provide. */
+  it('duo-candy defines warm-white --lg-* glass tints (no dark fallback)', () => {
+    const tintHi = candyToken('--lg-tint-hi');
+    const tintLo = candyToken('--lg-tint-lo');
+    const dim = candyToken('--hub-ink-dim');
+    const ink = candyToken('--hub-ink');
+    expect(contrast(dim, tintLo), 'composer labels (dim ink) on the glass card').toBeGreaterThanOrEqual(4.5);
+    expect(contrast(ink, tintLo), 'composer text (ink) on the glass card').toBeGreaterThanOrEqual(4.5);
+    expect(contrast(dim, tintHi), 'dim ink on the glass card highlight').toBeGreaterThanOrEqual(4.5);
+  });
+
+  /* Regression (live QA, 2026-10-21): the scoreboard partner-XP
+   * hint rendered plum-gray --hub-ink-dim directly on the teal
+   * page panel (~1.9:1), and podium names leaked the Cinzel serif
+   * (--hub-display) because .hub-plinth-name was missing from the
+   * Baloo 2 list. Both fixes live in hub-noir.css's candy block. */
+  it('duo-candy scoreboard hint is cream on teal, podium names are Baloo', () => {
+    const hubCss = readFileSync(join(ROOT, 'components', 'hub-noir.css'), 'utf8');
+    const hint = hubCss.match(
+      /\[data-theme='duo-candy'\] \.hub-page:has\(\.hub-podium\) > div > p\.hub-mono\s*\{\s*color:\s*(#[0-9a-fA-F]{6})/,
+    );
+    expect(hint, 'hub-noir.css needs the candy scoreboard hint color rule').not.toBeNull();
+    expect(contrast(hint![1], '#0e7c7b'), 'hint on the lightest teal stop').toBeGreaterThanOrEqual(4.5);
+    expect(contrast(hint![1], '#0b6e63'), 'hint on the mid teal stop').toBeGreaterThanOrEqual(4.5);
+    expect(contrast(hint![1], '#09594f'), 'hint on the deepest teal stop').toBeGreaterThanOrEqual(4.5);
+    expect(
+      hubCss,
+      '.hub-plinth-name must be in the duo-candy Baloo 2 selector list',
+    ).toContain("[data-theme='duo-candy'] .hub-plinth-name,");
+  });
 });

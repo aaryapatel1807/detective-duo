@@ -1253,6 +1253,18 @@
   letter-spacing: 0.02em;
   text-transform: none;
 }
+/* Featured eyebrow: the gold inline color is unreadable over the
+   cover photos — give it a dark plum chip with cream text, lifted
+   above the cover art/title (!important beats the inline style,
+   which is shared by all themes and stays untouched). */
+:global([data-theme='duo-candy']) .featFlag {
+  background: #2e2a38;
+  color: #fff6e9 !important;
+  border-radius: 9999px;
+  padding: 0.3rem 0.7rem;
+  box-shadow: 0 6px 14px rgba(46, 42, 56, 0.28);
+  z-index: 2;
+}
 :global([data-theme='duo-candy']) .featOpen {
   color: #c24352;
 }
