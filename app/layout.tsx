@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Courier_Prime, Cinzel, Inter, JetBrains_Mono, Caveat, Nunito } from 'next/font/google';
+import { Courier_Prime, Cinzel, Inter, JetBrains_Mono, Caveat, Nunito, Baloo_2 } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '../components/theme';
 import { Sidebar } from '../components/Sidebar';
@@ -46,6 +46,16 @@ const hubHand = Caveat({
   display: 'swap',
 });
 
+// Duo Candy theme display font: Baloo 2 — chunky rounded display type,
+// used only under [data-theme='duo-candy'] (body stays Nunito there).
+const candyFont = Baloo_2({
+  weight: ['600', '700', '800'],
+  subsets: ['latin'],
+  variable: '--font-candy',
+  fallback: ['system-ui', 'sans-serif'],
+  display: 'swap',
+});
+
 // Duo Blue theme font: rounded friendly sans, used only under [data-theme='duo-blue'].
 const duoFont = Nunito({
   weight: ['400', '600', '700', '800', '900'],
@@ -62,7 +72,7 @@ export const metadata: Metadata = {
 
 // Runs before paint: applies the saved theme, no flash.
 const themeInit = `
-(function(){try{var t=localStorage.getItem('dd-theme');document.documentElement.dataset.theme=(t==='light'||t==='dark'||t==='duo-blue')?t:'dark';}catch(e){document.documentElement.dataset.theme='dark';}})();
+(function(){try{var t=localStorage.getItem('dd-theme');document.documentElement.dataset.theme=(t==='light'||t==='dark'||t==='duo-blue'||t==='duo-candy')?t:'dark';}catch(e){document.documentElement.dataset.theme='dark';}})();
 `;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -72,7 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
       <body
-        className={`${courierPrime.variable} ${hubDisplay.variable} ${hubBody.variable} ${hubMono.variable} ${hubHand.variable} ${duoFont.variable} min-h-screen`}
+        className={`${courierPrime.variable} ${hubDisplay.variable} ${hubBody.variable} ${hubMono.variable} ${hubHand.variable} ${duoFont.variable} ${candyFont.variable} min-h-screen`}
       >
         <ThemeProvider>
           <AudioUnlocker />
