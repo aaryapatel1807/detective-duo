@@ -54,7 +54,7 @@ export function Sidebar() {
           animate={{ x: 0, opacity: 1 }}
           onClick={toggle}
           data-sidebar-toggle
-          className="hub-sidebar-toggle hub-glass fixed left-3 top-1/2 z-40 h-16 w-12 -translate-y-1/2 text-xl"
+          className="hub-sidebar-toggle hub-glass lg-3 fixed left-3 top-1/2 z-40 h-16 w-12 -translate-y-1/2 text-xl"
           title="Open sidebar"
           aria-label="Open sidebar"
         >
@@ -67,7 +67,7 @@ export function Sidebar() {
         initial={false}
         animate={{ x: collapsed ? '-105%' : '0%' }}
         transition={{ type: 'spring', stiffness: 260, damping: 30 }}
-        className="hub-sidebar hub-glass fixed bottom-4 left-4 top-4 z-40 w-[268px] gap-4 overflow-y-auto p-5"
+        className="hub-sidebar hub-glass lg-3 fixed bottom-4 left-4 top-4 z-40 w-[268px] gap-4 overflow-y-auto p-5"
         aria-hidden={collapsed}
       >
         <div className="flex items-center justify-between">
