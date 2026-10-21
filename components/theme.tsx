@@ -2,14 +2,14 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-export type Theme = 'dark' | 'light' | 'duo-blue' | 'duo-candy';
+export type Theme = 'dark' | 'light' | 'duo-candy';
 
-/** Toggle order: noir desk → case-file paper → Duo Blue → Duo Candy → back to noir. */
-const THEME_ORDER: Theme[] = ['dark', 'light', 'duo-blue', 'duo-candy'];
+/** Toggle order: noir desk → case-file paper → Duo Candy → back to noir. */
+const THEME_ORDER: Theme[] = ['dark', 'light', 'duo-candy'];
 const THEME_KEY = 'dd-theme';
 
 export function isTheme(v: unknown): v is Theme {
-  return v === 'dark' || v === 'light' || v === 'duo-blue' || v === 'duo-candy';
+  return v === 'dark' || v === 'light' || v === 'duo-candy';
 }
 
 export function nextTheme(t: Theme): Theme {
@@ -26,7 +26,7 @@ export function useTheme() {
   return useContext(ThemeCtx);
 }
 
-/** Dark-first; light = "case-file paper"; duo-blue = bright CRYPDINO blue; duo-candy = warm cream edu-playful. Persisted in localStorage. */
+/** Dark-first; light = "case-file paper"; duo-candy = warm cream edu-playful. Persisted in localStorage. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('dark');
 
