@@ -71,7 +71,7 @@ describe('duo-blue theme guard', () => {
     expect(duoBlock, 'globals.css needs a [data-theme=\'duo-blue\'] token block').not.toBe('');
     const themeTsx = readFileSync(join(ROOT, 'components', 'theme.tsx'), 'utf8');
     expect(themeTsx).toContain("'duo-blue'");
-    expect(themeTsx).toContain("['dark', 'light', 'duo-blue']");
+    expect(themeTsx).toContain("['dark', 'light', 'duo-blue', 'duo-candy']");
     const layout = readFileSync(join(ROOT, 'app', 'layout.tsx'), 'utf8');
     expect(layout).toContain("t==='duo-blue'");
   });
@@ -94,5 +94,58 @@ describe('duo-blue theme guard', () => {
     expect(contrast('#ffffff', navy), 'white text on navy pills').toBeGreaterThanOrEqual(4.5);
     expect(contrast(dim, backdrop), 'dim ink on the blue backdrop').toBeGreaterThanOrEqual(3.0);
     expect(contrast(dim, card), 'dim ink on white cards').toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+/* Duo Candy guard (fourth theme, warm cream edu-playful).
+ * Duo Candy restyles hub chrome only, exactly like Duo Blue: the
+ * play panel's pinned --gk-* tokens must never be redefined, and
+ * the plum ink must keep readable contrast on white cards, on the
+ * cream backdrop, and reversed on deep-plum pills. */
+const candyBlock = globalsCss.match(/\[data-theme='duo-candy'\]\s*\{[^}]*\}/)?.[0] ?? '';
+
+function candyToken(name: string): string {
+  const m = candyBlock.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`));
+  if (!m) throw new Error(`token ${name} missing from [data-theme='duo-candy'] block`);
+  return m[1];
+}
+
+describe('duo-candy theme guard', () => {
+  it('theme is wired end-to-end (provider, toggle cycle, pre-paint init)', () => {
+    expect(candyBlock, 'globals.css needs a [data-theme=\'duo-candy\'] token block').not.toBe('');
+    const themeTsx = readFileSync(join(ROOT, 'components', 'theme.tsx'), 'utf8');
+    expect(themeTsx).toContain("'duo-candy'");
+    expect(themeTsx).toContain("['dark', 'light', 'duo-blue', 'duo-candy']");
+    const toggle = readFileSync(join(ROOT, 'components', 'ThemeToggle.tsx'), 'utf8');
+    expect(toggle).toContain("'duo-candy'");
+    const layout = readFileSync(join(ROOT, 'app', 'layout.tsx'), 'utf8');
+    expect(layout).toContain("t==='duo-candy'");
+    expect(layout, 'Baloo 2 must be loaded for the candy display type').toContain('Baloo_2');
+  });
+
+  it('duo-candy never redefines the pinned --gk-* play-panel tokens', () => {
+    expect(candyBlock).not.toMatch(/--gk-[a-z-]+\s*:/);
+    const hubCss = readFileSync(join(ROOT, 'components', 'hub-noir.css'), 'utf8');
+    const hubCandy = hubCss.match(/\[data-theme='duo-candy'\]\s*\{[^}]*\}/)?.[0] ?? '';
+    expect(hubCandy, 'hub-noir.css needs a [data-theme=\'duo-candy\'] token block').not.toBe('');
+    expect(hubCandy).not.toMatch(/--gk-[a-z-]+\s*:/);
+  });
+
+  it('duo-candy ink keeps readable contrast on its surfaces', () => {
+    const ink = candyToken('--hub-ink');
+    const dim = candyToken('--hub-ink-dim');
+    const card = candyToken('--hub-panel');
+    const plum = candyToken('--hub-panel-2');
+    const backdrop = candyToken('--hub-bg');
+    expect(contrast(ink, card), 'plum ink on white cards').toBeGreaterThanOrEqual(4.5);
+    expect(contrast(ink, backdrop), 'plum ink on the cream backdrop').toBeGreaterThanOrEqual(4.5);
+    expect(contrast('#fff6e9', plum), 'cream text on plum pills').toBeGreaterThanOrEqual(4.5);
+    expect(contrast(dim, backdrop), 'dim ink on the cream backdrop').toBeGreaterThanOrEqual(3.0);
+    expect(contrast(dim, card), 'dim ink on white cards').toBeGreaterThanOrEqual(4.5);
+    /* key candy accents carry text somewhere: deep variants must read */
+    expect(contrast('#c24352', card), 'coral-deep text on white').toBeGreaterThanOrEqual(4.5);
+    expect(contrast('#ffffff', '#f26071'), 'white on coral primary buttons (deepened a step from #f96d7b for legibility)').toBeGreaterThanOrEqual(3.0);
+    expect(contrast(ink, '#ffc93c'), 'plum on the mustard profile card').toBeGreaterThanOrEqual(4.5);
+    expect(contrast('#fff6e9', '#0b6e63'), 'cream on the teal masthead').toBeGreaterThanOrEqual(4.5);
   });
 });

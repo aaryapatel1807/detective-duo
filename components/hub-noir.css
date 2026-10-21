@@ -68,6 +68,31 @@
   --hub-input-bg: #eef3ff;
 }
 
+/* Duo Candy — warm cream edu-playful: white chunky cards, deep
+   plum-brown ink. --hub-ink-dim is a solid plum-gray so secondary
+   text stays ≥4.5:1 on cream AND on white cards. --hub-gold is a
+   deep mustard that stays readable as text; the bright mustard
+   (#ffb703) is used as fill only. */
+[data-theme='duo-candy'] {
+  --hub-bg: #fff6e9;
+  --hub-panel: #ffffff;
+  --hub-panel-2: #2e2a38;
+  --hub-border: rgba(46, 42, 56, 0.12);
+  --hub-gold: #8a5e00;
+  --hub-gold-soft: rgba(255, 183, 3, 0.3);
+  --hub-green: #0e6b57;
+  --hub-red: #c24352;
+  --hub-ink: #2e2a38;
+  --hub-ink-dim: #57506b;
+  --hub-glass-blur: blur(14px) saturate(1.2);
+  --hub-line: rgba(46, 42, 56, 0.09);
+  --hub-line-2: rgba(46, 42, 56, 0.08);
+  --hub-shadow: 0 10px 24px rgba(46, 42, 56, 0.12);
+  --hub-silver: #57506b;
+  --hub-bronze: #8a5e00;
+  --hub-input-bg: #fff6e9;
+}
+
 /* ---------- page shell ---------- */
 
 .hub-page {
@@ -919,4 +944,409 @@ a.hub-game-card:hover .hub-open-file {
 
 [data-theme='duo-blue'] .hub-icon-btn:hover {
   color: #c22f24;
+}
+
+/* ============================================================
+   DUO CANDY flourishes — gated on [data-theme='duo-candy'] so
+   noir + case-file + Duo Blue are untouched. Baloo 2 rounded
+   type (no Cinzel, no JetBrains Mono), 28px chunky cards,
+   coral primary pills, color-coded scoreboard, plum badge pills.
+   Spec: docs/ui-reference/duo-candy/SPEC.md
+   ============================================================ */
+
+/* Scoreboard page base goes teal (its reference) — it is the only
+   hub page with a podium. Other candy pages keep the cream base. */
+[data-theme='duo-candy'] .hub-page:has(.hub-podium) {
+  background:
+    radial-gradient(480px 360px at 104% 0%, rgba(255, 183, 3, 0.4), transparent 62%),
+    radial-gradient(520px 420px at -6% 96%, rgba(94, 200, 180, 0.45), transparent 62%),
+    linear-gradient(160deg, #0e7c7b 0%, #0b6e63 60%, #09594f 100%);
+  border-radius: 32px;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+[data-theme='duo-candy'] .hub-page:has(.hub-podium) .hub-page-title,
+[data-theme='duo-candy'] .hub-page:has(.hub-podium) .hub-sub {
+  color: #fff6e9;
+}
+
+/* ---------- type: Baloo 2 everywhere, Nunito body ---------- */
+
+[data-theme='duo-candy'] .hub-page {
+  font-family: var(--font-duo, 'Nunito', sans-serif);
+}
+
+[data-theme='duo-candy'] .hub-display {
+  font-family: var(--font-candy, 'Baloo 2', sans-serif);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+[data-theme='duo-candy'] .hub-page-title {
+  font-family: var(--font-candy, 'Baloo 2', sans-serif);
+  font-weight: 800;
+  font-size: 2.4rem;
+  letter-spacing: 0.01em;
+}
+
+/* any bare heading on a hub page (e.g. "Sealed Surprises") */
+[data-theme='duo-candy'] .hub-page h1,
+[data-theme='duo-candy'] .hub-page h2,
+[data-theme='duo-candy'] .hub-page h3 {
+  font-family: var(--font-candy, 'Baloo 2', sans-serif);
+  font-weight: 800;
+}
+
+[data-theme='duo-candy'] .hub-eyebrow,
+[data-theme='duo-candy'] .hub-btn,
+[data-theme='duo-candy'] .hub-btn-ghost,
+[data-theme='duo-candy'] .hub-badge,
+[data-theme='duo-candy'] .hub-row-label,
+[data-theme='duo-candy'] .hub-row-value,
+[data-theme='duo-candy'] .hub-note-date,
+[data-theme='duo-candy'] .hub-rankbar-rank,
+[data-theme='duo-candy'] .hub-rankbar-nums,
+[data-theme='duo-candy'] .hub-plinth-place,
+[data-theme='duo-candy'] .hub-plinth-xp,
+[data-theme='duo-candy'] .hub-rank-num,
+[data-theme='duo-candy'] .hub-rank-xp,
+[data-theme='duo-candy'] .hub-cover-cat,
+[data-theme='duo-candy'] .hub-open-file,
+[data-theme='duo-candy'] .hub-room-code {
+  font-family: var(--font-candy, 'Baloo 2', sans-serif);
+}
+
+[data-theme='duo-candy'] .hub-mono {
+  font-family: var(--font-candy, 'Baloo 2', sans-serif);
+  letter-spacing: 0.04em;
+}
+
+[data-theme='duo-candy'] .hub-eyebrow {
+  letter-spacing: 0.14em;
+}
+
+/* the handwritten note voice stays (content, not chrome) */
+[data-theme='duo-candy'] .hub-hand {
+  font-family: var(--hub-hand, 'Caveat', cursive);
+}
+
+/* ---------- chunky cards ---------- */
+
+[data-theme='duo-candy'] .hub-glass {
+  border-radius: 28px;
+}
+[data-theme='duo-candy'] .hub-glass-strong {
+  /* panel-2 is deep plum in Duo Candy; keep strong cards white so
+     plum ink stays readable — plum shows up on pills instead */
+  background: var(--hub-panel);
+  border-radius: 28px;
+}
+
+/* ---------- buttons: coral primary, lavender ghost ---------- */
+
+[data-theme='duo-candy'] .hub-btn {
+  border-color: #f26071;
+  background: #f26071;
+  color: #ffffff;
+  border-radius: 9999px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  box-shadow: 0 8px 20px rgba(249, 109, 123, 0.4);
+}
+[data-theme='duo-candy'] .hub-btn:hover {
+  box-shadow: 0 12px 26px rgba(249, 109, 123, 0.5);
+}
+
+[data-theme='duo-candy'] .hub-btn-ghost {
+  border-color: rgba(46, 42, 56, 0.1);
+  background: #a78bfa;
+  color: #2e2a38;
+  border-radius: 9999px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+[data-theme='duo-candy'] .hub-btn-ghost:hover {
+  border-color: #a78bfa;
+  color: #2e2a38;
+  box-shadow: 0 8px 20px rgba(167, 139, 250, 0.45);
+}
+
+/* ---------- badges: dark plum pills (solo-files reference) ------ */
+
+[data-theme='duo-candy'] .hub-badge {
+  background: #2e2a38;
+  border-color: #2e2a38;
+  color: #fff6e9;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+[data-theme='duo-candy'] .hub-pill-easy,
+[data-theme='duo-candy'] .hub-pill-medium,
+[data-theme='duo-candy'] .hub-pill-hard {
+  background: #2e2a38;
+  border-color: #2e2a38;
+  color: #fff6e9;
+}
+
+/* ---------- inputs: cream fill, chunky radius ---------- */
+
+[data-theme='duo-candy'] .hub-input {
+  border-radius: 18px;
+}
+[data-theme='duo-candy'] .hub-input:focus {
+  border-color: #f96d7b;
+  box-shadow: 0 0 0 3px rgba(249, 109, 123, 0.25);
+}
+
+/* ---------- XP: coral fill on a cream groove ---------- */
+
+[data-theme='duo-candy'] .hub-xp-track {
+  background: #ffedd6;
+  border-color: rgba(46, 42, 56, 0.08);
+  box-shadow: inset 0 1px 3px rgba(46, 42, 56, 0.14);
+}
+[data-theme='duo-candy'] .hub-xp-fill {
+  background: linear-gradient(90deg, #f96d7b, #ff6b81);
+  box-shadow: 0 0 10px rgba(249, 109, 123, 0.45);
+}
+[data-theme='duo-candy'] .hub-rankbar-rank {
+  color: #c24352;
+}
+
+/* ---------- avatars: plum circle, cream initial ---------- */
+
+[data-theme='duo-candy'] .hub-avatar {
+  background: #2e2a38;
+  border-color: #ffc93c;
+  box-shadow: 0 6px 14px rgba(46, 42, 56, 0.25);
+}
+[data-theme='duo-candy'] .hub-avatar .hub-avatar-initials {
+  color: #fff6e9;
+  font-family: var(--font-candy, 'Baloo 2', sans-serif);
+}
+
+/* ---------- game cards (Solo Files): white, color-cycled wells -- */
+
+[data-theme='duo-candy'] .hub-game-card {
+  border-radius: 28px;
+  background: #ffffff;
+}
+[data-theme='duo-candy'] a.hub-game-card:hover {
+  box-shadow: 0 16px 32px rgba(46, 42, 56, 0.18), 0 0 0 2px rgba(255, 183, 3, 0.55);
+}
+
+/* Cover wells cycle coral → teal → mustard → lavender → mint
+   behind the game's real icon + title (grid order, 5n cycle). */
+[data-theme='duo-candy'] .hub-cover {
+  background: linear-gradient(150deg, #ffb3ab 0%, #f96d7b 78%);
+  border-bottom: none;
+}
+[data-theme='duo-candy'] .hub-game-card:nth-child(5n + 2) .hub-cover {
+  background: linear-gradient(150deg, #3aa79b 0%, #0b6e63 78%);
+}
+[data-theme='duo-candy'] .hub-game-card:nth-child(5n + 3) .hub-cover {
+  background: linear-gradient(150deg, #ffd34d 0%, #ffb703 78%);
+}
+[data-theme='duo-candy'] .hub-game-card:nth-child(5n + 4) .hub-cover {
+  background: linear-gradient(150deg, #c4b0fc 0%, #a78bfa 78%);
+}
+[data-theme='duo-candy'] .hub-game-card:nth-child(5n) .hub-cover {
+  background: linear-gradient(150deg, #93e0cd 0%, #5ec8b4 78%);
+}
+[data-theme='duo-candy'] .hub-cover::before {
+  background: radial-gradient(circle at 85% 12%, rgba(255, 255, 255, 0.35), transparent 55%);
+}
+[data-theme='duo-candy'] .hub-cover-icon {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 9999px;
+  background: #ffffff;
+  font-size: 2rem;
+  filter: none;
+  box-shadow: 0 8px 18px rgba(46, 42, 56, 0.18);
+}
+[data-theme='duo-candy'] .hub-cover-title {
+  color: #2e2a38;
+  font-size: 1.15rem;
+}
+[data-theme='duo-candy'] .hub-game-card:nth-child(5n + 2) .hub-cover-title,
+[data-theme='duo-candy'] .hub-game-card:nth-child(5n + 2) .hub-cover-cat {
+  color: #fff6e9;
+}
+[data-theme='duo-candy'] .hub-cover-cat {
+  color: rgba(46, 42, 56, 0.66);
+}
+[data-theme='duo-candy'] .hub-game-card:nth-child(5n + 4) .hub-cover-cat {
+  color: rgba(46, 42, 56, 0.82);
+}
+[data-theme='duo-candy'] .hub-open-file {
+  color: #c24352;
+}
+
+/* ---------- podium: coral #1, cream #2, mustard-dashed vacant -- */
+
+[data-theme='duo-candy'] .hub-plinth {
+  border-radius: 22px 22px 0 0;
+}
+[data-theme='duo-candy'] .hub-plinth-1 {
+  background: linear-gradient(180deg, #f8a5a5, #f96d7b);
+  border-color: rgba(194, 67, 82, 0.4);
+  box-shadow: 0 -8px 24px rgba(249, 109, 123, 0.3);
+}
+[data-theme='duo-candy'] .hub-plinth-2 {
+  background: linear-gradient(180deg, #fffaf0, #ffedd6);
+  border-color: rgba(46, 42, 56, 0.1);
+}
+[data-theme='duo-candy'] .hub-plinth-1 .hub-plinth-name,
+[data-theme='duo-candy'] .hub-plinth-1 .hub-plinth-place {
+  color: #2e2a38;
+}
+[data-theme='duo-candy'] .hub-plinth-1 .hub-plinth-xp {
+  display: inline-block;
+  background: #ffc93c;
+  color: #2e2a38;
+  border-radius: 9999px;
+  padding: 0.1rem 0.6rem;
+  font-weight: 700;
+}
+[data-theme='duo-candy'] .hub-plinth-2 .hub-plinth-xp {
+  display: inline-block;
+  background: #5ec8b4;
+  color: #2e2a38;
+  border-radius: 9999px;
+  padding: 0.1rem 0.6rem;
+  font-weight: 700;
+}
+[data-theme='duo-candy'] .hub-plinth-avatar {
+  background: #ffffff;
+  color: #2e2a38;
+  font-family: var(--font-candy, 'Baloo 2', sans-serif);
+  box-shadow: 0 6px 14px rgba(46, 42, 56, 0.2);
+}
+[data-theme='duo-candy'] .hub-plinth-1 .hub-plinth-avatar {
+  background: linear-gradient(135deg, #ffd34d, #ffb703);
+  border-color: #ffffff;
+}
+[data-theme='duo-candy'] .hub-plinth-2 .hub-plinth-avatar {
+  background: linear-gradient(135deg, #3aa79b, #0e7c7b);
+  border-color: #ffffff;
+  color: #fff6e9;
+}
+[data-theme='duo-candy'] .hub-plinth-vacant {
+  background: rgba(255, 183, 3, 0.16);
+  border-color: rgba(255, 183, 3, 0.75);
+  opacity: 1;
+}
+
+/* ---------- standings rows ---------- */
+
+[data-theme='duo-candy'] .hub-rank-row {
+  background: #ffffff;
+  border-radius: 9999px;
+  border-color: rgba(46, 42, 56, 0.08);
+}
+/* first standing = coral fill with a mustard XP pill */
+[data-theme='duo-candy'] .hub-rank-row:nth-of-type(1) {
+  background: #f8a5a5;
+  border-color: rgba(194, 67, 82, 0.3);
+}
+[data-theme='duo-candy'] .hub-rank-row:nth-of-type(1) .hub-rank-xp {
+  background: #ffc93c;
+  border-radius: 9999px;
+  padding: 0.3rem 0.8rem;
+  font-weight: 700;
+}
+[data-theme='duo-candy'] .hub-rank-row:nth-of-type(2) .hub-rank-xp {
+  background: #5ec8b4;
+  border-radius: 9999px;
+  padding: 0.3rem 0.8rem;
+  font-weight: 700;
+}
+[data-theme='duo-candy'] .hub-rank-row-you {
+  border-color: #f96d7b;
+  box-shadow: 0 0 0 2px rgba(249, 109, 123, 0.55), 0 10px 24px rgba(46, 42, 56, 0.14);
+}
+/* the sticky "you" row is :nth-of-type(1) in its own wrapper —
+   keep it white with the coral ring, not the rank-1 coral fill */
+[data-theme='duo-candy'] .hub-you-sticky .hub-rank-row {
+  background: #ffffff;
+}
+[data-theme='duo-candy'] .hub-rank-num-1 {
+  color: #c24352;
+}
+[data-theme='duo-candy'] .hub-rank-num-2 {
+  color: #0b6e63;
+}
+[data-theme='duo-candy'] .hub-rank-num-3 {
+  color: #8a5e00;
+}
+
+/* ---------- rank ladder: chunky pills, coral CURRENT ---------- */
+
+[data-theme='duo-candy'] .hub-row {
+  border-radius: 9999px;
+  background: #fff6e9;
+  border-color: rgba(46, 42, 56, 0.08);
+}
+[data-theme='duo-candy'] .hub-row:nth-child(odd) {
+  background: #ffe9b8;
+}
+[data-theme='duo-candy'] .hub-row:nth-child(3n) {
+  background: #d9f3ec;
+}
+[data-theme='duo-candy'] .hub-row.hub-rank-row-you {
+  background: #ffffff;
+  border-color: #f96d7b;
+  box-shadow: 0 0 0 2px #f96d7b, 0 10px 24px rgba(46, 42, 56, 0.14);
+  position: relative;
+}
+[data-theme='duo-candy'] .hub-row.hub-rank-row-you .hub-rank-label::after {
+  content: 'CURRENT';
+  margin-left: 0.6rem;
+  background: #f96d7b;
+  color: #ffffff;
+  border-radius: 9999px;
+  padding: 0.12rem 0.55rem;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  vertical-align: 2px;
+}
+
+/* ---------- love notes: sealed cards cycle pink/teal/lavender - */
+
+[data-theme='duo-candy'] .hub-page .grid > :is(.hub-glass, .hub-glass-strong):nth-child(3n + 1) {
+  background: linear-gradient(165deg, #ffffff 55%, #fde3e1 100%);
+}
+[data-theme='duo-candy'] .hub-page .grid > :is(.hub-glass, .hub-glass-strong):nth-child(3n + 2) {
+  background: linear-gradient(165deg, #ffffff 55%, #d9f3ec 100%);
+}
+[data-theme='duo-candy'] .hub-page .grid > :is(.hub-glass, .hub-glass-strong):nth-child(3n) {
+  background: linear-gradient(165deg, #ffffff 55%, #e4def9 100%);
+}
+
+/* Scoreboard cards on the teal page: podium card goes cream,
+   the rank-ladder card goes deep teal (its reference panel) with
+   the tinted pills sitting on top. */
+[data-theme='duo-candy'] .hub-page:has(.hub-podium) .hub-glass:has(.hub-podium) {
+  background: #fffaf0;
+}
+[data-theme='duo-candy'] .hub-page:has(.hub-podium) .hub-glass:has(.space-y-2 .hub-row) {
+  background: linear-gradient(165deg, #0e7c7b 0%, #09594f 100%);
+  border-color: rgba(255, 246, 233, 0.25);
+}
+[data-theme='duo-candy'] .hub-page:has(.hub-podium) .hub-glass:has(.space-y-2 .hub-row) .hub-eyebrow {
+  color: rgba(255, 246, 233, 0.85);
+}
+
+[data-theme='duo-candy'] .hub-icon-btn:hover {
+  color: #c24352;
+}
+
+[data-theme='duo-candy'] .hub-room-code {
+  color: #c24352;
+  text-shadow: none;
 }
