@@ -126,22 +126,50 @@
 
 /* ---------- glass panels ---------- */
 
-.hub-glass {
-  background: var(--hub-panel);
-  border: 1px solid var(--hub-line);
-  border-radius: 20px;
-  backdrop-filter: var(--hub-glass-blur);
-  -webkit-backdrop-filter: var(--hub-glass-blur);
-  box-shadow: var(--hub-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+/* Liquid glass (tier 2). Mirror of the primitives in app/globals.css:
+   specular sheen + tinted body + refracting rim + layered shadows.
+   Tokens (--lg-*) live in globals.css so the two files never drift. */
+.hub-glass,
+.hub-glass-strong {
+  border: 1px solid transparent;
+  background-image:
+    radial-gradient(120% 90% at 18% -14%, var(--lg-spec) 0%, transparent 58%),
+    linear-gradient(158deg, var(--lg-tint-hi) 0%, var(--lg-tint-lo) 100%),
+    linear-gradient(
+      152deg,
+      var(--lg-rim-hi) 0%,
+      var(--lg-rim-lo) 32%,
+      var(--lg-rim-lo) 64%,
+      var(--lg-rim-mid) 100%
+    );
+  background-origin: border-box;
+  background-clip: padding-box, padding-box, border-box;
+  border-radius: var(--lg-radius-2);
+  box-shadow: var(--lg-shadow-2), inset 0 1px 0 var(--lg-edge), inset 0 -1px 0 var(--lg-inner);
+  backdrop-filter: var(--lg-blur-2);
+  -webkit-backdrop-filter: var(--lg-blur-2);
 }
 
 .hub-glass-strong {
-  background: var(--hub-panel-2);
-  border: 1px solid var(--hub-line-2);
-  border-radius: 20px;
-  backdrop-filter: var(--hub-glass-blur);
-  -webkit-backdrop-filter: var(--hub-glass-blur);
-  box-shadow: var(--hub-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background-image:
+    radial-gradient(120% 90% at 18% -14%, var(--lg-spec) 0%, transparent 62%),
+    linear-gradient(158deg, var(--lg-tint-hi) 0%, var(--lg-tint-hi) 55%, var(--lg-tint-lo) 100%),
+    linear-gradient(
+      152deg,
+      var(--lg-rim-hi) 0%,
+      var(--lg-rim-lo) 30%,
+      var(--lg-rim-lo) 62%,
+      var(--lg-rim-mid) 100%
+    );
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .hub-glass,
+  .hub-glass-strong {
+    background-image:
+      radial-gradient(120% 90% at 18% -14%, var(--lg-spec) 0%, transparent 58%),
+      linear-gradient(158deg, var(--hub-panel) 0%, var(--hub-panel) 100%);
+  }
 }
 
 /* ---------- buttons ---------- */
@@ -161,9 +189,10 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease,
-    color 0.15s ease;
+  transition: transform 0.45s var(--lg-spring), box-shadow 0.45s var(--lg-ease),
+    border-color 0.25s ease, color 0.2s ease, background-color 0.25s ease;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .hub-btn {
@@ -405,18 +434,42 @@ select.hub-input {
 
 .hub-game-card {
   display: block;
-  border-radius: 20px;
+  border-radius: 22px;
   overflow: hidden;
-  background: var(--hub-panel);
-  border: 1px solid var(--hub-line);
-  backdrop-filter: var(--hub-glass-blur);
-  -webkit-backdrop-filter: var(--hub-glass-blur);
-  box-shadow: var(--hub-shadow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid transparent;
+  background-image:
+    radial-gradient(120% 90% at 18% -14%, var(--lg-spec) 0%, transparent 58%),
+    linear-gradient(158deg, var(--lg-tint-hi) 0%, var(--lg-tint-lo) 100%),
+    linear-gradient(
+      152deg,
+      var(--lg-rim-hi) 0%,
+      var(--lg-rim-lo) 32%,
+      var(--lg-rim-lo) 64%,
+      var(--lg-rim-mid) 100%
+    );
+  background-origin: border-box;
+  background-clip: padding-box, padding-box, border-box;
+  backdrop-filter: var(--lg-blur-2);
+  -webkit-backdrop-filter: var(--lg-blur-2);
+  box-shadow: var(--lg-shadow-2), inset 0 1px 0 var(--lg-edge), inset 0 -1px 0 var(--lg-inner);
+  transition: transform 0.45s var(--lg-spring), box-shadow 0.45s var(--lg-ease);
 }
 a.hub-game-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--hub-gold-soft);
+  transform: translateY(-4px) scale(1.006);
+  box-shadow: var(--lg-shadow-3), inset 0 1px 0 var(--lg-edge),
+    0 0 0 1px var(--hub-gold-soft);
+}
+a.hub-game-card:active {
+  transform: translateY(-1px) scale(0.99);
+  transition-duration: 0.12s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hub-game-card,
+  a.hub-game-card:hover,
+  a.hub-game-card:active {
+    transform: none;
+    transition: box-shadow 0.2s ease;
+  }
 }
 .hub-cover {
   position: relative;
