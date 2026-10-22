@@ -11,7 +11,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import type { Socket } from 'socket.io';
 
-const PORT = Number(process.env.SOCKET_PORT || 4001);
+const PORT = Number(process.env.PORT || process.env.SOCKET_PORT || 4001);
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
 interface Member {
