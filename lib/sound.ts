@@ -11,7 +11,7 @@
  *
  * Per-theme UI sounds (all soft, gain <= 0.08):
  *  candy    — soft pops/chimes (two sine plucks, rising)
- *  midnight — one slow soft chime (long decay, calm by design)
+ *  blue     — a bright chime pair (gold on blue)
  *  noir     — a subtle low tick
  * Ambient:
  *  rain — looped filtered noise; jazz — gentle sine chords, one every
@@ -107,8 +107,9 @@ export function playUiSound(theme: ThemeId): void {
     if (theme === 'candy') {
       pluck(660, 0, 0.25, 0.07);
       pluck(880, 0.07, 0.3, 0.06);
-    } else if (theme === 'midnight') {
-      pluck(523, 0, 1.1, 0.05);
+    } else if (theme === 'blue') {
+      pluck(523, 0, 0.4, 0.06);
+      pluck(784, 0.08, 0.4, 0.05);
     } else {
       pluck(220, 0, 0.12, 0.04);
     }

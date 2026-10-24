@@ -1,5 +1,5 @@
 /**
- * Case Files: the solo mystery format for Detective Duo v2.
+ * Case Files: the solo mystery format for Sachi.
  *
  * A case is a small whodunit with ONE provable answer. The validator
  * (lib/cases/validator.ts) is the authority on what "provable" means:

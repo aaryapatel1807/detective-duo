@@ -15,7 +15,7 @@ describe('theme tokens', () => {
   });
 
   it('all three themes define the full token set', () => {
-    expect(THEME_IDS).toEqual(['candy', 'noir', 'midnight']);
+    expect(THEME_IDS).toEqual(['candy', 'noir', 'blue']);
     const keys = Object.keys(THEMES.noir.tokens).sort();
     for (const theme of Object.values(THEMES)) {
       expect(Object.keys(theme.tokens).sort()).toEqual(keys);
@@ -28,23 +28,21 @@ describe('theme tokens', () => {
       expect(theme.tokens['--glow']).toBeTruthy();
       expect(theme.tokens['--card-border']).toBeTruthy();
     }
-    // Midnight is slow and calm by design; the others are quicker.
-    expect(THEMES.midnight.tokens['--motion']).toContain('0.6s');
-    expect(THEMES.candy.tokens['--motion']).not.toContain('0.6s');
   });
 });
 
 describe('theme switching', () => {
   it('accepts all three theme ids and nothing else', () => {
     for (const id of THEME_IDS) expect(isThemeId(id)).toBe(true);
-    for (const bad of ['duo-blue', 'sunny', '', null, undefined, 42]) {
+    for (const bad of ['midnight', 'sunny', '', null, undefined, 42]) {
       expect(isThemeId(bad)).toBe(false);
     }
   });
 
-  it('resolves an unknown saved value to candy (Light, the default)', () => {
-    expect(resolveThemeId('midnight')).toBe('midnight');
+  it('resolves an unknown saved value to candy (Candy, the default)', () => {
+    expect(resolveThemeId('blue')).toBe('blue');
     expect(resolveThemeId('candy')).toBe('candy');
+    expect(resolveThemeId('midnight')).toBe('candy');
     expect(resolveThemeId('sunny')).toBe('candy');
     expect(resolveThemeId('not-a-theme')).toBe('candy');
     expect(resolveThemeId(null)).toBe('candy');

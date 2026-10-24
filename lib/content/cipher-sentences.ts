@@ -1,7 +1,7 @@
 /**
  * Hand-written plaintext bank for Cipher Desk.
  *
- * Detective + cozy flavored sentences across themes. Only plain ASCII
+ * Mystery + cozy flavored sentences across themes. Only plain ASCII
  * letters, spaces and ordinary punctuation are used, so every cipher in
  * lib/generators/cipherDesk.ts round-trips them exactly.
  */
@@ -128,19 +128,19 @@ export const CIPHER_SENTENCES: CipherSentence[] = [
   { theme: 'Forest', text: 'Pine needles softened every footstep on the trail.' },
   { theme: 'Forest', text: 'The bridge over the brook creaked but held firm.' },
   { theme: 'Forest', text: 'Wild berries stained our fingers purple by noon.' },
-  // --- Detective desk --------------------------------------------------
-  { theme: 'Detective desk', text: 'The case file lay open beside a cold cup of tea.' },
-  { theme: 'Detective desk', text: 'A fingerprint smudged the edge of the photograph.' },
-  { theme: 'Detective desk', text: 'The suspect left through the garden gate at dusk.' },
-  { theme: 'Detective desk', text: 'Every clue pointed to the house on the hill.' },
-  { theme: 'Detective desk', text: 'The magnifying glass revealed a second signature.' },
-  { theme: 'Detective desk', text: 'A torn ticket matched the stub in the drawer.' },
-  { theme: 'Detective desk', text: 'The alibi held until the clock struck twelve.' },
-  { theme: 'Detective desk', text: 'Notes in the margin spelled a name in code.' },
-  { theme: 'Detective desk', text: 'The witness remembered a coat, a hat, and a laugh.' },
-  { theme: 'Detective desk', text: 'A locked drawer hid letters tied with string.' },
-  { theme: 'Detective desk', text: 'The detective trusted the cat, who trusted no one.' },
-  { theme: 'Detective desk', text: 'Rain washed the footprints, but not the story.' },
+  // --- Sachi's desk --------------------------------------------------
+  { theme: "Sachi's desk", text: 'The case file lay open beside a cold cup of tea.' },
+  { theme: "Sachi's desk", text: 'A fingerprint smudged the edge of the photograph.' },
+  { theme: "Sachi's desk", text: 'The suspect left through the garden gate at dusk.' },
+  { theme: "Sachi's desk", text: 'Every clue pointed to the house on the hill.' },
+  { theme: "Sachi's desk", text: 'The magnifying glass revealed a second signature.' },
+  { theme: "Sachi's desk", text: 'A torn ticket matched the stub in the drawer.' },
+  { theme: "Sachi's desk", text: 'The alibi held until the clock struck twelve.' },
+  { theme: "Sachi's desk", text: 'Notes in the margin spelled a name in code.' },
+  { theme: "Sachi's desk", text: 'The witness remembered a coat, a hat, and a laugh.' },
+  { theme: "Sachi's desk", text: 'A locked drawer hid letters tied with string.' },
+  { theme: "Sachi's desk", text: 'Sachi trusted the cat, who trusted no one.' },
+  { theme: "Sachi's desk", text: 'Rain washed the footprints, but not the story.' },
   // --- Winter evening --------------------------------------------------
   { theme: 'Winter evening', text: 'Snow settled on the rooftops like powdered sugar.' },
   { theme: 'Winter evening', text: 'The fire crackled while cocoa warmed our hands.' },
@@ -173,8 +173,8 @@ export const CIPHER_SENTENCES: CipherSentence[] = [
   { theme: 'Market', text: 'Pumpkins piled high marked the start of autumn, and children chose the roundest ones for carving at home.' },
   { theme: 'Forest', text: 'Ferns brushed our ankles as we followed the deer track deeper into the pines, where the light turned green and gold.' },
   { theme: 'Forest', text: 'The bridge over the brook creaked but held firm, and the stream below chuckled over stones all the way downhill.' },
-  { theme: 'Detective desk', text: 'The witness remembered a coat, a hat, and a laugh, but not the face, which made the whole case twice as hard.' },
-  { theme: 'Detective desk', text: 'The alibi held until the clock struck twelve, and then the whole story quietly fell apart at the seams.' },
+  { theme: "Sachi's desk", text: 'The witness remembered a coat, a hat, and a laugh, but not the face, which made the whole case twice as hard.' },
+  { theme: "Sachi's desk", text: 'The alibi held until the clock struck twelve, and then the whole story quietly fell apart at the seams.' },
   { theme: 'Winter evening', text: 'The village lights glowed amber through the snow, and smoke curled from every chimney into the cold, clear air.' },
   { theme: 'Winter evening', text: 'Icicles chimed softly in the evening breeze while the fire crackled and the cocoa warmed our cold hands.' },
   // --- Longer messages (Medium, Hard and Expert draw from these) -------
@@ -205,9 +205,9 @@ export const CIPHER_SENTENCES: CipherSentence[] = [
   { theme: 'Forest', text: 'The path through the pines was marked with white stones, and each stone had been painted by hand, so that even in the dimmest light a walker could follow the trail all the way to the old mill.' },
   { theme: 'Forest', text: 'Mushrooms ringed the oak where the map was buried, and the map, when it was finally dug up, showed not treasure but a picnic spot, a stream, and a very good place to watch the sunset.' },
   { theme: 'Forest', text: 'The cabin in the clearing had smoke in its chimney, and the smell of woodsmoke and baking bread drifted down the trail, promising warmth to anyone willing to walk a little further.' },
-  { theme: 'Detective desk', text: 'The case file lay open beside a cold cup of tea, and the detective read it twice, once for the facts and once for the gaps, because the gaps were where the truth usually liked to hide.' },
-  { theme: 'Detective desk', text: 'Notes in the margin spelled a name in code, and the name, once decoded, belonged to a quiet neighbour who grew roses, baked bread, and apparently knew far more than she ever let on.' },
-  { theme: 'Detective desk', text: 'A locked drawer hid letters tied with string, and the letters told a gentle story of a friendship, a promise, and a small brass key that had been lost and found three times.' },
+  { theme: "Sachi's desk", text: 'The case file lay open beside a cold cup of tea, and Sachi read it twice, once for the facts and once for the gaps, because the gaps were where the truth usually liked to hide.' },
+  { theme: "Sachi's desk", text: 'Notes in the margin spelled a name in code, and the name, once decoded, belonged to a quiet neighbour who grew roses, baked bread, and apparently knew far more than she ever let on.' },
+  { theme: "Sachi's desk", text: 'A locked drawer hid letters tied with string, and the letters told a gentle story of a friendship, a promise, and a small brass key that had been lost and found three times.' },
   { theme: 'Winter evening', text: 'Snow settled on the rooftops like powdered sugar, and the village lights glowed amber through the falling snow, while the smell of soup and fresh bread drifted from every kitchen door.' },
   { theme: 'Winter evening', text: 'Frost traced ferns across the windowpane, and inside, by the fire, the family played cards, drank cocoa, and told the same winter stories they had told every year since anyone could remember.' },
   { theme: 'Winter evening', text: 'The last bus home crunched through fresh snow, carrying parcels, passengers, and one very sleepy dog, and the driver hummed a tune all the way down the quiet, white lane.' },

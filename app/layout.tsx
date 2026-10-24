@@ -13,7 +13,7 @@ const caveat = Caveat({ subsets: ['latin'], variable: '--font-caveat', display: 
 const sacramento = Sacramento({ subsets: ['latin'], weight: '400', variable: '--font-sacramento', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Detective Duo',
+  title: 'Sachi',
   description: 'Cozy puzzles and short mysteries, one level at a time.',
 };
 
@@ -24,7 +24,7 @@ export const viewport: Viewport = {
 
 // Set the saved theme before first paint so there is no flash of the
 // default for users of another theme.
-const themeInit = `(function(){try{var t=localStorage.getItem('dd-v2-theme');if(t!=='noir'&&t!=='candy'&&t!=='midnight')t='candy';document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='candy';}})();`;
+const themeInit = `(function(){try{var t=localStorage.getItem('dd-v2-theme');if(t!=='noir'&&t!=='candy'&&t!=='blue')t='candy';document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='candy';}})();`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const fontVars = [fraunces, nunitoSans, nunito, baloo, caveat, sacramento]

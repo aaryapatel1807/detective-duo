@@ -1,4 +1,4 @@
-# Detective Duo v2
+# Sachi
 
 A cozy, solo-first puzzle and mystery app. Open it when bored, clear a
 level, earn stars. No points races, no leaderboards — just levels and

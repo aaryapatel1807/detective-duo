@@ -60,7 +60,7 @@ export const DEFAULT_DATE_LISTS: DateLists = {
     'A cozy film',
     'An episode of something gentle',
     'A playlist swap',
-    'A round of Detective Duo',
+    'A game night on Sachi',
     'A documentary',
     'A comedy special',
     'An old favourite, again',

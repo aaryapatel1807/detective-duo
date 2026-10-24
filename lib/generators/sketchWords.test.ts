@@ -22,7 +22,7 @@ const tallStroke: Stroke = {
 
 describe('sketchWords banks', () => {
   it('has four themes with words and hints', () => {
-    expect(SKETCH_THEMES.map((t) => t.id)).toEqual(['detective', 'cozy', 'food', 'places']);
+    expect(SKETCH_THEMES.map((t) => t.id)).toEqual(['mystery', 'cozy', 'food', 'places']);
     for (const t of SKETCH_THEMES) {
       const w = pickWord(`bank-${t.id}`, 1, t.id);
       expect(w.word.length).toBeGreaterThan(0);

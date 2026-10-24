@@ -157,7 +157,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
         ctx.fillRect(STORY_WIDTH - 36, y, 24, 48);
       }
     }
-    const text = (caption.trim() || 'Detective Duo').slice(0, 40);
+    const text = (caption.trim() || 'Sachi').slice(0, 40);
     ctx.fillStyle = style.caption;
     ctx.font = '600 64px Georgia, serif';
     ctx.textAlign = 'center';
@@ -224,9 +224,9 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
     try {
       const res = await fetch(stripUrl);
       const blob = await res.blob();
-      const file = new File([blob], 'detective-duo-strip.png', { type: 'image/png' });
+      const file = new File([blob], 'sachi-strip.png', { type: 'image/png' });
       if (canShareFiles() && navigator.share) {
-        await navigator.share({ files: [file], title: 'Detective Duo strip' });
+        await navigator.share({ files: [file], title: 'Sachi strip' });
         return;
       }
     } catch {
@@ -234,7 +234,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
     }
     const a = document.createElement('a');
     a.href = stripUrl;
-    a.download = 'detective-duo-strip.png';
+    a.download = 'sachi-strip.png';
     a.click();
   }, [stripUrl]);
 
@@ -296,7 +296,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
           className="input"
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
-          placeholder="Detective Duo"
+          placeholder="Sachi"
           maxLength={40}
           aria-label="Caption on the strip"
         />
@@ -322,7 +322,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
         )}
         {phase === 'done' && stripUrl && (
           <>
-            <a className="btn" href={stripUrl} download="detective-duo-strip.png">
+            <a className="btn" href={stripUrl} download="sachi-strip.png">
               <Download size={18} aria-hidden /> Download
             </a>
             <button type="button" className="btn" onClick={() => void share()}>

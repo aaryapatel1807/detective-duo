@@ -52,7 +52,7 @@ export const KNOW_QUESTIONS: KnowQuestion[] = [
   Q('puddle', 'Jump in the puddle or walk around', 'silly', ['Jump, every time', 'Walk around, I have dry socks', 'Jump, but only if no one watches']),
   Q('nap', 'The ideal nap length', 'silly', ['Twenty minutes, precisely', 'Three hours, accidentally', 'Naps are for the weak']),
   Q('ghost', 'If you were a ghost, where would you haunt', 'silly', ['A library, shushing people', 'My own kitchen, for snacks', 'A lighthouse, for the view']),
-  Q('hat', 'A hat you would wear every day if you could', 'silly', ['A very large sun hat', 'A detective’s fedora', 'A crown, why not']),
+  Q('hat', 'A hat you would wear every day if you could', 'silly', ['A very large sun hat', 'A classic fedora', 'A crown, why not']),
   Q('pickle', 'Pickles: love, hate, or indifferent', 'silly', ['Love, extra pickles', 'Hate, keep them away', 'Indifferent, I eat around them']),
   Q('sneeze', 'Your sneeze style', 'silly', ['One polite achoo', 'A dramatic triple', 'Silent, then red-faced']),
   // deep

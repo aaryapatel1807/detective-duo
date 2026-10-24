@@ -1,7 +1,7 @@
 /**
  * Sketch the Clue word banks + toy classifier (Duo Corner).
  *
- * Words are grouped by theme: detective, cozy, food, and places we have
+ * Words are grouped by theme: mystery, cozy, food, and places we have
  * been. Levels favour shorter, simpler words early and longer ones later.
  *
  * The solo "guesser" is deliberately simple and playful: it looks only
@@ -12,9 +12,9 @@
 
 import { rngFromSeed } from './rng';
 
-export type SketchTheme = 'detective' | 'cozy' | 'food' | 'places';
+export type SketchTheme = 'mystery' | 'cozy' | 'food' | 'places';
 export const SKETCH_THEMES: { id: SketchTheme; label: string }[] = [
-  { id: 'detective', label: 'Detective' },
+  { id: 'mystery', label: 'Mystery' },
   { id: 'cozy', label: 'Cozy' },
   { id: 'food', label: 'Food' },
   { id: 'places', label: 'Places we have been' },
@@ -26,7 +26,7 @@ export interface SketchWord {
 }
 
 export const SKETCH_WORDS: Record<SketchTheme, SketchWord[]> = {
-  detective: [
+  mystery: [
     { word: 'key', hint: 'Small, opens something bigger.' },
     { word: 'lamp', hint: 'It keeps the desk lit at night.' },
     { word: 'map', hint: 'Folded, and full of secrets.' },
@@ -34,7 +34,7 @@ export const SKETCH_WORDS: Record<SketchTheme, SketchWord[]> = {
     { word: 'mask', hint: 'Worn to hide a face.' },
     { word: 'magnifier', hint: 'Makes tiny things big.' },
     { word: 'footprint', hint: 'Left behind in the mud.' },
-    { word: 'notebook', hint: 'Where the detective writes it all down.' },
+    { word: 'notebook', hint: 'Where Sachi writes it all down.' },
     { word: 'fingerprint', hint: 'No two are the same.' },
     { word: 'lantern', hint: 'Carried into the dark.' },
     { word: 'telescope', hint: 'For watching from far away.' },

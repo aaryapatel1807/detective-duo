@@ -2,14 +2,20 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Home, Settings, SunMoon } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { THEME_IDS, THEMES } from '@/lib/themes';
 import { OfflineBanner } from '@/lib/offline';
 import { loadLocalProgress, syncProgress } from '@/lib/progress';
 
-/** Top bar: wordmark, quick theme toggle (cycles + saves), nav. */
+/**
+ * Top bar: wordmark, quick theme toggle (cycles + saves), nav.
+ * On the home dashboard the dashboard's own sidebar / bottom nav is
+ * the chrome, so this bar stays out of the way there.
+ */
 export default function Shell() {
+  const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const cycle = () => {
     const i = THEME_IDS.indexOf(theme);
@@ -26,11 +32,15 @@ export default function Shell() {
     return () => window.removeEventListener('online', onOnline);
   }, []);
 
+  if (pathname === '/') {
+    return <OfflineBanner />;
+  }
+
   return (
     <>
       <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-4">
         <Link href="/" className="font-display text-xl font-bold tracking-tight">
-          Detective Duo
+          Sachi
         </Link>
         <nav className="flex items-center gap-2">
           <button

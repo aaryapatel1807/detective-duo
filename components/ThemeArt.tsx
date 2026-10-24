@@ -9,8 +9,8 @@ import { useTheme } from './ThemeProvider';
  * the colours around it. No images, no emoji.
  *
  *  noir     — a desk lamp over a rainy window
- *  candy    — balloons and dots (shown as Light)
- *  midnight — a crescent moon under a string of fairy lights
+ *  candy    — balloons and dots
+ *  blue     — gold coins and stars on blue
  */
 export default function HomeArt() {
   const { theme } = useTheme();
@@ -20,20 +20,16 @@ export default function HomeArt() {
     viewBox: '0 0 120 64',
     'aria-hidden': true as const,
   };
-  if (theme === 'midnight') {
+  if (theme === 'blue') {
     return (
       <svg {...common}>
-        <path d="M8 10 Q 60 26 112 10" fill="none" stroke="var(--line)" strokeWidth="1.5" />
-        {[20, 45, 70, 95].map((x, i) => (
-          <g key={x}>
-            <line x1={x} y1={10 + Math.sin(i) * 2} x2={x} y2={18} stroke="var(--line)" strokeWidth="1" />
-            <circle cx={x} cy={22} r={3.5} fill="var(--accent-2)" />
-          </g>
-        ))}
-        <path d="M88 26 a14 14 0 1 0 10 24 a11 11 0 1 1 -10 -24" fill="var(--accent-2)" />
-        <circle cx={28} cy={44} r={2} fill="var(--ink-dim)" />
-        <circle cx={44} cy={52} r={1.6} fill="var(--ink-dim)" />
-        <circle cx={58} cy={42} r={2} fill="var(--ink-dim)" />
+        <circle cx={30} cy={26} r={15} fill="var(--accent)" />
+        <circle cx={30} cy={26} r={15} fill="none" stroke="var(--accent-2)" strokeWidth="1.5" />
+        <circle cx={62} cy={18} r={7} fill="var(--accent)" />
+        <path d="M88 14 l2.5 6 6 0.5 -4.5 4 1.5 6 -5.5 -3.5 -5.5 3.5 1.5 -6 -4.5 -4 6 -0.5 Z" fill="var(--accent)" />
+        <circle cx={104} cy={44} r={3} fill="var(--accent-2)" />
+        <circle cx={14} cy={50} r={3} fill="var(--accent-2)" />
+        <circle cx={58} cy={48} r={2.5} fill="var(--accent)" />
       </svg>
     );
   }

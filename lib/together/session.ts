@@ -26,9 +26,9 @@ function localKey(code: string): string {
 
 export function getDisplayName(): string {
   try {
-    return localStorage.getItem(DISPLAY_NAME_KEY) || 'Detective';
+    return localStorage.getItem(DISPLAY_NAME_KEY) || 'Sachi';
   } catch {
-    return 'Detective';
+    return 'Sachi';
   }
 }
 

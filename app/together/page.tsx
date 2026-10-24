@@ -47,7 +47,7 @@ export default function TogetherPage() {
   }, [me]);
 
   const withName = () => {
-    const n = name.trim() || 'Detective';
+    const n = name.trim() || 'Sachi';
     setDisplayName(n);
     return n;
   };
@@ -89,7 +89,7 @@ export default function TogetherPage() {
       </div>
       <h1 className="mt-4 text-3xl font-bold">Play together</h1>
       <p className="mt-1 text-[var(--ink-dim)]">
-        One room, two detectives. Create a room and share its 4-letter code, or join
+        One room, two players. Create a room and share its 4-letter code, or join
         with a code your partner shared.
       </p>
 
@@ -114,7 +114,7 @@ export default function TogetherPage() {
             className="input"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Detective"
+            placeholder="Sachi"
             maxLength={40}
             aria-label="Your name in the room"
           />

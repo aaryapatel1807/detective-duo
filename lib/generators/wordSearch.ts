@@ -77,8 +77,8 @@ export const WORD_THEMES: WordTheme[] = [
     words: ['UMBRELLA', 'PUDDLE', 'THUNDER', 'RAINCOAT', 'DRIZZLE', 'STORM', 'LIGHTNING', 'RAINBOW', 'GALOSHES', 'MIST', 'CLOUD', 'DOWNPOUR', 'SPLASH', 'WET', 'SOUP', 'FIREPLACE', 'BLANKET', 'COCOA'],
   },
   {
-    theme: 'Detective kit',
-    words: ['MAGNIFIER', 'FINGERPRINT', 'CLUE', 'NOTEBOOK', 'SUSPECT', 'ALIBI', 'EVIDENCE', 'WITNESS', 'CASEFILE', 'DETECTIVE', 'DISGUISE', 'FOOTPRINT', 'KEY', 'LOCK', 'LANTERN', 'TELESCOPE', 'ENVELOPE', 'MYSTERY'],
+    theme: 'Mystery kit',
+    words: ['MAGNIFIER', 'FINGERPRINT', 'CLUE', 'NOTEBOOK', 'SUSPECT', 'ALIBI', 'EVIDENCE', 'WITNESS', 'CASEFILE', 'SACHI', 'DISGUISE', 'FOOTPRINT', 'KEY', 'LOCK', 'LANTERN', 'TELESCOPE', 'ENVELOPE', 'MYSTERY'],
   },
   {
     theme: 'Forest walk',

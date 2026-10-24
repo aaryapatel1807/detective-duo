@@ -11,7 +11,7 @@
  * (the contrast test reads the same values).
  */
 
-export type ThemeId = 'noir' | 'candy' | 'midnight';
+export type ThemeId = 'noir' | 'candy' | 'blue';
 
 export interface ThemeConfig {
   id: ThemeId;
@@ -20,7 +20,7 @@ export interface ThemeConfig {
   tokens: Record<string, string>;
 }
 
-export const THEME_IDS: ThemeId[] = ['candy', 'noir', 'midnight'];
+export const THEME_IDS: ThemeId[] = ['candy', 'noir', 'blue'];
 
 export const THEMES: Record<ThemeId, ThemeConfig> = {
   noir: {
@@ -60,7 +60,7 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
   },
   candy: {
     id: 'candy',
-    label: 'Light',
+    label: 'Candy',
     blurb: 'Bright and sweet. Pastels on soft cream, everything round.',
     tokens: {
       '--bg': '#fff6e9',
@@ -93,50 +93,50 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
         'radial-gradient(circle at 12% 8%, rgba(255,179,199,0.35), transparent 40%), radial-gradient(circle at 88% 4%, rgba(178,242,219,0.4), transparent 42%), radial-gradient(circle at 50% 100%, rgba(255,236,170,0.35), transparent 55%)',
     },
   },
-  midnight: {
-    id: 'midnight',
-    label: 'Midnight Cozy',
-    blurb: 'Deep blue night, fairy lights, a warm lantern in the window.',
+  blue: {
+    id: 'blue',
+    label: 'Blue',
+    blurb: 'Bright cornflower blue, chunky white cards, gold accents.',
     tokens: {
-      '--bg': '#0e1830',
-      '--bg-2': '#16233f',
-      '--surface': '#1c2c4d',
-      '--surface-2': '#24365e',
-      '--ink': '#f3ead6',
-      '--ink-dim': '#c9bdd6',
-      '--accent': '#b9a5e8',
-      '--accent-ink': '#1d1433',
-      '--accent-2': '#f2c14e',
-      '--accent-2-ink': '#2a1c02',
-      '--line': '#3d4f74',
-      '--paper': '#fdf3d7',
-      '--paper-ink': '#2b2118',
-      '--good': '#a8d98a',
-      '--bad': '#f2a08a',
-      '--cell': '#14213c',
-      '--cell-line': '#3d4f74',
-      '--radius': '18px',
-      '--radius-lg': '26px',
-      '--shadow': '0 14px 34px rgba(0,0,0,0.55)',
-      '--btn-shadow': '0 3px 0 rgba(0,0,0,0.45)',
-      '--motion': '0.6s ease',
-      '--glow': '0 0 24px rgba(185,165,232,0.45)',
+      '--bg': '#5b8def',
+      '--bg-2': '#7ea3f2',
+      '--surface': '#ffffff',
+      '--surface-2': '#e8efff',
+      '--ink': '#141d4d',
+      '--ink-dim': '#141d4d',
+      '--accent': '#ffc93c',
+      '--accent-ink': '#141d4d',
+      '--accent-2': '#141d4d',
+      '--accent-2-ink': '#ffffff',
+      '--line': 'rgba(20,29,77,0.16)',
+      '--paper': '#efe6cf',
+      '--paper-ink': '#33240d',
+      '--good': '#2b8a3e',
+      '--bad': '#c22f24',
+      '--cell': '#ffffff',
+      '--cell-line': '#c9d4f5',
+      '--radius': '28px',
+      '--radius-lg': '34px',
+      '--shadow': '0 18px 40px rgba(20,41,110,0.28)',
+      '--btn-shadow': '0 4px 0 rgba(20,29,77,0.25)',
+      '--motion': '0.35s cubic-bezier(0.34,1.56,0.64,1)',
+      '--glow': '0 0 20px rgba(255,201,60,0.5)',
       '--card-border': '1px solid var(--line)',
-      '--font-display': 'var(--font-fraunces), Georgia, serif',
-      '--font-body': 'var(--font-nunito-sans), system-ui, sans-serif',
+      '--font-display': 'var(--font-nunito), system-ui, sans-serif',
+      '--font-body': 'var(--font-nunito), system-ui, sans-serif',
       '--texture':
-        'radial-gradient(circle at 15% 10%, rgba(185,165,232,0.16), transparent 45%), radial-gradient(circle at 85% 15%, rgba(242,193,78,0.10), transparent 40%), radial-gradient(ellipse at 50% 110%, rgba(36,54,94,0.9), transparent 60%)',
+        'radial-gradient(circle at 12% 8%, rgba(255,255,255,0.35), transparent 40%), radial-gradient(circle at 88% 4%, rgba(255,201,60,0.28), transparent 42%), radial-gradient(circle at 50% 100%, rgba(20,29,77,0.28), transparent 55%)',
     },
   },
 };
 
 export function isThemeId(v: unknown): v is ThemeId {
-  return v === 'noir' || v === 'candy' || v === 'midnight';
+  return v === 'noir' || v === 'candy' || v === 'blue';
 }
 
 /**
  * The pre-paint script in app/layout.tsx mirrors this exactly: an
- * unknown or missing saved value falls back to candy (Light, the
+ * unknown or missing saved value falls back to candy (Candy, the
  * default), so the first paint never flashes the wrong theme.
  */
 export function resolveThemeId(v: unknown): ThemeId {

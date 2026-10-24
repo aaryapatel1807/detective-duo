@@ -167,7 +167,7 @@ export default function SettingsPage() {
         </label>
         <p className="mt-2 text-sm text-[var(--ink-dim)]">
           {sound.enabled
-            ? 'Tap sounds are on, in this theme’s own voice — soft pops for Light, a slow chime for Midnight, a quiet tick for Noir.'
+            ? 'Tap sounds are on, in this theme’s own voice — soft pops for Candy, a bright chime pair for Blue, a quiet tick for Noir.'
             : 'Tap sounds are off. Turn them on to hear this theme’s soft voice.'}
         </p>
       </section>

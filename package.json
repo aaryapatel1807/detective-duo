@@ -9,7 +9,7 @@
     "socket.io": "4.7.5",
     "socket.io-client": "4.7.5"
   },
-  "description": "Detective Duo v2 \u2014 cozy solo-first puzzle & mystery app",
+  "description": "Sachi \u2014 cozy games and little gifts, made for Sachi",
   "devDependencies": {
     "@types/node": "24.19.1",
     "@types/react": "18.3.12",
@@ -21,7 +21,7 @@
     "typescript": "5.9.3",
     "vitest": "5.0.3"
   },
-  "name": "detective-duo",
+  "name": "sachi",
   "private": true,
   "scripts": {
     "build": "next build",
