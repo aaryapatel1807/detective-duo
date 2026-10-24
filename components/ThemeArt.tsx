@@ -11,6 +11,7 @@ import { useTheme } from './ThemeProvider';
  *  noir     — a desk lamp over a rainy window
  *  candy    — balloons and dots
  *  blue     — gold coins and stars on blue
+ *  violet   — fireflies and sparkles on violet night
  */
 export default function HomeArt() {
   const { theme } = useTheme();
@@ -20,6 +21,21 @@ export default function HomeArt() {
     viewBox: '0 0 120 64',
     'aria-hidden': true as const,
   };
+  if (theme === 'violet') {
+    return (
+      <svg {...common}>
+        <circle cx={28} cy={30} r={4} fill="var(--accent)" />
+        <circle cx={28} cy={30} r={8} fill="var(--accent)" opacity={0.25} />
+        <circle cx={58} cy={20} r={3} fill="var(--accent-2)" />
+        <circle cx={58} cy={20} r={7} fill="var(--accent-2)" opacity={0.25} />
+        <circle cx={88} cy={34} r={3.5} fill="var(--accent)" />
+        <circle cx={88} cy={34} r={8} fill="var(--accent)" opacity={0.2} />
+        <path d="M104 12 l1.8 4.5 4.5 0.4 -3.4 3 1.1 4.5 -4 -2.6 -4 2.6 1.1 -4.5 -3.4 -3 4.5 -0.4 Z" fill="var(--accent-2)" />
+        <circle cx={16} cy={52} r={2.5} fill="var(--accent-2)" />
+        <circle cx={104} cy={54} r={2} fill="var(--accent)" />
+      </svg>
+    );
+  }
   if (theme === 'blue') {
     return (
       <svg {...common}>

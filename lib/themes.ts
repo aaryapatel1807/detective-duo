@@ -11,7 +11,7 @@
  * (the contrast test reads the same values).
  */
 
-export type ThemeId = 'noir' | 'candy' | 'blue';
+export type ThemeId = 'noir' | 'candy' | 'blue' | 'violet';
 
 export interface ThemeConfig {
   id: ThemeId;
@@ -20,7 +20,7 @@ export interface ThemeConfig {
   tokens: Record<string, string>;
 }
 
-export const THEME_IDS: ThemeId[] = ['candy', 'noir', 'blue'];
+export const THEME_IDS: ThemeId[] = ['candy', 'noir', 'blue', 'violet'];
 
 export const THEMES: Record<ThemeId, ThemeConfig> = {
   noir: {
@@ -128,10 +128,45 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
         'radial-gradient(circle at 12% 8%, rgba(255,255,255,0.35), transparent 40%), radial-gradient(circle at 88% 4%, rgba(255,201,60,0.28), transparent 42%), radial-gradient(circle at 50% 100%, rgba(20,29,77,0.28), transparent 55%)',
     },
   },
+  violet: {
+    id: 'violet',
+    label: 'Violet Night',
+    blurb: 'Dark violet wine, neon purple glow, fireflies drifting through the night.',
+    tokens: {
+      '--bg': '#1d0a2e',
+      '--bg-2': '#2a123f',
+      '--surface': '#311647',
+      '--surface-2': '#3d1c57',
+      '--ink': '#f7f0ff',
+      '--ink-dim': '#c9b1e2',
+      '--accent': '#d946ef',
+      '--accent-ink': '#1d0a2e',
+      '--accent-2': '#a78bfa',
+      '--accent-2-ink': '#1d0a2e',
+      '--line': 'rgba(216,180,254,0.22)',
+      '--paper': '#fdf3d7',
+      '--paper-ink': '#2b2118',
+      '--good': '#bef264',
+      '--bad': '#fb7185',
+      '--cell': '#22103a',
+      '--cell-line': '#4c2a6d',
+      '--radius': '20px',
+      '--radius-lg': '30px',
+      '--shadow': '0 18px 40px rgba(0,0,0,0.5)',
+      '--btn-shadow': '0 4px 0 rgba(0,0,0,0.4)',
+      '--motion': '0.35s cubic-bezier(0.34,1.56,0.64,1)',
+      '--glow': '0 0 26px rgba(217,70,239,0.55)',
+      '--card-border': '1px solid var(--line)',
+      '--font-display': 'var(--font-nunito), system-ui, sans-serif',
+      '--font-body': 'var(--font-nunito), system-ui, sans-serif',
+      '--texture':
+        'radial-gradient(700px 420px at 12% -5%, rgba(217,70,239,0.30), transparent 60%), radial-gradient(800px 500px at 95% 0%, rgba(124,58,237,0.28), transparent 60%), radial-gradient(900px 600px at 50% 115%, rgba(88,28,135,0.35), transparent 60%)',
+    },
+  },
 };
 
 export function isThemeId(v: unknown): v is ThemeId {
-  return v === 'noir' || v === 'candy' || v === 'blue';
+  return v === 'noir' || v === 'candy' || v === 'blue' || v === 'violet';
 }
 
 /**

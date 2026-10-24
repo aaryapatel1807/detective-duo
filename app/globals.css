@@ -495,3 +495,53 @@ h1, h2, h3, .font-display {
     padding: 28px;
   }
 }
+
+/* Violet Night fireflies: drifting, blinking neon dots over the page.
+   Rendered only while the violet theme is active. Still under
+   prefers-reduced-motion. */
+.theme-flies {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.theme-fly {
+  position: absolute;
+  border-radius: 50%;
+  background: #fdf4ff;
+  box-shadow:
+    0 0 10px 3px rgba(232, 121, 249, 0.95),
+    0 0 26px 9px rgba(217, 70, 239, 0.55);
+  animation:
+    fly-drift var(--fly-d) ease-in-out infinite alternate,
+    fly-blink 3.2s ease-in-out infinite;
+  animation-delay: var(--fly-dl), var(--fly-bl);
+}
+
+@keyframes fly-drift {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(var(--fly-dx), var(--fly-dy));
+  }
+}
+
+@keyframes fly-blink {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-fly {
+    animation: none;
+    opacity: 0.5;
+  }
+}

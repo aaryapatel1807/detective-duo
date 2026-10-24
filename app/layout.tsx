@@ -24,7 +24,7 @@ export const viewport: Viewport = {
 
 // Set the saved theme before first paint so there is no flash of the
 // default for users of another theme.
-const themeInit = `(function(){try{var t=localStorage.getItem('dd-v2-theme');if(t!=='noir'&&t!=='candy'&&t!=='blue')t='candy';document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='candy';}})();`;
+const themeInit = `(function(){try{var t=localStorage.getItem('dd-v2-theme');if(t!=='noir'&&t!=='candy'&&t!=='blue'&&t!=='violet')t='candy';document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='candy';}})();`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const fontVars = [fraunces, nunitoSans, nunito, baloo, caveat, sacramento]

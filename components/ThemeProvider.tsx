@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { THEMES, isThemeId, type ThemeId } from '@/lib/themes';
+import Fireflies from './Fireflies';
 import SoundEngine from './SoundEngine';
 
 const STORAGE_KEY = 'dd-v2-theme';
@@ -68,5 +69,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  return <Ctx.Provider value={{ theme, setTheme, userId: null }}>{children}<SoundEngine /></Ctx.Provider>;
+  return (
+    <Ctx.Provider value={{ theme, setTheme, userId: null }}>
+      {children}
+      {theme === 'violet' && <Fireflies />}
+      <SoundEngine />
+    </Ctx.Provider>
+  );
 }

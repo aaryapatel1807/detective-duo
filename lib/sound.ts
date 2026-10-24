@@ -12,6 +12,7 @@
  * Per-theme UI sounds (all soft, gain <= 0.08):
  *  candy    — soft pops/chimes (two sine plucks, rising)
  *  blue     — a bright chime pair (gold on blue)
+ *  violet   — a high sparkle pair (night glow)
  *  noir     — a subtle low tick
  * Ambient:
  *  rain — looped filtered noise; jazz — gentle sine chords, one every
@@ -110,6 +111,9 @@ export function playUiSound(theme: ThemeId): void {
     } else if (theme === 'blue') {
       pluck(523, 0, 0.4, 0.06);
       pluck(784, 0.08, 0.4, 0.05);
+    } else if (theme === 'violet') {
+      pluck(784, 0, 0.3, 0.06);
+      pluck(1175, 0.08, 0.35, 0.05);
     } else {
       pluck(220, 0, 0.12, 0.04);
     }

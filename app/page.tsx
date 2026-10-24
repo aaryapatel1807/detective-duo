@@ -294,7 +294,7 @@ export default function HomePage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h1 className="dash-title">{greeting ? `${greeting}, Sachi` : 'Sachi'}</h1>
-              <p className="mt-1 text-[var(--ink-dim)]">
+              <p className="mt-2 text-[var(--ink-dim)]">
                 Games and little gifts, made for you. Pick up where you left off, or try
                 something gentle.
               </p>

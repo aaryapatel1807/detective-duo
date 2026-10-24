@@ -14,8 +14,8 @@ describe('theme tokens', () => {
     }
   });
 
-  it('all three themes define the full token set', () => {
-    expect(THEME_IDS).toEqual(['candy', 'noir', 'blue']);
+  it('all four themes define the full token set', () => {
+    expect(THEME_IDS).toEqual(['candy', 'noir', 'blue', 'violet']);
     const keys = Object.keys(THEMES.noir.tokens).sort();
     for (const theme of Object.values(THEMES)) {
       expect(Object.keys(theme.tokens).sort()).toEqual(keys);
