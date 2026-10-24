@@ -11,6 +11,7 @@ import {
 import { THEMES, isThemeId, type ThemeId } from '@/lib/themes';
 import BlueSky from './BlueSky';
 import Fireflies from './Fireflies';
+import NoirRain from './NoirRain';
 import SoundEngine from './SoundEngine';
 
 const STORAGE_KEY = 'dd-v2-theme';
@@ -75,6 +76,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       {children}
       {theme === 'violet' && <Fireflies />}
       {theme === 'blue' && <BlueSky />}
+      {theme === 'noir' && <NoirRain />}
       <SoundEngine />
     </Ctx.Provider>
   );
