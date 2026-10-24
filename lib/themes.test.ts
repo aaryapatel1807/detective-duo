@@ -14,8 +14,8 @@ describe('theme tokens', () => {
     }
   });
 
-  it('all four themes define the full token set', () => {
-    expect(THEME_IDS).toEqual(['noir', 'candy', 'midnight', 'sunny']);
+  it('all three themes define the full token set', () => {
+    expect(THEME_IDS).toEqual(['candy', 'noir', 'midnight']);
     const keys = Object.keys(THEMES.noir.tokens).sort();
     for (const theme of Object.values(THEMES)) {
       expect(Object.keys(theme.tokens).sort()).toEqual(keys);
@@ -35,18 +35,18 @@ describe('theme tokens', () => {
 });
 
 describe('theme switching', () => {
-  it('accepts all four theme ids and nothing else', () => {
+  it('accepts all three theme ids and nothing else', () => {
     for (const id of THEME_IDS) expect(isThemeId(id)).toBe(true);
-    for (const bad of ['duo-blue', '', null, undefined, 42]) {
+    for (const bad of ['duo-blue', 'sunny', '', null, undefined, 42]) {
       expect(isThemeId(bad)).toBe(false);
     }
   });
 
-  it('resolves an unknown saved value to noir (no flash of a wrong theme)', () => {
+  it('resolves an unknown saved value to candy (Light, the default)', () => {
     expect(resolveThemeId('midnight')).toBe('midnight');
-    expect(resolveThemeId('sunny')).toBe('sunny');
     expect(resolveThemeId('candy')).toBe('candy');
-    expect(resolveThemeId('not-a-theme')).toBe('noir');
-    expect(resolveThemeId(null)).toBe('noir');
+    expect(resolveThemeId('sunny')).toBe('candy');
+    expect(resolveThemeId('not-a-theme')).toBe('candy');
+    expect(resolveThemeId(null)).toBe('candy');
   });
 });

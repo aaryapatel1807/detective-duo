@@ -9,9 +9,8 @@ import { useTheme } from './ThemeProvider';
  * the colours around it. No images, no emoji.
  *
  *  noir     — a desk lamp over a rainy window
- *  candy    — balloons and dots
+ *  candy    — balloons and dots (shown as Light)
  *  midnight — a crescent moon under a string of fairy lights
- *  sunny    — a crayon sun, a cloud, a hand-drawn squiggle
  */
 export default function HomeArt() {
   const { theme } = useTheme();
@@ -35,30 +34,6 @@ export default function HomeArt() {
         <circle cx={28} cy={44} r={2} fill="var(--ink-dim)" />
         <circle cx={44} cy={52} r={1.6} fill="var(--ink-dim)" />
         <circle cx={58} cy={42} r={2} fill="var(--ink-dim)" />
-      </svg>
-    );
-  }
-  if (theme === 'sunny') {
-    return (
-      <svg {...common}>
-        <circle cx={88} cy={22} r={12} fill="var(--accent)" />
-        {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => {
-          const rad = (deg * Math.PI) / 180;
-          return (
-            <line
-              key={deg}
-              x1={88 + Math.cos(rad) * 17}
-              y1={22 + Math.sin(rad) * 17}
-              x2={88 + Math.cos(rad) * 23}
-              y2={22 + Math.sin(rad) * 23}
-              stroke="var(--accent)"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            />
-          );
-        })}
-        <path d="M8 48 q 8 -10 18 0 t 18 0 t 18 0" fill="none" stroke="var(--accent-2)" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M14 56 q 12 -8 24 0" fill="none" stroke="var(--ink-dim)" strokeWidth="2" strokeLinecap="round" />
       </svg>
     );
   }

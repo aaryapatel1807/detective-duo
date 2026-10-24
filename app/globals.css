@@ -109,8 +109,6 @@ h1, h2, h3, .font-display {
 [data-theme='candy'] .tile-icon { border-radius: 999px; }
 [data-theme='midnight'] .game-tile:not(:disabled):hover { transform: translateY(-1px); }
 [data-theme='midnight'] .tile-icon { box-shadow: var(--glow); }
-[data-theme='sunny'] .game-tile:not(:disabled):hover { transform: translateY(-2px) rotate(-0.5deg); }
-[data-theme='sunny'] .tile-icon { border: 2px dashed var(--line); transform: rotate(-2deg); }
 [data-theme='noir'] .game-tile:not(:disabled):hover { transform: translateY(-1px); }
 .game-tile:disabled { opacity: 0.75; cursor: default; }
 

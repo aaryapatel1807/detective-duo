@@ -13,6 +13,8 @@ import {
 import { useTheme } from '@/components/ThemeProvider';
 import { useMe } from '@/components/together/useMe';
 import HomeArt from '@/components/ThemeArt';
+import WelcomeIntro from '@/components/WelcomeIntro';
+import { isWelcomeSeen } from '@/lib/welcome';
 import { listLeftCases, type LeftCase } from '@/lib/together/leftCases';
 import { ALL_CASES } from '@/lib/cases/bank';
 import { getDailySet, getISTDateString } from '@/lib/daily';
@@ -75,6 +77,16 @@ export default function HomePage() {
   const [progress, setProgress] = useState<ProgressMap>({});
   const [leftCases, setLeftCases] = useState<LeftCase[]>([]);
   const [surprise, setSurprise] = useState(GAMES[1]);
+  const [welcome, setWelcome] = useState<'loading' | 'show' | 'hide'>('loading');
+
+  // The welcome intro plays once per session, before the home screen.
+  useEffect(() => {
+    try {
+      setWelcome(isWelcomeSeen(sessionStorage) ? 'hide' : 'show');
+    } catch {
+      setWelcome('show');
+    }
+  }, []);
 
   useEffect(() => {
     setProgress(loadLocalProgress());
@@ -106,6 +118,14 @@ export default function HomePage() {
   }, [progress]);
 
   const lastProgress = lastPlayed ? getGameProgress(progress, lastPlayed.id) : null;
+
+  if (welcome === 'loading') {
+    return <main className="min-h-screen" style={{ background: 'var(--bg)' }} aria-label="Loading" />;
+  }
+
+  if (welcome === 'show') {
+    return <WelcomeIntro onDone={() => setWelcome('hide')} />;
+  }
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-16">

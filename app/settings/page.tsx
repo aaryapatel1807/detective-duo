@@ -200,9 +200,30 @@ export default function SettingsPage() {
         </label>
         <p className="mt-2 text-sm text-[var(--ink-dim)]">
           {sound.enabled
-            ? 'Tap sounds are on, in this theme’s own voice — soft pops for Candy, a slow chime for Midnight, a light pluck for Sunny, a quiet tick for Noir.'
+            ? 'Tap sounds are on, in this theme’s own voice — soft pops for Light, a slow chime for Midnight, a quiet tick for Noir.'
             : 'Tap sounds are off. Turn them on to hear this theme’s soft voice.'}
         </p>
+      </section>
+
+      <section className="card mt-5 p-5 sm:p-6">
+        <h2 className="text-xl font-bold">Welcome</h2>
+        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+          See the “hey Sachi” welcome screen again, from the start.
+        </p>
+        <button
+          type="button"
+          className="btn mt-3"
+          onClick={() => {
+            try {
+              sessionStorage.removeItem('dd-welcome-seen');
+            } catch {
+              /* ignore */
+            }
+            window.location.href = '/';
+          }}
+        >
+          Replay welcome
+        </button>
       </section>
 
       <section className="card mt-5 p-5 sm:p-6">

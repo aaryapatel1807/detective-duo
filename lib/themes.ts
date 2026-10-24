@@ -11,7 +11,7 @@
  * (the contrast test reads the same values).
  */
 
-export type ThemeId = 'noir' | 'candy' | 'midnight' | 'sunny';
+export type ThemeId = 'noir' | 'candy' | 'midnight';
 
 export interface ThemeConfig {
   id: ThemeId;
@@ -20,7 +20,7 @@ export interface ThemeConfig {
   tokens: Record<string, string>;
 }
 
-export const THEME_IDS: ThemeId[] = ['noir', 'candy', 'midnight', 'sunny'];
+export const THEME_IDS: ThemeId[] = ['candy', 'noir', 'midnight'];
 
 export const THEMES: Record<ThemeId, ThemeConfig> = {
   noir: {
@@ -60,7 +60,7 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
   },
   candy: {
     id: 'candy',
-    label: 'Candy',
+    label: 'Light',
     blurb: 'Bright and sweet. Pastels on soft cream, everything round.',
     tokens: {
       '--bg': '#fff6e9',
@@ -128,54 +128,19 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
         'radial-gradient(circle at 15% 10%, rgba(185,165,232,0.16), transparent 45%), radial-gradient(circle at 85% 15%, rgba(242,193,78,0.10), transparent 40%), radial-gradient(ellipse at 50% 110%, rgba(36,54,94,0.9), transparent 60%)',
     },
   },
-  sunny: {
-    id: 'sunny',
-    label: 'Sunny Pastel',
-    blurb: 'Paper and crayons. Peach, sky blue and butter yellow, lightly sketched.',
-    tokens: {
-      '--bg': '#fff8e7',
-      '--bg-2': '#ffeed3',
-      '--surface': '#ffffff',
-      '--surface-2': '#fff3c4',
-      '--ink': '#33291f',
-      '--ink-dim': '#6d5b4c',
-      '--accent': '#d95f3b',
-      '--accent-ink': '#2b1206',
-      '--accent-2': '#1577a8',
-      '--accent-2-ink': '#ffffff',
-      '--line': '#e0c9a8',
-      '--paper': '#fffdf4',
-      '--paper-ink': '#3a2a1a',
-      '--good': '#2b7a3d',
-      '--bad': '#bf3b2a',
-      '--cell': '#fffdf4',
-      '--cell-line': '#e0c9a8',
-      '--radius': '16px',
-      '--radius-lg': '24px',
-      '--shadow': '0 8px 20px rgba(217,95,59,0.14)',
-      '--btn-shadow': '0 3px 0 rgba(51,41,31,0.18)',
-      '--motion': '0.25s cubic-bezier(0.34,1.3,0.64,1)',
-      '--glow': '0 6px 18px rgba(217,95,59,0.18)',
-      '--card-border': '2px dashed var(--line)',
-      '--font-display': 'var(--font-baloo), var(--font-nunito), system-ui, sans-serif',
-      '--font-body': 'var(--font-nunito), system-ui, sans-serif',
-      '--texture':
-        'radial-gradient(circle at 10% 5%, rgba(255,214,140,0.5), transparent 40%), radial-gradient(circle at 90% 10%, rgba(168,216,234,0.5), transparent 42%), radial-gradient(circle at 50% 100%, rgba(255,183,178,0.35), transparent 55%)',
-    },
-  },
 };
 
 export function isThemeId(v: unknown): v is ThemeId {
-  return v === 'noir' || v === 'candy' || v === 'midnight' || v === 'sunny';
+  return v === 'noir' || v === 'candy' || v === 'midnight';
 }
 
 /**
  * The pre-paint script in app/layout.tsx mirrors this exactly: an
- * unknown or missing saved value falls back to noir, so the first paint
- * never flashes the wrong theme.
+ * unknown or missing saved value falls back to candy (Light, the
+ * default), so the first paint never flashes the wrong theme.
  */
 export function resolveThemeId(v: unknown): ThemeId {
-  return isThemeId(v) ? v : 'noir';
+  return isThemeId(v) ? v : 'candy';
 }
 
 /** WCAG relative luminance. */

@@ -22,7 +22,7 @@ interface ThemeCtx {
   userId: string | null;
 }
 
-const Ctx = createContext<ThemeCtx>({ theme: 'noir', setTheme: () => {}, userId: null });
+const Ctx = createContext<ThemeCtx>({ theme: 'candy', setTheme: () => {}, userId: null });
 
 export const useTheme = () => useContext(Ctx);
 
@@ -40,7 +40,7 @@ export function ThemeStyle() {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeId>('noir');
+  const [theme, setThemeState] = useState<ThemeId>('candy');
   const [userId, setUserId] = useState<string | null>(null);
 
   // Pre-login choice lives in localStorage; on sign-in the profile wins.
