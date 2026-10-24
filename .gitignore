@@ -9,3 +9,7 @@ dist/
 .DS_Store
 .env.local
 .env*.local
+
+# Album ML weights are fetched by postinstall, not committed.
+public/models/*.onnx
+public/models/imagenet_classes.txt
