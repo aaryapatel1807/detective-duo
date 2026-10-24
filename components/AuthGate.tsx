@@ -10,6 +10,12 @@ const PUBLIC_PATHS = ['/login', '/signup'];
  * Layout-level auth guard. When Supabase is configured, signed-out visitors
  * are sent to /login; everything else renders. When it is not configured
  * (local dev), the app runs in local-only mode and nothing is gated.
+ *
+ * Exception (Phase 6 guest join): /together routes are open to signed-out
+ * visitors, so a joiner with a link + nickname can play without an
+ * account. Their progress does not save (pushGameProgress no-ops without
+ * a session) and the room UI says so. Hosts and accounts still sign in
+ * exactly as before — nothing about the email-login flow changed.
  */
 export default function AuthGate({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -27,8 +33,9 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       const { data } = await sb.auth.getSession();
       if (!active) return;
       const signedIn = Boolean(data.session);
+      const isTogetherPath = pathname === '/together' || pathname.startsWith('/together/');
       if (signedIn) hadSession.current = true;
-      if (!signedIn && !PUBLIC_PATHS.includes(pathname)) {
+      if (!signedIn && !PUBLIC_PATHS.includes(pathname) && !isTogetherPath) {
         router.replace(hadSession.current ? '/login?signedout=1' : '/login');
       } else if (signedIn && PUBLIC_PATHS.includes(pathname)) {
         router.replace('/');

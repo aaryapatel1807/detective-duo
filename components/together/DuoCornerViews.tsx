@@ -84,7 +84,7 @@ function guestUid(players: RoomPlayer[], meUid: string): string {
 }
 
 /** Private room tally: wins per display name, inside this room only. */
-function TallyPanel({
+export function TallyPanel({
   tally,
   players,
   meUid,

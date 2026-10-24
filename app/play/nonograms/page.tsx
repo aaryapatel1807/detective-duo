@@ -14,6 +14,8 @@ import {
   type ProgressMap,
 } from '@/lib/progress';
 import { useTheme } from '@/components/ThemeProvider';
+import BotRaceBar, { useBotRace } from '@/components/BotRaceBar';
+import { nonogramProgress } from '@/lib/together/versus';
 
 const GAME_ID = 'nonograms';
 type Mark = 0 | 1 | 2; // blank, filled, X
@@ -41,6 +43,7 @@ export default function NonogramsPage() {
   const [level, setLevel] = useState(1);
   const [state, setState] = useState<PlayState>(freshState());
   const [won, setWon] = useState<number | null>(null);
+  const [raceBot, setRaceBot] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const countedRef = useRef<Set<string>>(new Set());
   const loadedFor = useRef<string>('');
@@ -58,6 +61,9 @@ export default function NonogramsPage() {
     () => generateLevelPuzzle(level, salt),
     [level, salt],
   );
+
+  const bot = useBotRace(raceBot && won === null, level, `${GAME_ID}|${level}|${salt}`);
+  const botWon = raceBot && bot.botFinished && won === null;
 
   useEffect(() => {
     const tag = `${salt}|${level}`;
@@ -109,7 +115,7 @@ export default function NonogramsPage() {
   };
 
   const finishIfWon = (cells: Record<string, Mark>, s: PlayState) => {
-    if (won !== null) return;
+    if (won !== null || botWon) return;
     if (isWon(cells)) {
       const { map, stars } = recordWin(progress, GAME_ID, level, s.hints, s.mistakes);
       setProgress(map);
@@ -123,7 +129,7 @@ export default function NonogramsPage() {
   };
 
   const cycleCell = (r: number, c: number) => {
-    if (won !== null) return;
+    if (won !== null || botWon) return;
     setState((s) => {
       const k = cellKey(r, c);
       const next = (((s.cells[k] ?? 0) + 1) % 3) as Mark;
@@ -140,7 +146,7 @@ export default function NonogramsPage() {
   };
 
   const useHint = () => {
-    if (won !== null) return;
+    if (won !== null || botWon) return;
     const options: [number, number][] = [];
     for (let r = 0; r < puzzle.size; r++) {
       for (let c = 0; c < puzzle.size; c++) {
@@ -188,6 +194,13 @@ export default function NonogramsPage() {
   const levelStars = myProgress.stars[String(level)] ?? 0;
   const filledCount = Object.values(state.cells).filter((m) => m === 1).length;
   const solutionCount = puzzle.grid.flat().filter(Boolean).length;
+
+  const versusCells: Record<string, 'fill' | 'x'> = {};
+  for (const [k, m] of Object.entries(state.cells)) {
+    if (m === 1) versusCells[k.replace(':', ',')] = 'fill';
+    else if (m === 2) versusCells[k.replace(':', ',')] = 'x';
+  }
+  const playerPct = nonogramProgress(puzzle, versusCells);
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-16">
@@ -307,6 +320,28 @@ export default function NonogramsPage() {
         </button>
       </div>
       {msg && <p className="mt-2 text-sm font-semibold">{msg}</p>}
+      <section className="mt-4">
+        <label className="flex items-center gap-2 text-sm font-semibold">
+          <input
+            type="checkbox"
+            checked={raceBot}
+            onChange={(e) => setRaceBot(e.target.checked)}
+          />
+          Race the bot
+        </label>
+        {raceBot && (
+          <div className="mt-2">
+            <BotRaceBar playerPct={playerPct} botPct={bot.botPct} level={level} />
+          </div>
+        )}
+        {botWon && (
+          <p className="panel mt-2 p-4 text-sm">
+            The bot finished first this time — no progress recorded. Start over to
+            race again.
+          </p>
+        )}
+      </section>
+
 
       {won !== null && (
         <section className="card mt-4 p-5 text-center">

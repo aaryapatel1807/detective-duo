@@ -1,17 +1,26 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   BookOpenText,
+  Eye,
+  Fence,
   Flashlight,
   Grid3x3,
   Grip,
+  Hand,
+  Hash,
   Heart,
   KeyRound,
   DoorOpen,
   LayoutGrid,
   Lock,
   MessagesSquare,
+  MousePointerClick,
   Pencil,
+  Route,
   Search,
+  Smile,
+  Type,
+  Zap,
 } from 'lucide-react';
 
 export interface GameMeta {
@@ -69,14 +78,82 @@ export const GAMES: GameMeta[] = [
 ];
 
 export function gameById(id: string): GameMeta | undefined {
-  return GAMES.find((g) => g.id === id) ?? DUO_GAMES.find((g) => g.id === id);
+  return (
+    GAMES.find((g) => g.id === id) ??
+    DUO_GAMES.find((g) => g.id === id) ??
+    QUICK_GAMES.find((g) => g.id === id)
+  );
 }
 
 /**
- * Duo Corner (Phase 5): lighter, quicker games made for two. Every one
- * works solo too — each solo page plays against a bot (Sketch the Clue
- * solo is the toy guesser), so Surprise me can pick any of them.
+ * Quick games (Phase 6): nine more two-player games from the crisskross
+ * extract. Each is quick, self-contained, and plays solo against a bot.
  */
+export const QUICK_GAMES: GameMeta[] = [
+  {
+    id: 'quoridor',
+    name: 'Quoridor',
+    tagline: 'Race across the board, fences in the way.',
+    icon: Fence,
+    live: true,
+  },
+  {
+    id: 'checkbox-race',
+    name: 'Checkbox Race',
+    tagline: 'Hunt the called number, fill your boxes first.',
+    icon: Hash,
+    live: true,
+  },
+  {
+    id: 'the-bridge',
+    name: 'The Bridge',
+    tagline: 'A word-ladder bridge between two words.',
+    icon: Route,
+    live: true,
+  },
+  {
+    id: 'jinx',
+    name: 'Jinx',
+    tagline: 'Same letters, shared words score nobody.',
+    icon: Type,
+    live: true,
+  },
+  {
+    id: 'spot-emoji',
+    name: 'Speed Spot-the-Emoji',
+    tagline: 'Two cards, one twin picture. Find it first.',
+    icon: Eye,
+    live: true,
+  },
+  {
+    id: 'dont-press-purple',
+    name: "Don't Press Purple",
+    tagline: 'Tap teal, hold still on violet.',
+    icon: MousePointerClick,
+    live: true,
+  },
+  {
+    id: 'snake-arena',
+    name: 'Snake Arena',
+    tagline: 'Real-time snakes, fruit, stars, shields.',
+    icon: Zap,
+    live: true,
+  },
+  {
+    id: 'uno-slap',
+    name: 'Uno Slap',
+    tagline: 'Count to ten, slap on the match.',
+    icon: Hand,
+    live: true,
+  },
+  {
+    id: 'vibe-check',
+    name: 'Vibe Check',
+    tagline: 'Guess Who with personality questions.',
+    icon: Smile,
+    live: true,
+  },
+];
 export const DUO_GAMES: GameMeta[] = [
   {
     id: 'dots-boxes',

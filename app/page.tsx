@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, MailOpen, Play, Sparkles, Users } from 'lucide-react';
-import { GAMES, DUO_GAMES, gameById, type GameMeta } from '@/lib/games';
+import { CalendarDays, Camera, Dices, MailOpen, Play, Sparkles, Users } from 'lucide-react';
+import { GAMES, DUO_GAMES, QUICK_GAMES, gameById, type GameMeta } from '@/lib/games';
 import {
   getGameProgress,
   loadLocalProgress,
@@ -67,7 +67,7 @@ function Tiles({ games, progress }: { games: GameMeta[]; progress: ProgressMap }
   );
 }
 
-const ALL_GAMES = [...GAMES, ...DUO_GAMES];
+const ALL_GAMES = [...GAMES, ...DUO_GAMES, ...QUICK_GAMES];
 
 export default function HomePage() {
   const { userId } = useTheme();
@@ -140,8 +140,8 @@ export default function HomePage() {
           </Link>
         </div>
         <p className="mt-3 text-sm text-[var(--ink-dim)]">
-          Surprise me picks from all twelve games, at your level in whichever one it lands
-          on. Every Duo Corner game works alone too, against a bot.
+          Surprise me picks from all twenty-one games, at your level in whichever one it lands
+          on. Every Duo Corner and quick game works alone too, against a bot.
         </p>
       </section>
 
@@ -232,6 +232,39 @@ export default function HomePage() {
           against a bot.
         </p>
         <Tiles games={DUO_GAMES} progress={progress} />
+      </section>
+
+      <section className="mt-6">
+        <h2 className="text-lg font-bold">Quick games</h2>
+        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+          Nine more fast two-player games, each with its own ladder — and a bot when
+          your partner is away.
+        </p>
+        <Tiles games={QUICK_GAMES} progress={progress} />
+      </section>
+
+      <section className="mt-6">
+        <h2 className="text-lg font-bold">For the two of you</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <Link href="/date-night" className="panel flex items-center gap-3 p-4">
+            <Dices size={22} aria-hidden className="shrink-0" />
+            <div>
+              <p className="font-semibold">Roll a date night</p>
+              <p className="text-sm text-[var(--ink-dim)]">
+                Dinner, activity, treat, entertainment — decided by dice.
+              </p>
+            </div>
+          </Link>
+          <Link href="/photo-booth" className="panel flex items-center gap-3 p-4">
+            <Camera size={22} aria-hidden className="shrink-0" />
+            <div>
+              <p className="font-semibold">Photo booth</p>
+              <p className="text-sm text-[var(--ink-dim)]">
+                Three shots, one strip, made on this device.
+              </p>
+            </div>
+          </Link>
+        </div>
       </section>
     </main>
   );

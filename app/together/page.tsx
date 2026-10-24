@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, MailOpen, Plus, Users } from 'lucide-react';
 import { useMe } from '@/components/together/useMe';
+import { useTheme } from '@/components/ThemeProvider';
 import { generateRoomCode, isValidRoomCode, normalizeRoomCode } from '@/lib/together/roomCode';
 import {
   createSession,
@@ -27,6 +28,7 @@ import { noLastRoom } from '@/lib/emptyStates';
 export default function TogetherPage() {
   const router = useRouter();
   const me = useMe();
+  const { userId } = useTheme();
   const [name, setName] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -97,6 +99,13 @@ export default function TogetherPage() {
         <p className="panel mt-4 p-4 text-sm">
           Local mode: this room lives in this browser only, so two devices cannot
           share it yet. Sign in once accounts are connected to play across devices.
+        </p>
+      )}
+
+      {isSupabaseConfigured && userId === null && (
+        <p className="panel mt-4 p-4 text-sm">
+          No account needed to join a room — just a code and a nickname. Guest
+          progress will not save unless you sign in.
         </p>
       )}
 

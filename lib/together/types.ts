@@ -43,6 +43,22 @@
  * - every game: { notes: string, chat: ChatMsg[] } (shared extras)
  * - tally (private, Phase 5): round wins per player inside this room
  *   only. Not a leaderboard, not XP, not a rank — just the two of them.
+ *   Phase 6 extends the same tally to the original versus modes
+ *   (logic-grids, cipher-desk, nonograms) and the quick games.
+ * - versus quoridor (Phase 6): { quoridor: QuoridorState } — shared
+ *   board; host initializes it, host declares the winner.
+ * - versus vibe-check (Phase 6): { vibeTurn: uid, vibePending:
+ *   { askerUid, questionId, text, trait } | null, vibeLastAnswer:
+ *   { text, answer } | null, vibeAsked: string[], vibeEliminated:
+ *   Record<uid, number[]> } — secrets are never stored: each player
+ *   derives their own from seed + uid, and only their own is shown.
+ * - versus jinx (Phase 6): { answers: Record<uid, string[]>,
+ *   jinxSubmitted: Record<uid, boolean> } — host declares the winner
+ *   from the two lists once both are submitted (tie = no winner).
+ * - boothAutoSnap (Phase 6): boolean — offer a win strip when a
+ *   round is won.
+ * - dateNightRoll (Phase 6): { counter, dinner, activity, treat,
+ *   entertainment } — the latest shared date-night roll in this room.
  */
 
 export type TogetherMode = 'coop' | 'versus';
