@@ -12,11 +12,14 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [nextPath, setNextPath] = useState<string | null>(null);
+  const [signedOut, setSignedOut] = useState(false);
 
   useEffect(() => {
     try {
-      const next = new URLSearchParams(window.location.search).get('next');
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get('next');
       if (next && next.startsWith('/')) setNextPath(next);
+      if (params.get('signedout') === '1') setSignedOut(true);
     } catch {
       /* ignore */
     }
@@ -44,6 +47,12 @@ export default function LoginPage() {
         <p className="mt-1 text-sm text-[var(--ink-dim)]">
           Sign in to pick up your puzzles where you left them.
         </p>
+        {signedOut && (
+          <p className="panel mt-4 p-4 text-sm">
+            You were signed out mid-session. Your progress is saved on this device —
+            sign in again to pick up where you left off.
+          </p>
+        )}
         {nextPath && (
           <p className="panel mt-4 p-4 text-sm">
             Sign in to play together — you will return to {nextPath} right after.
@@ -51,8 +60,8 @@ export default function LoginPage() {
         )}
         {!isSupabaseConfigured ? (
           <p className="panel mt-4 p-4 text-sm">
-            Sign-in is not wired up yet — the Supabase keys are still being set up.
-            The app works in local mode until then.{' '}
+            Sign-in is not connected on this build yet. The app works in local mode
+            until then.{' '}
             <Link href="/" className="underline">Back to the games</Link>
           </p>
         ) : (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client';
 
@@ -15,6 +15,9 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [ready, setReady] = useState(!isSupabaseConfigured);
+  // Remember a seen session so a mid-session sign-out can be named on
+  // the login screen instead of silently bouncing the player there.
+  const hadSession = useRef(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -24,8 +27,9 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       const { data } = await sb.auth.getSession();
       if (!active) return;
       const signedIn = Boolean(data.session);
+      if (signedIn) hadSession.current = true;
       if (!signedIn && !PUBLIC_PATHS.includes(pathname)) {
-        router.replace('/login');
+        router.replace(hadSession.current ? '/login?signedout=1' : '/login');
       } else if (signedIn && PUBLIC_PATHS.includes(pathname)) {
         router.replace('/');
       } else {

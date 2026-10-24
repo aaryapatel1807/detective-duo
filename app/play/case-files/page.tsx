@@ -30,7 +30,7 @@ import {
   Star,
   Users,
 } from 'lucide-react';
-import { caseForLevel, GAME_ID, tierForLevel, ALL_CASES } from '@/lib/cases/bank';
+import { caseForLevel, CASES_BY_TIER, GAME_ID, tierForLevel, tierStartForLevel, ALL_CASES } from '@/lib/cases/bank';
 import { hashSeed, mulberry32 } from '@/lib/generators/logicGrid';
 import {
   computeStars,
@@ -40,6 +40,8 @@ import {
   type ProgressMap,
 } from '@/lib/progress';
 import { markLeftCaseSeen } from '@/lib/together/leftCases';
+import EmptyState from '@/components/EmptyState';
+import { tierCycleNote, unknownCase } from '@/lib/emptyStates';
 
 type Tab = 'story' | 'evidence' | 'suspects' | 'accuse';
 
@@ -82,6 +84,7 @@ export default function CaseFilesPage() {
   const [accuseMsg, setAccuseMsg] = useState<string | null>(null);
   const [loadedFor, setLoadedFor] = useState(0);
   const [leftCaseId, setLeftCaseId] = useState<string | null>(null);
+  const [badCaseId, setBadCaseId] = useState<string | null>(null);
 
   const myProgress = getGameProgress(progress, GAME_ID);
   const unlocked = Math.max(myProgress.currentLevel, 1);
@@ -92,11 +95,14 @@ export default function CaseFilesPage() {
     setProgress(map);
     setLevel(getGameProgress(map, GAME_ID).currentLevel);
     // A case left by a partner opens by id (?case=...), and is marked seen.
+    // An unknown id shows an error state instead of silently opening level 1.
     try {
       const id = new URLSearchParams(window.location.search).get('case');
       if (id && ALL_CASES.some((c) => c.id === id)) {
         setLeftCaseId(id);
         void markLeftCaseSeen(id);
+      } else if (id) {
+        setBadCaseId(id);
       }
     } catch {
       /* ignore */
@@ -226,6 +232,20 @@ export default function CaseFilesPage() {
     { id: 'accuse', label: 'Accuse', icon: <Footprints size={16} aria-hidden /> },
   ];
 
+  const cycleNote = !leftCase
+    ? tierCycleNote(level, tierStartForLevel(level), CASES_BY_TIER[tierForLevel(level)].length)
+    : null;
+
+  if (badCaseId) {
+    return (
+      <main className="mx-auto w-full max-w-3xl px-4 pb-16">
+        <div className="mt-6">
+          <EmptyState state={unknownCase(badCaseId)} />
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-16">
       <div className="mt-2 flex items-center justify-between gap-2">
@@ -262,6 +282,9 @@ export default function CaseFilesPage() {
       </div>
 
       <h1 className="mt-4 text-3xl font-bold">Case Files</h1>
+      {cycleNote && (
+        <p className="mt-2 text-sm text-[var(--ink-dim)]">{cycleNote}</p>
+      )}
       <p className="mt-1 text-[var(--ink-dim)]">
         {c.title} · {c.setting}. Read the story, pin the clues that matter, question
         everyone — then name the culprit. Hints are free, and a wrong accusation never

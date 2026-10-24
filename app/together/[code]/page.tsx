@@ -14,6 +14,8 @@ import { useRoom } from '@/components/together/useRoom';
 import { createSession, saveSession } from '@/lib/together/session';
 import { coopSeed, versusSeed, type TogetherMode } from '@/lib/together/types';
 import { getGameProgress, loadLocalProgress } from '@/lib/progress';
+import EmptyState from '@/components/EmptyState';
+import { roomNotFound } from '@/lib/emptyStates';
 
 const COOP_GAMES = [
   { id: 'case-files', name: 'Case Files', note: 'Split clues — talk to solve.' },
@@ -82,21 +84,25 @@ export default function LobbyPage({ params }: { params: { code: string } }) {
     return (
       <main className="mx-auto w-full max-w-3xl px-4 pb-16">
         <h1 className="mt-6 text-3xl font-bold">No room {code} yet</h1>
-        <p className="mt-1 text-[var(--ink-dim)]">
-          Nobody has created this room. Create it and share the code with your partner.
-        </p>
-        <div className="mt-4 flex gap-2">
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={async () => {
-              await createSession(code, { uid: me.uid, name: me.name, role: 'host' });
-              window.location.assign(`/together/${code}`);
-            }}
-          >
-            Create room {code}
-          </button>
-          <Link href="/together" className="btn">Back to together</Link>
+        <div className="mt-4">
+          <EmptyState
+            state={roomNotFound(code)}
+            action={
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={async () => {
+                    await createSession(code, { uid: me.uid, name: me.name, role: 'host' });
+                    window.location.assign(`/together/${code}`);
+                  }}
+                >
+                  Create room {code}
+                </button>
+                <Link href="/together" className="btn">Back to together</Link>
+              </div>
+            }
+          />
         </div>
       </main>
     );

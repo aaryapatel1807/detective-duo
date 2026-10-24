@@ -12,6 +12,7 @@ import {
 } from '@/lib/progress';
 import { useTheme } from '@/components/ThemeProvider';
 import { useMe } from '@/components/together/useMe';
+import HomeArt from '@/components/ThemeArt';
 import { listLeftCases, type LeftCase } from '@/lib/together/leftCases';
 import { ALL_CASES } from '@/lib/cases/bank';
 import { getDailySet, getISTDateString } from '@/lib/daily';
@@ -67,10 +68,17 @@ export default function HomePage() {
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-16">
       <section className="card mt-2 p-5 sm:p-6">
-        <h1 className="text-3xl font-bold">Good to see you, detective.</h1>
-        <p className="mt-1 text-[var(--ink-dim)]">
-          Pick up where you left off, or try something gentle.
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold">Good to see you, detective.</h1>
+            <p className="mt-1 text-[var(--ink-dim)]">
+              Pick up where you left off, or try something gentle.
+            </p>
+          </div>
+          <div className="home-art" aria-hidden>
+            <HomeArt />
+          </div>
+        </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {lastPlayed && lastProgress ? (
             <Link href={`/play/${lastPlayed.id}`} className="btn btn-primary">
@@ -90,7 +98,7 @@ export default function HomePage() {
           </Link>
         </div>
         <p className="mt-3 text-sm text-[var(--ink-dim)]">
-          Surprise me picks one of the six games at your level in it.
+          Surprise me picks from all six games, at your level in whichever one it lands on.
         </p>
       </section>
 
@@ -106,7 +114,7 @@ export default function HomePage() {
                 name: 'Daily Case',
                 detail: daily.dailyCase
                   ? daily.dailyCase.title
-                  : 'Arrives with the case bank — cipher and nonogram are ready.',
+                  : 'No case today — the cipher and nonogram below are ready, and a fresh case arrives tomorrow.',
                 href: '/daily#case',
               },
               {

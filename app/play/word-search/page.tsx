@@ -236,12 +236,13 @@ export default function WordSearchPage() {
         </p>
       )}
 
-      <section className="card mt-4 p-3 sm:p-4">
+      <section className="card mt-4 overflow-x-auto p-3 sm:p-4">
         <div
           className="mx-auto grid"
           style={{
             gridTemplateColumns: `repeat(${puzzle.size}, minmax(0, 1fr))`,
             maxWidth: puzzle.size > 12 ? '100%' : '480px',
+            minWidth: `${Math.min(480, puzzle.size * 32)}px`,
           }}
         >
           {puzzle.grid.map((row, r) =>

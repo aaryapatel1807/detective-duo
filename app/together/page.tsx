@@ -21,6 +21,8 @@ import {
   type RoomSession,
 } from '@/lib/together/session';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
+import EmptyState from '@/components/EmptyState';
+import { noLastRoom } from '@/lib/emptyStates';
 
 export default function TogetherPage() {
   const router = useRouter();
@@ -30,6 +32,7 @@ export default function TogetherPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<RoomSession | null>(null);
+  const [lastChecked, setLastChecked] = useState(false);
 
   useEffect(() => {
     setName(getDisplayName());
@@ -37,7 +40,10 @@ export default function TogetherPage() {
 
   useEffect(() => {
     if (!me) return;
-    void myLastSession(me.uid).then(setLast);
+    void myLastSession(me.uid).then((r) => {
+      setLast(r);
+      setLastChecked(true);
+    });
   }, [me]);
 
   const withName = () => {
@@ -89,8 +95,8 @@ export default function TogetherPage() {
 
       {!isSupabaseConfigured && (
         <p className="panel mt-4 p-4 text-sm">
-          Local mode: rooms live in this browser until Supabase is wired up. Two
-          devices cannot sync yet — sign-in arrives with the project connection.
+          Local mode: this room lives in this browser only, so two devices cannot
+          share it yet. Sign in once accounts are connected to play across devices.
         </p>
       )}
 
@@ -113,14 +119,14 @@ export default function TogetherPage() {
         </div>
         <div className="mt-4 flex gap-2">
           <input
-            className="input flex-1 uppercase"
+            className="input min-w-0 flex-1 uppercase"
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
             placeholder="ABCD"
             maxLength={4}
             aria-label="Room code to join"
           />
-          <button type="button" className="btn" onClick={join} disabled={busy || !me}>
+          <button type="button" className="btn shrink-0" onClick={join} disabled={busy || !me}>
             <Users size={18} aria-hidden /> Join
           </button>
         </div>
@@ -131,7 +137,7 @@ export default function TogetherPage() {
         )}
       </section>
 
-      {last && (
+      {last ? (
         <section className="panel mt-4 p-4">
           <p className="font-semibold">Your last room</p>
           <p className="mt-1 text-sm text-[var(--ink-dim)]">
@@ -142,7 +148,18 @@ export default function TogetherPage() {
             Reopen room {last.code}
           </Link>
         </section>
-      )}
+      ) : lastChecked ? (
+        <div className="mt-4">
+          <EmptyState
+            state={noLastRoom()}
+            action={
+              <button type="button" className="btn btn-primary" onClick={create} disabled={busy || !me}>
+                Create a room
+              </button>
+            }
+          />
+        </div>
+      ) : null}
 
       <section className="panel mt-4 flex items-center gap-3 p-4">
         <MailOpen size={22} aria-hidden className="shrink-0" />

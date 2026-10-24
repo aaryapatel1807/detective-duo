@@ -19,6 +19,8 @@ import {
   touchDailyProgress,
   type DailyState,
 } from '@/lib/daily';
+import EmptyState from '@/components/EmptyState';
+import { dailyAllDone, emptyDaily } from '@/lib/emptyStates';
 
 type Mark = 0 | 1 | 2; // blank, filled, crossed
 
@@ -99,6 +101,15 @@ export default function DailyPage() {
         Three small things, fresh each morning (IST). Missing a day never takes anything away.
       </p>
 
+      {/* Empty / complete states: never a blank desk. */}
+      <div className="mt-4">
+        {!day.cipher && !day.nonogram && !day.case ? (
+          <EmptyState state={emptyDaily()} />
+        ) : day.cipher && day.nonogram && day.case ? (
+          <EmptyState state={dailyAllDone()} />
+        ) : null}
+      </div>
+
       {/* Daily Case */}
       <section className="card mt-5 p-4 sm:p-5" id="case">
         <h2 className="flex items-center gap-2 font-display text-lg font-bold">
@@ -114,8 +125,8 @@ export default function DailyPage() {
           </>
         ) : (
           <p className="mt-1 text-sm text-[var(--ink-dim)]">
-            Today&apos;s case arrives with the case bank — it is still being written.
-            The cipher and nonogram below are ready now.
+            No case in today&apos;s set — try the cipher and nonogram below, and a fresh
+            case comes tomorrow.
           </p>
         )}
       </section>
@@ -132,14 +143,14 @@ export default function DailyPage() {
         </p>
         <div className="mt-3 flex gap-2">
           <input
-            className="input"
+            className="input min-w-0 flex-1"
             value={cipherInput}
             onChange={(e) => setCipherInput(e.target.value)}
             placeholder="Type the decoded message"
             aria-label="Decoded message"
             disabled={day.cipher}
           />
-          <button type="button" className="btn btn-primary" onClick={checkCipher} disabled={day.cipher}>
+          <button type="button" className="btn btn-primary shrink-0" onClick={checkCipher} disabled={day.cipher}>
             Check
           </button>
         </div>

@@ -6,6 +6,15 @@ import { Check, LogOut } from 'lucide-react';
 import { THEMES, THEME_IDS, type ThemeId } from '@/lib/themes';
 import { useTheme } from '@/components/ThemeProvider';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client';
+import {
+  loadSoundSettings,
+  playUiSound,
+  saveSoundSettings,
+  startAmbient,
+  stopAmbient,
+  type AmbientKind,
+  type SoundSettings,
+} from '@/lib/sound';
 import { useRouter } from 'next/navigation';
 
 function tokenStyle(id: ThemeId): CSSProperties {
@@ -20,6 +29,9 @@ export default function SettingsPage() {
   const [selected, setSelected] = useState<ThemeId>(theme);
   const [name, setName] = useState('');
   const [saved, setSaved] = useState(false);
+  const [sound, setSound] = useState<SoundSettings>({ enabled: false, ambient: 'off' });
+
+  useEffect(() => setSound(loadSoundSettings()), []);
 
   useEffect(() => setSelected(theme), [theme]);
 
@@ -38,6 +50,14 @@ export default function SettingsPage() {
 
   const previewStyle = useMemo(() => tokenStyle(selected), [selected]);
   const dirty = selected !== theme;
+
+  function updateSound(next: SoundSettings) {
+    setSound(next);
+    saveSoundSettings(next);
+    if (next.enabled) playUiSound(theme);
+    if (next.ambient === 'off') stopAmbient();
+    else startAmbient(next.ambient);
+  }
 
   async function saveName() {
     const sb = getSupabase();
@@ -147,11 +167,50 @@ export default function SettingsPage() {
       </section>
 
       <section className="card mt-5 p-5 sm:p-6">
+        <h2 className="text-xl font-bold">Sound</h2>
+        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+          Off by default, and kept on this device only — it is not part of your
+          account, so no extra setup is needed. Sounds are made on the spot in
+          your browser; nothing is downloaded, and nothing ever plays by itself.
+        </p>
+        <label className="mt-3 flex items-center justify-between gap-3 text-sm font-semibold">
+          Soft sounds when you tap buttons
+          <button
+            type="button"
+            role="switch"
+            aria-checked={sound.enabled}
+            onClick={() => updateSound({ ...sound, enabled: !sound.enabled })}
+            className="btn shrink-0"
+          >
+            {sound.enabled ? 'On' : 'Off'}
+          </button>
+        </label>
+        <label className="mt-3 flex flex-col gap-1 text-sm font-semibold">
+          Gentle background sound
+          <select
+            className="input"
+            value={sound.ambient}
+            onChange={(e) => updateSound({ ...sound, ambient: e.target.value as AmbientKind })}
+            aria-label="Background sound"
+          >
+            <option value="off">Off</option>
+            <option value="rain">Soft rain</option>
+            <option value="jazz">Soft jazz chords</option>
+          </select>
+        </label>
+        <p className="mt-2 text-sm text-[var(--ink-dim)]">
+          {sound.enabled
+            ? 'Tap sounds are on, in this theme’s own voice — soft pops for Candy, a slow chime for Midnight, a light pluck for Sunny, a quiet tick for Noir.'
+            : 'Tap sounds are off. Turn them on to hear this theme’s soft voice.'}
+        </p>
+      </section>
+
+      <section className="card mt-5 p-5 sm:p-6">
         <h2 className="text-xl font-bold">Account</h2>
         {!isSupabaseConfigured ? (
           <p className="mt-2 text-sm text-[var(--ink-dim)]">
-            Accounts are not wired up yet — the Supabase keys are still being set up.
-            Your progress is saved on this device until then.
+            Sign-in is not connected on this build yet. Your progress is saved on
+            this device until then.
           </p>
         ) : userId ? (
           <>
@@ -159,7 +218,7 @@ export default function SettingsPage() {
               Display name
               <span className="flex gap-2">
                 <input
-                  className="input"
+                  className="input min-w-0 flex-1"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Detective"

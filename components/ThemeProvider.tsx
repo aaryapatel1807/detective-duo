@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { THEMES, isThemeId, type ThemeId } from '@/lib/themes';
 import { getSupabase } from '@/lib/supabase/client';
+import SoundEngine from './SoundEngine';
 
 const STORAGE_KEY = 'dd-v2-theme';
 
@@ -97,5 +98,5 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [userId],
   );
 
-  return <Ctx.Provider value={{ theme, setTheme, userId }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ theme, setTheme, userId }}>{children}<SoundEngine /></Ctx.Provider>;
 }

@@ -33,21 +33,21 @@ h1, h2, h3, .font-display {
 
 .card {
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: var(--card-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
 }
 
 .panel {
   background: var(--surface-2);
-  border: 1px solid var(--line);
+  border: var(--card-border);
   border-radius: var(--radius);
 }
 
 .paper {
   background: var(--paper);
   color: var(--paper-ink);
-  border: 1px solid var(--line);
+  border: var(--card-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
@@ -64,9 +64,10 @@ h1, h2, h3, .font-display {
   background: var(--surface);
   color: var(--ink);
   padding: 0.65rem 1.25rem;
+  min-height: 44px;
   font-weight: 700;
   box-shadow: var(--btn-shadow);
-  transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+  transition: transform var(--motion), background var(--motion), opacity var(--motion);
   cursor: pointer;
   text-decoration: none;
 }
@@ -99,9 +100,18 @@ h1, h2, h3, .font-display {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   padding: 1rem;
-  transition: transform 0.15s ease;
+  transition: transform var(--motion);
 }
 .game-tile:not(:disabled):hover { transform: translateY(-2px); }
+
+/* Per-theme tile feel (token colours only; motion differs by theme). */
+[data-theme='candy'] .game-tile:not(:disabled):hover { transform: translateY(-4px) rotate(-0.3deg); }
+[data-theme='candy'] .tile-icon { border-radius: 999px; }
+[data-theme='midnight'] .game-tile:not(:disabled):hover { transform: translateY(-1px); }
+[data-theme='midnight'] .tile-icon { box-shadow: var(--glow); }
+[data-theme='sunny'] .game-tile:not(:disabled):hover { transform: translateY(-2px) rotate(-0.5deg); }
+[data-theme='sunny'] .tile-icon { border: 2px dashed var(--line); transform: rotate(-2deg); }
+[data-theme='noir'] .game-tile:not(:disabled):hover { transform: translateY(-1px); }
 .game-tile:disabled { opacity: 0.75; cursor: default; }
 
 .tile-icon {
@@ -141,6 +151,7 @@ h1, h2, h3, .font-display {
   background: var(--surface);
   color: var(--ink);
   padding: 0.7rem 0.9rem;
+  min-height: 44px;
 }
 .input::placeholder { color: var(--ink-dim); }
 
@@ -152,8 +163,10 @@ h1, h2, h3, .font-display {
 /* --------------------------------------------------------- logic grid --- */
 
 .lg-cell {
-  width: 2.4rem;
-  height: 2.4rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 44px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -163,7 +176,7 @@ h1, h2, h3, .font-display {
   color: var(--ink);
   font-weight: 800;
   cursor: pointer;
-  transition: transform 0.1s ease, background 0.1s ease;
+  transition: transform var(--motion), background var(--motion);
   touch-action: manipulation;
 }
 .lg-cell:hover { transform: scale(1.06); }
@@ -180,6 +193,29 @@ h1, h2, h3, .font-display {
 .clue-struck {
   opacity: 0.45;
   text-decoration: line-through;
+}
+
+/* ------------------------------------------------------- home art ------ */
+/* Theme art accents on the home hero. Shapes come from components/ThemeArt;
+ * colours here are tokens only, so art re-themes with everything else. */
+.home-art {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+@keyframes art-float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+[data-theme='midnight'] .home-art { animation: art-float-slow 6s ease-in-out infinite; }
+
+/* ----------------------------------------------------- offline banner --- */
+.offline-banner {
+  background: var(--accent-2);
+  color: var(--accent-2-ink);
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
 }
 
 /* ------------------------------------------------------------- motion --- */

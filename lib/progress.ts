@@ -26,6 +26,48 @@ export interface GameProgress {
 export type ProgressMap = Record<string, GameProgress>;
 
 const CACHE_KEY = 'dd-v2-progress';
+const QUEUE_KEY = 'dd-v2-progress-queue';
+
+/**
+ * Offline queue (Phase 4): when a progress push fails — offline, or the
+ * network drops mid-write — the game's row waits here in localStorage.
+ * syncProgress() drains it on reconnect. Last-write-wins per game and
+ * best-stars-per-level still hold: the queued row is the latest local
+ * row for that game, and the merge in syncProgress keeps the best star
+ * per level from either side.
+ */
+export type PendingQueue = Record<string, GameProgress>;
+
+export function loadPendingProgress(): PendingQueue {
+  try {
+    const raw = localStorage.getItem(QUEUE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as PendingQueue;
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function savePendingProgress(q: PendingQueue): void {
+  try {
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function enqueuePendingProgress(game: string, p: GameProgress): PendingQueue {
+  const q = { ...loadPendingProgress(), [game]: p };
+  savePendingProgress(q);
+  return q;
+}
+
+export function dequeuePendingProgress(game: string): void {
+  const q = loadPendingProgress();
+  delete q[game];
+  savePendingProgress(q);
+}
 
 export function emptyProgress(): GameProgress {
   return { currentLevel: 1, stars: {}, hintsUsed: 0, mistakes: 0, lastPlayedAt: null };
@@ -103,26 +145,43 @@ function rowToProgress(r: ProgressRow): GameProgress {
   };
 }
 
-/** Push one game's progress up (no-op when signed out / unconfigured). */
+/** Push one game's progress up (no-op when signed out / unconfigured).
+ *  On any failure (offline, dropped network) the row is queued locally
+ *  instead of lost — syncProgress() retries it on reconnect. */
 export async function pushGameProgress(game: string, p: GameProgress): Promise<void> {
   const sb = getSupabase();
   if (!sb) return;
-  const { data } = await sb.auth.getSession();
-  const uid = data.session?.user.id;
-  if (!uid) return;
-  await sb.from('progress').upsert(
-    {
-      user_id: uid,
-      game,
-      current_level: p.currentLevel,
-      stars: p.stars,
-      hints_used: p.hintsUsed,
-      mistakes: p.mistakes,
-      last_played_at: p.lastPlayedAt,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id,game' },
-  );
+  try {
+    const { data } = await sb.auth.getSession();
+    const uid = data.session?.user.id;
+    if (!uid) return;
+    const { error } = await sb.from('progress').upsert(
+      {
+        user_id: uid,
+        game,
+        current_level: p.currentLevel,
+        stars: p.stars,
+        hints_used: p.hintsUsed,
+        mistakes: p.mistakes,
+        last_played_at: p.lastPlayedAt,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,game' },
+    );
+    if (error) throw error;
+    dequeuePendingProgress(game);
+  } catch {
+    // Offline or failed: keep the row in the local queue for reconnect.
+    enqueuePendingProgress(game, p);
+  }
+}
+
+/** Retry every queued row; rows that still fail stay queued. */
+export async function flushPendingProgress(): Promise<void> {
+  const q = loadPendingProgress();
+  for (const [game, p] of Object.entries(q)) {
+    await pushGameProgress(game, p);
+  }
 }
 
 /**
@@ -133,14 +192,28 @@ export async function pushGameProgress(game: string, p: GameProgress): Promise<v
 export async function syncProgress(local: ProgressMap): Promise<ProgressMap> {
   const sb = getSupabase();
   if (!sb) return local;
-  const { data } = await sb.auth.getSession();
-  const uid = data.session?.user.id;
+  // Reconnect path: push anything queued while offline first, so the
+  // server sees the latest local rows before we pull and merge.
+  await flushPendingProgress();
+  let uid: string | undefined;
+  try {
+    const { data } = await sb.auth.getSession();
+    uid = data.session?.user.id;
+  } catch {
+    return local;
+  }
   if (!uid) return local;
-  const { data: rows, error } = await sb
-    .from('progress')
-    .select('game,current_level,stars,hints_used,mistakes,last_played_at')
-    .eq('user_id', uid);
-  if (error || !rows) return local;
+  let rows: ProgressRow[] | null = null;
+  try {
+    const res = await sb
+      .from('progress')
+      .select('game,current_level,stars,hints_used,mistakes,last_played_at')
+      .eq('user_id', uid);
+    if (res.error || !res.data) return local;
+    rows = res.data as ProgressRow[];
+  } catch {
+    return local;
+  }
 
   const merged: ProgressMap = { ...local };
   for (const row of rows as ProgressRow[]) {

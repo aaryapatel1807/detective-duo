@@ -272,7 +272,7 @@ export default function LogicGridsPage() {
               </span>
               <button
                 type="button"
-                className={`text-left ${state.struck.includes(clue.id) ? 'clue-struck' : ''}`}
+                className={`py-1 text-left ${state.struck.includes(clue.id) ? 'clue-struck' : ''}`}
                 onClick={() =>
                   setState((s) => ({
                     ...s,

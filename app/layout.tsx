@@ -23,8 +23,8 @@ export const viewport: Viewport = {
 };
 
 // Set the saved theme before first paint so there is no flash of Noir
-// for Candy users.
-const themeInit = `(function(){try{var t=localStorage.getItem('dd-v2-theme');if(t!=='noir'&&t!=='candy')t='noir';document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='noir';}})();`;
+// for users of another theme.
+const themeInit = `(function(){try{var t=localStorage.getItem('dd-v2-theme');if(t!=='noir'&&t!=='candy'&&t!=='midnight'&&t!=='sunny')t='noir';document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='noir';}})();`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const fontVars = [fraunces, nunitoSans, nunito, baloo, caveat]
