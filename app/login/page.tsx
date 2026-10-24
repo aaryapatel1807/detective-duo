@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client';
@@ -11,6 +11,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [nextPath, setNextPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const next = new URLSearchParams(window.location.search).get('next');
+      if (next && next.startsWith('/')) setNextPath(next);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -23,7 +33,7 @@ export default function LoginPage() {
     if (err) {
       setError('That email and password do not match. Try again.');
     } else {
-      router.replace('/');
+      router.replace(nextPath ?? '/');
     }
   }
 
@@ -34,6 +44,11 @@ export default function LoginPage() {
         <p className="mt-1 text-sm text-[var(--ink-dim)]">
           Sign in to pick up your puzzles where you left them.
         </p>
+        {nextPath && (
+          <p className="panel mt-4 p-4 text-sm">
+            Sign in to play together — you will return to {nextPath} right after.
+          </p>
+        )}
         {!isSupabaseConfigured ? (
           <p className="panel mt-4 p-4 text-sm">
             Sign-in is not wired up yet — the Supabase keys are still being set up.

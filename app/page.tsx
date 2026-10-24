@@ -11,6 +11,9 @@ import {
   type ProgressMap,
 } from '@/lib/progress';
 import { useTheme } from '@/components/ThemeProvider';
+import { useMe } from '@/components/together/useMe';
+import { listLeftCases, type LeftCase } from '@/lib/together/leftCases';
+import { ALL_CASES } from '@/lib/cases/bank';
 import { getDailySet, getISTDateString } from '@/lib/daily';
 
 function Stars({ n }: { n: number }) {
@@ -25,7 +28,10 @@ function Stars({ n }: { n: number }) {
 
 export default function HomePage() {
   const { userId } = useTheme();
+  const me = useMe();
   const [progress, setProgress] = useState<ProgressMap>({});
+  const [leftCases, setLeftCases] = useState<LeftCase[]>([]);
+  const [surprise, setSurprise] = useState(GAMES[1]);
 
   useEffect(() => {
     setProgress(loadLocalProgress());
@@ -36,6 +42,15 @@ export default function HomePage() {
       void syncProgress(loadLocalProgress()).then(setProgress);
     }
   }, [userId]);
+
+  useEffect(() => {
+    if (!me) return;
+    void listLeftCases(me.uid).then(setLeftCases);
+  }, [me]);
+
+  useEffect(() => {
+    setSurprise(GAMES[Math.floor(Math.random() * GAMES.length)]);
+  }, []);
 
   const lastPlayed = useMemo(() => {
     let best: { game: string; at: string } | null = null;
@@ -67,15 +82,15 @@ export default function HomePage() {
               <Play size={18} aria-hidden /> Start with Logic Grids
             </Link>
           )}
-          <Link href="/play/logic-grids" className="btn">
+          <Link href={`/play/${surprise.id}`} className="btn">
             <Sparkles size={18} aria-hidden /> Surprise me
           </Link>
-          <button type="button" className="btn" disabled title="Together mode arrives in Phase 3">
-            <Users size={18} aria-hidden /> Play together · Phase 3
-          </button>
+          <Link href="/together" className="btn">
+            <Users size={18} aria-hidden /> Play together
+          </Link>
         </div>
         <p className="mt-3 text-sm text-[var(--ink-dim)]">
-          Surprise me opens Logic Grids at your level for now.
+          Surprise me picks one of the six games at your level in it.
         </p>
       </section>
 
@@ -116,15 +131,42 @@ export default function HomePage() {
       </section>
 
       <section className="mt-6">
-        <div className="panel flex items-center gap-3 p-4">
-          <MailOpen size={22} aria-hidden className="shrink-0" />
-          <div>
-            <p className="font-semibold">Left for you</p>
-            <p className="text-sm text-[var(--ink-dim)]">
-              Nothing here yet. When he leaves you a case, it will wait in this spot.
-            </p>
-          </div>
-        </div>
+        {(() => {
+          const first = leftCases[0];
+          const leftCase = first ? ALL_CASES.find((c) => c.id === first.caseId) : undefined;
+          if (!first || !leftCase) {
+            return (
+              <div className="panel flex items-center gap-3 p-4">
+                <MailOpen size={22} aria-hidden className="shrink-0" />
+                <div>
+                  <p className="font-semibold">Left for you</p>
+                  <p className="text-sm text-[var(--ink-dim)]">
+                    Nothing here yet. When your partner leaves you a case, it will wait in
+                    this spot.
+                  </p>
+                  <Link href="/together/leave" className="btn mt-2">
+                    Leave one for your partner
+                  </Link>
+                </div>
+              </div>
+            );
+          }
+          return (
+            <Link href={`/play/case-files?case=${leftCase.id}`} className="panel flex items-center gap-3 p-4">
+              <MailOpen size={22} aria-hidden className="shrink-0" />
+              <div>
+                <p className="font-semibold">
+                  Left for you{leftCases.length > 1 ? ` · ${leftCases.length} waiting` : ''}
+                </p>
+                <p className="text-sm">
+                  {leftCase.title}
+                  {first.note ? ` — “${first.note}”` : ''}
+                </p>
+                <p className="text-sm text-[var(--ink-dim)]">From your partner · tap to open</p>
+              </div>
+            </Link>
+          );
+        })()}
       </section>
 
       <section className="mt-6">

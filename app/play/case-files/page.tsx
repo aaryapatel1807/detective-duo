@@ -30,14 +30,16 @@ import {
   Star,
   Users,
 } from 'lucide-react';
-import { caseForLevel, GAME_ID, tierForLevel } from '@/lib/cases/bank';
+import { caseForLevel, GAME_ID, tierForLevel, ALL_CASES } from '@/lib/cases/bank';
 import { hashSeed, mulberry32 } from '@/lib/generators/logicGrid';
 import {
+  computeStars,
   getGameProgress,
   loadLocalProgress,
   recordWin,
   type ProgressMap,
 } from '@/lib/progress';
+import { markLeftCaseSeen } from '@/lib/together/leftCases';
 
 type Tab = 'story' | 'evidence' | 'suspects' | 'accuse';
 
@@ -79,6 +81,7 @@ export default function CaseFilesPage() {
   const [won, setWon] = useState<number | null>(null);
   const [accuseMsg, setAccuseMsg] = useState<string | null>(null);
   const [loadedFor, setLoadedFor] = useState(0);
+  const [leftCaseId, setLeftCaseId] = useState<string | null>(null);
 
   const myProgress = getGameProgress(progress, GAME_ID);
   const unlocked = Math.max(myProgress.currentLevel, 1);
@@ -88,9 +91,20 @@ export default function CaseFilesPage() {
     const map = loadLocalProgress();
     setProgress(map);
     setLevel(getGameProgress(map, GAME_ID).currentLevel);
+    // A case left by a partner opens by id (?case=...), and is marked seen.
+    try {
+      const id = new URLSearchParams(window.location.search).get('case');
+      if (id && ALL_CASES.some((c) => c.id === id)) {
+        setLeftCaseId(id);
+        void markLeftCaseSeen(id);
+      }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
-  const c = useMemo(() => caseForLevel(level), [level]);
+  const leftCase = leftCaseId ? ALL_CASES.find((c) => c.id === leftCaseId) : undefined;
+  const c = useMemo(() => leftCase ?? caseForLevel(level), [leftCase, level]);
 
   // Evidence board: clues + red herrings, shuffled per case so the
   // herrings don't sit in a giveaway group at the bottom.
@@ -107,7 +121,15 @@ export default function CaseFilesPage() {
   );
 
   // Load / resume in-progress state for this level.
+  // Left cases always start fresh and never touch ladder storage.
   useEffect(() => {
+    if (leftCaseId) {
+      setWon(null);
+      setAccuseMsg(null);
+      setTab('story');
+      setState(freshState());
+      return;
+    }
     if (loadedFor === level) return;
     setLoadedFor(level);
     setWon(null);
@@ -123,17 +145,17 @@ export default function CaseFilesPage() {
       /* ignore */
     }
     setState(freshState());
-  }, [level, loadedFor]);
+  }, [level, loadedFor, leftCaseId]);
 
   // Persist in-progress state.
   useEffect(() => {
-    if (loadedFor !== level) return;
+    if (leftCaseId || loadedFor !== level) return;
     try {
       localStorage.setItem(storageKey(level), JSON.stringify(state));
     } catch {
       /* ignore */
     }
-  }, [state, level, loadedFor]);
+  }, [state, level, loadedFor, leftCaseId]);
 
   const togglePin = (id: string) =>
     setState((s) => ({
@@ -156,6 +178,11 @@ export default function CaseFilesPage() {
   const accuse = (suspectId: string) => {
     if (won !== null) return;
     if (suspectId === c.solution.culpritId) {
+      if (leftCaseId) {
+        // Gifted cases don't advance the ladder — just the keepsake stars.
+        setWon(computeStars(state.hints, state.mistakes));
+        return;
+      }
       const { map, stars } = recordWin(progress, GAME_ID, level, state.hints, state.mistakes);
       setProgress(map);
       setWon(stars);
@@ -205,29 +232,33 @@ export default function CaseFilesPage() {
         <Link href="/" className="btn !px-3 !py-2 text-sm">
           <ArrowLeft size={16} aria-hidden /> Games
         </Link>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            className="btn !px-2 !py-2"
-            disabled={level <= 1}
-            onClick={() => setLevel(level - 1)}
-            aria-label="Previous level"
-          >
-            <ChevronLeft size={16} aria-hidden />
-          </button>
-          <span className="chip">
-            Level {level} · {tierForLevel(level)}
-          </span>
-          <button
-            type="button"
-            className="btn !px-2 !py-2"
-            disabled={level >= unlocked}
-            onClick={() => setLevel(level + 1)}
-            aria-label="Next level"
-          >
-            <ChevronRight size={16} aria-hidden />
-          </button>
-        </div>
+        {leftCase ? (
+          <span className="chip">Left for you by your partner</span>
+        ) : (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              className="btn !px-2 !py-2"
+              disabled={level <= 1}
+              onClick={() => setLevel(level - 1)}
+              aria-label="Previous level"
+            >
+              <ChevronLeft size={16} aria-hidden />
+            </button>
+            <span className="chip">
+              Level {level} · {tierForLevel(level)}
+            </span>
+            <button
+              type="button"
+              className="btn !px-2 !py-2"
+              disabled={level >= unlocked}
+              onClick={() => setLevel(level + 1)}
+              aria-label="Next level"
+            >
+              <ChevronRight size={16} aria-hidden />
+            </button>
+          </div>
+        )}
       </div>
 
       <h1 className="mt-4 text-3xl font-bold">Case Files</h1>
@@ -236,7 +267,7 @@ export default function CaseFilesPage() {
         everyone — then name the culprit. Hints are free, and a wrong accusation never
         locks you out.
       </p>
-      {levelStars > 0 && (
+      {levelStars > 0 && !leftCase && (
         <p className="mt-2 flex items-center gap-1 text-sm font-semibold">
           <Star size={16} aria-hidden /> Best on this level: {'★'.repeat(levelStars)}
           {'☆'.repeat(3 - levelStars)}
@@ -409,9 +440,11 @@ export default function CaseFilesPage() {
             ))}
           </ol>
           <div className="mt-4 flex justify-center gap-2">
-            <button type="button" className="btn btn-primary" onClick={() => setLevel(level + 1)}>
-              Next level
-            </button>
+            {!leftCase && (
+              <button type="button" className="btn btn-primary" onClick={() => setLevel(level + 1)}>
+                Next level
+              </button>
+            )}
             <Link href="/" className="btn">Home</Link>
           </div>
         </section>
