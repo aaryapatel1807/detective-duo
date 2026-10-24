@@ -14,6 +14,14 @@ import { useRoom } from '@/components/together/useRoom';
 import RoomShell from '@/components/together/RoomShell';
 import { cycleMark, GridBoard, ProgressBars, VersusCipherView, VersusNonogramView } from '@/components/together/VersusViews';
 import { CaseCoopView, EscapeCoopView } from '@/components/together/CoopViews';
+import {
+  DotsBoxesDuo,
+  KnowMeDuo,
+  LanternDuo,
+  LiarDuo,
+  SafeCrackerVersus,
+  SketchDuo,
+} from '@/components/together/DuoCornerViews';
 import { generatePuzzle as genGrid } from '@/lib/generators/logicGrid';
 import { generatePuzzle as genCipher } from '@/lib/generators/cipherDesk';
 import { generatePuzzle as genNonogram } from '@/lib/generators/nonogram';
@@ -30,6 +38,12 @@ const GAME_NAMES: Record<string, string> = {
   'logic-grids': 'Logic Grids',
   'cipher-desk': 'Cipher Desk',
   'nonograms': 'Nonograms',
+  'dots-boxes': 'Dots and Boxes',
+  'safe-cracker': 'Safe Cracker',
+  'lantern-map': 'Lantern and Map',
+  'sketch-clue': 'Sketch the Clue',
+  'spot-liar': 'Spot the Liar',
+  'know-me': 'How Well Do You Know Me',
 };
 
 export default function PlayPage({ params }: { params: { code: string } }) {
@@ -346,6 +360,108 @@ export default function PlayPage({ params }: { params: { code: string } }) {
         }}
         escaped={escaped}
         disabled={paused || escaped}
+      />
+    );
+  } else if (session.mode === 'versus' && session.game === 'dots-boxes') {
+    body = (
+      <DotsBoxesDuo
+        seed={session.seed}
+        level={session.level}
+        me={me}
+        other={other}
+        players={session.players}
+        isHost={isHost}
+        paused={paused}
+        state={state}
+        update={update}
+        updateSession={updateSession}
+        sendChat={sendChat}
+        winnerUid={session.winnerUid}
+      />
+    );
+  } else if (session.mode === 'versus' && session.game === 'safe-cracker') {
+    body = (
+      <SafeCrackerVersus
+        seed={session.seed}
+        level={session.level}
+        me={me}
+        other={other}
+        players={session.players}
+        isHost={isHost}
+        paused={paused}
+        state={state}
+        update={update}
+        updateSession={updateSession}
+        sendChat={sendChat}
+        winnerUid={session.winnerUid}
+      />
+    );
+  } else if (session.mode === 'coop' && session.game === 'lantern-map') {
+    body = (
+      <LanternDuo
+        seed={session.seed}
+        level={session.level}
+        me={me}
+        other={other}
+        players={session.players}
+        isHost={isHost}
+        paused={paused}
+        state={state}
+        update={update}
+        updateSession={updateSession}
+        sendChat={sendChat}
+        winnerUid={session.winnerUid}
+      />
+    );
+  } else if (session.mode === 'coop' && session.game === 'sketch-clue') {
+    body = (
+      <SketchDuo
+        seed={session.seed}
+        level={session.level}
+        me={me}
+        other={other}
+        players={session.players}
+        isHost={isHost}
+        paused={paused}
+        state={state}
+        update={update}
+        updateSession={updateSession}
+        sendChat={sendChat}
+        winnerUid={session.winnerUid}
+      />
+    );
+  } else if (session.mode === 'coop' && session.game === 'spot-liar') {
+    body = (
+      <LiarDuo
+        seed={session.seed}
+        level={session.level}
+        me={me}
+        other={other}
+        players={session.players}
+        isHost={isHost}
+        paused={paused}
+        state={state}
+        update={update}
+        updateSession={updateSession}
+        sendChat={sendChat}
+        winnerUid={session.winnerUid}
+      />
+    );
+  } else if (session.mode === 'coop' && session.game === 'know-me') {
+    body = (
+      <KnowMeDuo
+        seed={session.seed}
+        level={session.level}
+        me={me}
+        other={other}
+        players={session.players}
+        isHost={isHost}
+        paused={paused}
+        state={state}
+        update={update}
+        updateSession={updateSession}
+        sendChat={sendChat}
+        winnerUid={session.winnerUid}
       />
     );
   } else {

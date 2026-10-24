@@ -1,10 +1,16 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   BookOpenText,
+  Flashlight,
   Grid3x3,
+  Grip,
+  Heart,
   KeyRound,
   DoorOpen,
   LayoutGrid,
+  Lock,
+  MessagesSquare,
+  Pencil,
   Search,
 } from 'lucide-react';
 
@@ -63,5 +69,55 @@ export const GAMES: GameMeta[] = [
 ];
 
 export function gameById(id: string): GameMeta | undefined {
-  return GAMES.find((g) => g.id === id);
+  return GAMES.find((g) => g.id === id) ?? DUO_GAMES.find((g) => g.id === id);
 }
+
+/**
+ * Duo Corner (Phase 5): lighter, quicker games made for two. Every one
+ * works solo too — each solo page plays against a bot (Sketch the Clue
+ * solo is the toy guesser), so Surprise me can pick any of them.
+ */
+export const DUO_GAMES: GameMeta[] = [
+  {
+    id: 'dots-boxes',
+    name: 'Dots and Boxes',
+    tagline: 'Draw lines, close boxes, beat the bot.',
+    icon: Grip,
+    live: true,
+  },
+  {
+    id: 'safe-cracker',
+    name: 'Safe Cracker',
+    tagline: 'Crack the code in fewer guesses than the bot.',
+    icon: Lock,
+    live: true,
+  },
+  {
+    id: 'lantern-map',
+    name: 'Lantern and Map',
+    tagline: 'Walk the dark maze; the guide whispers.',
+    icon: Flashlight,
+    live: true,
+  },
+  {
+    id: 'sketch-clue',
+    name: 'Sketch the Clue',
+    tagline: 'Draw it, and see what the guesser thinks.',
+    icon: Pencil,
+    live: true,
+  },
+  {
+    id: 'spot-liar',
+    name: 'Spot the Liar',
+    tagline: 'Three statements, one lie, notes to check.',
+    icon: MessagesSquare,
+    live: true,
+  },
+  {
+    id: 'know-me',
+    name: 'How Well Do You Know Me',
+    tagline: 'Answer, guess, reveal — together.',
+    icon: Heart,
+    live: true,
+  },
+];

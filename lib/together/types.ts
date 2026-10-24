@@ -23,7 +23,26 @@
  * - coop escape-rooms: { inventory: string[], openedLocks: string[],
  *     inspected: string[], escapeRole: Record<uid, "room"|"notebook">,
  *     escaped: boolean, notes, chat }
+ * - versus dots-boxes: { dotsBoard: DotsBoxesBoard, dotsTurn: uid,
+ *     tally: Record<uid, number> } (shared board, alternating turns;
+ *     a finished board sets winnerUid, or null on a tie)
+ * - versus safe-cracker: { safeGuesses: Record<uid, GuessRecord[]>,
+ *     safeProgress: Record<uid, number>, tally } (same secret code;
+ *     progress = share of the candidate set ruled out)
+ * - coop lantern-map: { lanternPos: [x,y], lanternKeys: number[],
+ *     lanternRole: Record<uid, "walker"|"map">, lanternWon: boolean }
+ * - coop sketch-clue: { sketchRound: number, sketchStrokes: Stroke[],
+ *     sketchGuesses: {name,text}[], sketchWonUid: uid|null }
+ * - coop spot-liar: { liarRound: number, liarWriter: uid,
+ *     liarStatements: string[], liarLie: number|null,
+ *     liarQuestions: {text, answer}[], liarGuess: number|null, tally }
+ *     (round win: questioner if they pick the lie, writer if fooled)
+ * - coop know-me: { knowAnswers: Record<uid, Record<qid, string>>,
+ *     knowGuesses: Record<uid, Record<qid, string>> }
+ *     (reveal only when every player has answered AND guessed)
  * - every game: { notes: string, chat: ChatMsg[] } (shared extras)
+ * - tally (private, Phase 5): round wins per player inside this room
+ *   only. Not a leaderboard, not XP, not a rank — just the two of them.
  */
 
 export type TogetherMode = 'coop' | 'versus';

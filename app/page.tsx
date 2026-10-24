@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { CalendarDays, MailOpen, Play, Sparkles, Users } from 'lucide-react';
-import { GAMES, gameById } from '@/lib/games';
+import { GAMES, DUO_GAMES, gameById, type GameMeta } from '@/lib/games';
 import {
   getGameProgress,
   loadLocalProgress,
@@ -26,6 +26,48 @@ function Stars({ n }: { n: number }) {
     </span>
   );
 }
+
+function Tiles({ games, progress }: { games: GameMeta[]; progress: ProgressMap }) {
+  return (
+    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+      {games.map((g) => {
+        const p = getGameProgress(progress, g.id);
+        const starsEarned = Object.values(p.stars).reduce((s, n) => s + n, 0);
+        const Icon = g.icon;
+        const inner = (
+          <>
+            <span className={`tile-icon ${g.live ? '' : 'alt'}`}>
+              <Icon size={24} aria-hidden />
+            </span>
+            <span className="font-display text-lg font-bold">{g.name}</span>
+            <span className="text-sm text-[var(--ink-dim)]">{g.tagline}</span>
+            <span className="mt-1 flex flex-wrap items-center gap-2">
+              {g.live ? (
+                <>
+                  <span className="chip">Level {p.currentLevel}</span>
+                  <Stars n={Math.min(3, starsEarned)} />
+                </>
+              ) : (
+                <span className="chip">Coming in {g.arrivesIn}</span>
+              )}
+            </span>
+          </>
+        );
+        return g.live ? (
+          <Link key={g.id} href={`/play/${g.id}`} className="game-tile">
+            {inner}
+          </Link>
+        ) : (
+          <div key={g.id} className="game-tile" aria-disabled>
+            {inner}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+const ALL_GAMES = [...GAMES, ...DUO_GAMES];
 
 export default function HomePage() {
   const { userId } = useTheme();
@@ -50,7 +92,7 @@ export default function HomePage() {
   }, [me]);
 
   useEffect(() => {
-    setSurprise(GAMES[Math.floor(Math.random() * GAMES.length)]);
+    setSurprise(ALL_GAMES[Math.floor(Math.random() * ALL_GAMES.length)]);
   }, []);
 
   const lastPlayed = useMemo(() => {
@@ -98,7 +140,8 @@ export default function HomePage() {
           </Link>
         </div>
         <p className="mt-3 text-sm text-[var(--ink-dim)]">
-          Surprise me picks from all six games, at your level in whichever one it lands on.
+          Surprise me picks from all twelve games, at your level in whichever one it lands
+          on. Every Duo Corner game works alone too, against a bot.
         </p>
       </section>
 
@@ -179,41 +222,16 @@ export default function HomePage() {
 
       <section className="mt-6">
         <h2 className="text-lg font-bold">Games</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {GAMES.map((g) => {
-            const p = getGameProgress(progress, g.id);
-            const starsEarned = Object.values(p.stars).reduce((s, n) => s + n, 0);
-            const Icon = g.icon;
-            const inner = (
-              <>
-                <span className={`tile-icon ${g.live ? '' : 'alt'}`}>
-                  <Icon size={24} aria-hidden />
-                </span>
-                <span className="font-display text-lg font-bold">{g.name}</span>
-                <span className="text-sm text-[var(--ink-dim)]">{g.tagline}</span>
-                <span className="mt-1 flex flex-wrap items-center gap-2">
-                  {g.live ? (
-                    <>
-                      <span className="chip">Level {p.currentLevel}</span>
-                      <Stars n={Math.min(3, starsEarned)} />
-                    </>
-                  ) : (
-                    <span className="chip">Coming in {g.arrivesIn}</span>
-                  )}
-                </span>
-              </>
-            );
-            return g.live ? (
-              <Link key={g.id} href={`/play/${g.id}`} className="game-tile">
-                {inner}
-              </Link>
-            ) : (
-              <div key={g.id} className="game-tile" aria-disabled>
-                {inner}
-              </div>
-            );
-          })}
-        </div>
+        <Tiles games={GAMES} progress={progress} />
+      </section>
+
+      <section className="mt-6">
+        <h2 className="text-lg font-bold">Duo Corner</h2>
+        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+          Lighter, quicker games made for two — and every one of them plays fine alone,
+          against a bot.
+        </p>
+        <Tiles games={DUO_GAMES} progress={progress} />
       </section>
     </main>
   );

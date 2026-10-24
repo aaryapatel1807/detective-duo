@@ -21,12 +21,18 @@ const COOP_GAMES = [
   { id: 'case-files', name: 'Case Files', note: 'Split clues — talk to solve.' },
   { id: 'escape-rooms', name: 'Escape Rooms', note: 'Room vs notebook — talk to escape.' },
   { id: 'logic-grids', name: 'Logic Grids', note: 'One shared grid, both marking.' },
+  { id: 'lantern-map', name: 'Lantern and Map', note: 'Walker in the dark, partner holds the map.' },
+  { id: 'sketch-clue', name: 'Sketch the Clue', note: 'One draws, the other guesses.' },
+  { id: 'spot-liar', name: 'Spot the Liar', note: 'Three statements, three questions, one lie.' },
+  { id: 'know-me', name: 'How Well Do You Know Me', note: 'Answer, guess, reveal together.' },
 ];
 
 const VERSUS_GAMES = [
   { id: 'logic-grids', name: 'Logic Grids', note: 'Same puzzle, friendly race.' },
   { id: 'cipher-desk', name: 'Cipher Desk', note: 'Same note, friendly race.' },
   { id: 'nonograms', name: 'Nonograms', note: 'Same picture, friendly race.' },
+  { id: 'dots-boxes', name: 'Dots and Boxes', note: 'One board, turns, most boxes wins.' },
+  { id: 'safe-cracker', name: 'Safe Cracker', note: 'Same code, fewest guesses wins.' },
 ];
 
 export default function LobbyPage({ params }: { params: { code: string } }) {
@@ -169,8 +175,8 @@ export default function LobbyPage({ params }: { params: { code: string } }) {
           <section className="mt-6">
             <h2 className="text-lg font-bold">Race, gently (versus)</h2>
             <p className="mt-1 text-sm text-[var(--ink-dim)]">
-              Identical puzzles, first to finish wins the round. No scores, no timers —
-              just a small progress bar each.
+              Identical puzzles, first to finish wins the round. No public scores, no
+              timers — just a small progress bar each, and a private tally in the room.
             </p>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
               {VERSUS_GAMES.map((g) => (
