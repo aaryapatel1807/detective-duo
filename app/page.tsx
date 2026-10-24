@@ -293,8 +293,7 @@ export default function HomePage() {
         <section className="dash-masthead">
           <div className="flex items-start justify-between gap-3">
             <div>
-              {greeting && <p className="dash-greet">{greeting},</p>}
-              <h1 className="dash-title">Sachi</h1>
+              <h1 className="dash-title">{greeting ? `${greeting}, Sachi` : 'Sachi'}</h1>
               <p className="mt-1 text-[var(--ink-dim)]">
                 Games and little gifts, made for you. Pick up where you left off, or try
                 something gentle.
