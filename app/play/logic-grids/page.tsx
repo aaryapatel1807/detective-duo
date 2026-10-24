@@ -264,9 +264,12 @@ export default function LogicGridsPage() {
       <section className="paper mt-4 p-4 sm:p-5">
         <h2 className="font-display text-lg font-bold">Clues</h2>
         <p className="text-sm opacity-70">Tap a clue to cross it off once you have used it.</p>
-        <ol className="mt-2 list-decimal space-y-1.5 pl-5">
-          {puzzle.clues.map((clue) => (
-            <li key={clue.id}>
+        <ol className="mt-2 space-y-1.5">
+          {puzzle.clues.map((clue, clueIndex) => (
+            <li key={clue.id} className="flex gap-2">
+              <span className="w-7 shrink-0 text-right font-semibold" aria-hidden>
+                {clueIndex + 1}.
+              </span>
               <button
                 type="button"
                 className={`text-left ${state.struck.includes(clue.id) ? 'clue-struck' : ''}`}

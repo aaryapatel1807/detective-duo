@@ -11,6 +11,7 @@ import {
   type ProgressMap,
 } from '@/lib/progress';
 import { useTheme } from '@/components/ThemeProvider';
+import { getDailySet, getISTDateString } from '@/lib/daily';
 
 function Stars({ n }: { n: number }) {
   if (!n) return null;
@@ -74,7 +75,7 @@ export default function HomePage() {
           </button>
         </div>
         <p className="mt-3 text-sm text-[var(--ink-dim)]">
-          Surprise me opens Logic Grids at your level for now. More games join it in Phase 2.
+          Surprise me opens Logic Grids at your level for now.
         </p>
       </section>
 
@@ -83,14 +84,34 @@ export default function HomePage() {
           <CalendarDays size={20} aria-hidden /> Today
         </h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          {['Daily Case', 'Daily Cipher', 'Daily Nonogram'].map((name) => (
-            <div key={name} className="panel p-4">
-              <p className="font-semibold">{name}</p>
-              <p className="mt-1 text-sm text-[var(--ink-dim)]">
-                Arrives with the Daily Desk in Phase 2.
-              </p>
-            </div>
-          ))}
+          {(() => {
+            const daily = getDailySet(getISTDateString());
+            const slots = [
+              {
+                name: 'Daily Case',
+                detail: daily.dailyCase
+                  ? daily.dailyCase.title
+                  : 'Arrives with the case bank — cipher and nonogram are ready.',
+                href: '/daily#case',
+              },
+              {
+                name: 'Daily Cipher',
+                detail: 'A fresh coded note to decode.',
+                href: '/daily#cipher',
+              },
+              {
+                name: 'Daily Nonogram',
+                detail: 'A fresh little picture to fill in.',
+                href: '/daily#nonogram',
+              },
+            ];
+            return slots.map((slot) => (
+              <Link key={slot.name} href={slot.href} className="panel p-4">
+                <p className="font-semibold">{slot.name}</p>
+                <p className="mt-1 text-sm text-[var(--ink-dim)]">{slot.detail}</p>
+              </Link>
+            ));
+          })()}
         </div>
       </section>
 
