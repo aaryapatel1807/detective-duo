@@ -19,7 +19,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSupabase } from '@/lib/supabase/client';
-import { applyPatch, type ChatMsg, type RoomSession } from '@/lib/together/types';
+import { applyPatch, emptySession, type ChatMsg, type RoomSession } from '@/lib/together/types';
 import {
   joinSession,
   loadSession,
@@ -70,6 +70,31 @@ export function useRoom(code: string, me: Me | null) {
       if (s && me && !s.players.some((p) => p.uid === me.uid)) {
         s = await joinSession(code, { uid: me.uid, name: me.name, role: 'guest' });
       }
+      if (!s && me) {
+        // Guest fallback (Phase 6): a signed-out visitor cannot read the
+        // row under the current RLS policy (reads need a signed-in role),
+        // so give them an ephemeral local session. Live broadcast play
+        // still works, and signed-in members' saves keep the room row —
+        // but a guest refresh re-enters through this same fallback, so
+        // durable guest restore awaits the flagged guest-sessions
+        // migration. Never write the ephemeral session to the row.
+        const sb = getSupabase();
+        let signedIn = false;
+        try {
+          if (sb) {
+            const { data } = await sb.auth.getSession();
+            signedIn = Boolean(data?.session);
+          }
+        } catch {
+          signedIn = false;
+        }
+        if (!signedIn) {
+          s = {
+            ...emptySession(code, { uid: me.uid, name: me.name, role: 'guest' }),
+            status: 'lobby',
+          };
+        }
+      }
       if (!active) return;
       setBoth(s);
       setLoaded(true);
@@ -113,7 +138,12 @@ export function useRoom(code: string, me: Me | null) {
         if (!patch) return;
         const prev = sessionRef.current;
         if (!prev) return;
-        setBoth({ ...prev, ...patch });
+        const next = { ...prev, ...patch };
+        setBoth(next);
+        // Persist what we received, so a game started by a guest (whose
+        // own saves are refused by RLS) still lands in the row through
+        // a signed-in member's client. Guest clients fail silently here.
+        void saveSession(next);
       })
       .on('broadcast', { event: 'cursor' }, ({ payload }) => {
         const p = payload as { uid?: string; x?: number; y?: number; name?: string } | undefined;

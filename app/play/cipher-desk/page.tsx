@@ -14,6 +14,8 @@ import {
   type ProgressMap,
 } from '@/lib/progress';
 import { useTheme } from '@/components/ThemeProvider';
+import BotRaceBar, { useBotRace } from '@/components/BotRaceBar';
+import { cipherProgress } from '@/lib/together/versus';
 
 const GAME_ID = 'cipher-desk';
 
@@ -43,6 +45,7 @@ export default function CipherDeskPage() {
   const [level, setLevel] = useState(1);
   const [state, setState] = useState<PlayState>(freshState());
   const [won, setWon] = useState<number | null>(null);
+  const [raceBot, setRaceBot] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const countedRef = useRef<Set<number>>(new Set());
   const loadedFor = useRef<string>('');
@@ -60,6 +63,9 @@ export default function CipherDeskPage() {
     () => generateLevelPuzzle(level, salt),
     [level, salt],
   );
+
+  const bot = useBotRace(raceBot && won === null, level, `${GAME_ID}|${level}|${salt}`);
+  const botWon = raceBot && bot.botFinished && won === null;
 
   useEffect(() => {
     const tag = `${salt}|${level}`;
@@ -109,7 +115,7 @@ export default function CipherDeskPage() {
     );
 
   const finishIfWon = (letters: Record<string, string>, s: PlayState) => {
-    if (won !== null) return;
+    if (won !== null || botWon) return;
     if (letterPositions.length > 0 && isComplete(letters)) {
       const { map, stars } = recordWin(progress, GAME_ID, level, s.hints, s.mistakes);
       setProgress(map);
@@ -124,7 +130,7 @@ export default function CipherDeskPage() {
 
   /** The input holds the decoded message; letters map onto letter slots in order. */
   const onType = (value: string) => {
-    if (won !== null) return;
+    if (won !== null || botWon) return;
     const typed = value.toUpperCase().replace(/[^A-Z]/g, '');
     const letters: Record<string, string> = {};
     letterPositions.forEach((pos, idx) => {
@@ -144,7 +150,7 @@ export default function CipherDeskPage() {
     .join('');
 
   const useHint = () => {
-    if (won !== null) return;
+    if (won !== null || botWon) return;
     const options = letterPositions.filter(
       (pos) => (state.letters[String(pos)] ?? '').toUpperCase() !== puzzle.plaintext[pos].toUpperCase(),
     );
@@ -158,7 +164,7 @@ export default function CipherDeskPage() {
   };
 
   const doCheck = () => {
-    if (won !== null) return;
+    if (won !== null || botWon) return;
     const wrong = letterPositions.filter((pos) => {
       const typed = state.letters[String(pos)];
       return typed !== undefined && typed.toUpperCase() !== puzzle.plaintext[pos].toUpperCase();
@@ -194,6 +200,8 @@ export default function CipherDeskPage() {
   };
 
   const levelStars = myProgress.stars[String(level)] ?? 0;
+
+  const playerPct = cipherProgress(puzzle.plaintext, inputValue);
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-16">
@@ -318,6 +326,28 @@ export default function CipherDeskPage() {
       <p className="mt-1 text-sm text-[var(--ink-dim)]">
         Hints used: {state.hints} · Mistakes found: {state.mistakes}
       </p>
+      <section className="mt-4">
+        <label className="flex items-center gap-2 text-sm font-semibold">
+          <input
+            type="checkbox"
+            checked={raceBot}
+            onChange={(e) => setRaceBot(e.target.checked)}
+          />
+          Race the bot
+        </label>
+        {raceBot && (
+          <div className="mt-2">
+            <BotRaceBar playerPct={playerPct} botPct={bot.botPct} level={level} />
+          </div>
+        )}
+        {botWon && (
+          <p className="panel mt-2 p-4 text-sm">
+            The bot finished first this time — no progress recorded. Start over to
+            race again.
+          </p>
+        )}
+      </section>
+
 
       {won !== null && (
         <section className="card mt-4 p-5 text-center">

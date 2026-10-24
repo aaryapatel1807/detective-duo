@@ -11,6 +11,10 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, MailOpen, Play, Users } from 'lucide-react';
 import { useMe } from '@/components/together/useMe';
 import { useRoom } from '@/components/together/useRoom';
+import { useTheme } from '@/components/ThemeProvider';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
+import PhotoBooth from '@/components/booth/PhotoBooth';
+import { loadDateLists, rollDateNightSeeded } from '@/lib/datenight';
 import { createSession, saveSession } from '@/lib/together/session';
 import { coopSeed, versusSeed, type TogetherMode } from '@/lib/together/types';
 import { getGameProgress, loadLocalProgress } from '@/lib/progress';
@@ -33,13 +37,23 @@ const VERSUS_GAMES = [
   { id: 'nonograms', name: 'Nonograms', note: 'Same picture, friendly race.' },
   { id: 'dots-boxes', name: 'Dots and Boxes', note: 'One board, turns, most boxes wins.' },
   { id: 'safe-cracker', name: 'Safe Cracker', note: 'Same code, fewest guesses wins.' },
+  { id: 'quoridor', name: 'Quoridor', note: 'Race your pawn across, fences in the way.' },
+  { id: 'checkbox-race', name: 'Checkbox Race', note: 'Hunt called numbers, fill every box first.' },
+  { id: 'the-bridge', name: 'The Bridge', note: 'Word-ladder bridge between two words.' },
+  { id: 'jinx', name: 'Jinx', note: 'Same letters, word hunt — shared words score for nobody.' },
+  { id: 'spot-emoji', name: 'Speed Spot-the-Emoji', note: 'Two cards, one shared emoji — find it first.' },
+  { id: 'dont-press-purple', name: "Don't Press Purple", note: 'Hit teal prompts, hold still on violet.' },
+  { id: 'snake-arena', name: 'Snake Arena', note: 'Parallel arenas, most fruit wins.' },
+  { id: 'uno-slap', name: 'Uno Slap', note: 'Cards count 1–10, slap on a match.' },
+  { id: 'vibe-check', name: 'Vibe Check', note: 'Guess who — personality questions, not faces.' },
 ];
 
 export default function LobbyPage({ params }: { params: { code: string } }) {
   const code = params.code.toUpperCase();
   const router = useRouter();
   const me = useMe();
-  const { session, loaded, members, updateSession } = useRoom(code, me);
+  const { userId } = useTheme();
+  const { session, loaded, members, update, updateSession } = useRoom(code, me);
   const [picked, setPicked] = useState<{ game: string; mode: TogetherMode } | null>(null);
   const [level, setLevel] = useState(1);
 
@@ -115,6 +129,16 @@ export default function LobbyPage({ params }: { params: { code: string } }) {
   }
 
   const inProgress = session.status === 'playing' || session.status === 'paused' || session.status === 'finished';
+  const dateRoll = session.state.dateNightRoll as
+    | { counter?: number; dinner?: string; activity?: string; treat?: string; entertainment?: string }
+    | undefined;
+  const rollDateNight = () => {
+    if (!session) return;
+    const counter = (dateRoll?.counter ?? 0) + 1;
+    const roll = rollDateNightSeeded(loadDateLists(userId), `${code}|${counter}`);
+    update({ dateNightRoll: { counter, ...roll } });
+  };
+  const isGuest = isSupabaseConfigured && userId === null;
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-16">
@@ -135,6 +159,13 @@ export default function LobbyPage({ params }: { params: { code: string } }) {
           : members.map((m) => m.name).join(' · ')}
         {others.length === 0 && ' — waiting for your partner to join.'}
       </p>
+
+      {isGuest && (
+        <p className="panel mt-3 p-4 text-sm" role="note">
+          You are here as a guest — you can play fully, but your progress will not
+          save unless you sign in.
+        </p>
+      )}
 
       {inProgress && session.game ? (
         <section className="card mt-4 p-5">
@@ -226,6 +257,36 @@ export default function LobbyPage({ params }: { params: { code: string } }) {
           )}
         </>
       )}
+
+      <section className="card mt-6 p-5">
+        <h2 className="text-lg font-bold">Roll a date night together</h2>
+        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+          One roll, both of you see it — dinner, activity, treat, and entertainment.
+          It uses the roller's own lists, edited on the date night page.
+        </p>
+        {dateRoll?.dinner && (
+          <ul className="mt-3 space-y-1 text-sm">
+            <li>Dinner: <strong>{dateRoll.dinner}</strong></li>
+            <li>Activity: <strong>{dateRoll.activity}</strong></li>
+            <li>Treat: <strong>{dateRoll.treat}</strong></li>
+            <li>Entertainment: <strong>{dateRoll.entertainment}</strong></li>
+          </ul>
+        )}
+        <button type="button" className="btn btn-primary mt-3" onClick={rollDateNight}>
+          Roll for both of us
+        </button>
+      </section>
+
+      <section className="mt-6">
+        <h2 className="text-lg font-bold">Photo booth</h2>
+        <p className="mt-1 text-sm text-[var(--ink-dim)]">
+          Count down together, each phone shoots its own camera, the app builds the strip.
+          Nothing is uploaded anywhere.
+        </p>
+        <div className="mt-3">
+          <PhotoBooth roomCode={code} />
+        </div>
+      </section>
 
       <section className="panel mt-6 flex items-center gap-3 p-4">
         <MailOpen size={22} aria-hidden className="shrink-0" />

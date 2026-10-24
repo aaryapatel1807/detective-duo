@@ -4,12 +4,18 @@
  * RoomShell: the shared frame for every together game — room header,
  * member list, pause banner, live cursors over the game area, and the
  * shared chat + notes panels underneath.
+ *
+ * Phase 6 additions: an optional call panel slot (opt-in WebRTC call),
+ * an optional photo booth panel (with an auto-snap-on-win toggle), a
+ * win-snap banner when a round is won with auto-snap on, and a guest
+ * banner for signed-out joiners.
  */
 import { useState, type ReactNode, type MouseEvent } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, LogOut, MessageCircle, NotebookPen, Pause } from 'lucide-react';
+import { ArrowLeft, Camera, LogOut, MessageCircle, NotebookPen, Pause } from 'lucide-react';
 import type { ChatMsg } from '@/lib/together/types';
 import type { CursorPos } from './useRoom';
+import PhotoBooth from '@/components/booth/PhotoBooth';
 
 interface Props {
   code: string;
@@ -27,12 +33,18 @@ interface Props {
   onLeave: () => void;
   backHref: string;
   children: ReactNode;
+  call?: ReactNode;
+  isGuest?: boolean;
+  boothAutoSnap?: boolean;
+  onBoothAutoSnap?: (v: boolean) => void;
+  showWinSnap?: boolean;
 }
 
 export default function RoomShell(props: Props) {
   const [draft, setDraft] = useState('');
   const [noteDraft, setNoteDraft] = useState(props.notes);
   const [extrasOpen, setExtrasOpen] = useState(true);
+  const [boothOpen, setBoothOpen] = useState(false);
 
   const trackCursor = (e: MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -68,6 +80,24 @@ export default function RoomShell(props: Props) {
         . Moves sync live; a refresh restores everything.
       </p>
 
+      {props.isGuest && (
+        <p className="panel mt-3 p-4 text-sm" role="note">
+          You are here as a guest — you can play fully, but your progress will not
+          save unless you sign in.
+        </p>
+      )}
+
+      {props.showWinSnap && (
+        <div className="panel mt-3 flex flex-wrap items-center justify-between gap-2 p-4">
+          <p className="font-semibold">Lovely round — snap a win strip?</p>
+          <button type="button" className="btn btn-primary" onClick={() => setBoothOpen(true)}>
+            <Camera size={18} aria-hidden /> Open the booth
+          </button>
+        </div>
+      )}
+
+      {props.call && <div className="mt-4">{props.call}</div>}
+
       {props.paused && (
         <p className="panel mt-3 flex items-center gap-2 p-4 font-semibold" role="status">
           <Pause size={18} aria-hidden />
@@ -93,14 +123,39 @@ export default function RoomShell(props: Props) {
         ))}
       </div>
 
-      <button
-        type="button"
-        className="btn mt-6"
-        onClick={() => setExtrasOpen((v) => !v)}
-        aria-expanded={extrasOpen}
-      >
-        <MessageCircle size={18} aria-hidden /> Chat &amp; shared notes
-      </button>
+      <div className="mt-6 flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="btn"
+          onClick={() => setExtrasOpen((v) => !v)}
+          aria-expanded={extrasOpen}
+        >
+          <MessageCircle size={18} aria-hidden /> Chat &amp; shared notes
+        </button>
+        <button
+          type="button"
+          className="btn"
+          onClick={() => setBoothOpen((v) => !v)}
+          aria-expanded={boothOpen}
+        >
+          <Camera size={18} aria-hidden /> Photo booth
+        </button>
+      </div>
+      {boothOpen && (
+        <div className="mt-3">
+          <label className="flex items-center gap-2 text-sm font-semibold">
+            <input
+              type="checkbox"
+              checked={props.boothAutoSnap ?? false}
+              onChange={(e) => props.onBoothAutoSnap?.(e.target.checked)}
+            />
+            Offer a win strip when someone wins a round
+          </label>
+          <div className="mt-3">
+            <PhotoBooth roomCode={props.code} />
+          </div>
+        </div>
+      )}
       {extrasOpen && (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <section className="panel p-4">
