@@ -26,7 +26,6 @@ import {
 import { useTheme } from '@/components/ThemeProvider';
 import { THEME_IDS, THEMES } from '@/lib/themes';
 import { useMe } from '@/components/together/useMe';
-import HomeArt from '@/components/ThemeArt';
 import WelcomeIntro from '@/components/WelcomeIntro';
 import { isWelcomeSeen } from '@/lib/welcome';
 import { listLeftCases, type LeftCase } from '@/lib/together/leftCases';
@@ -299,9 +298,12 @@ export default function HomePage() {
                 something gentle.
               </p>
             </div>
-            <div className="home-art shrink-0" aria-hidden>
-              <HomeArt />
-            </div>
+            <img
+              src="/sachi/portrait.webp"
+              alt=""
+              aria-hidden
+              className="hero-portrait shrink-0"
+            />
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="chip">★ {totals.stars} stars</span>

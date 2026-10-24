@@ -194,17 +194,19 @@ h1, h2, h3, .font-display {
 }
 
 /* ------------------------------------------------------- home art ------ */
-/* Theme art accents on the home hero. Shapes come from components/ThemeArt;
- * colours here are tokens only, so art re-themes with everything else. */
-.home-art {
-  color: var(--accent);
-  flex-shrink: 0;
+/* Sachi's Ghibli cutout in the home hero corner (was per-theme SVG art).
+ * The portrait is theme-agnostic, so it stays in every theme. */
+.hero-portrait {
+  height: 150px;
+  width: auto;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
 }
-@keyframes art-float-slow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+
+@media (max-width: 640px) {
+  .hero-portrait {
+    height: 96px;
+  }
 }
-[data-theme='midnight'] .home-art { animation: art-float-slow 6s ease-in-out infinite; }
 
 /* ----------------------------------------------------- offline banner --- */
 .offline-banner {
