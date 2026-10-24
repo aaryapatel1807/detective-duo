@@ -6,7 +6,6 @@ import {
   gameLoadFailed,
   noLastRoom,
   roomNotFound,
-  signedOutMidSession,
   tierCycleNote,
   unknownCase,
   wrongRoomCode,
@@ -20,7 +19,6 @@ const states: EmptyStateData[] = [
   noLastRoom(),
   gameLoadFailed('Logic Grids'),
   unknownCase('nope'),
-  signedOutMidSession(),
   emptyDaily(),
   dailyAllDone(),
 ];

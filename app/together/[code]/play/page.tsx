@@ -62,8 +62,6 @@ import {
 import { jinxScore } from '@/lib/quickgames/jinx';
 import type { ChatMsg } from '@/lib/together/types';
 import { saveSession } from '@/lib/together/session';
-import { useTheme } from '@/components/ThemeProvider';
-import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 const GAME_NAMES: Record<string, string> = {
   'case-files': 'Case Files',
@@ -92,7 +90,6 @@ export default function PlayPage({ params }: { params: { code: string } }) {
   const code = params.code.toUpperCase();
   const router = useRouter();
   const me = useMe();
-  const { userId } = useTheme();
   const {
     session, loaded, members, paused, connected, cursors,
     update, updateSession, sendChat, sendNote, sendCursor,
@@ -879,7 +876,6 @@ export default function PlayPage({ params }: { params: { code: string } }) {
       onLeave={leave}
       backHref={`/together/${code}`}
       call={<CallPanel code={code} meUid={me.uid} isHost={isHost} />}
-      isGuest={isSupabaseConfigured && userId === null}
       boothAutoSnap={(state.boothAutoSnap as boolean | undefined) ?? false}
       onBoothAutoSnap={(v) => update({ boothAutoSnap: v })}
       showWinSnap={!!session.winnerUid && (state.boothAutoSnap as boolean | undefined) === true}

@@ -2,14 +2,10 @@
  * Welcome intro (the "hey Sachi" screen).
  *
  * Built from the verified reference page (handwriting mask-reveal,
- * code-motion portrait, canvas petals) — no video, per the owner's
- * order. The portrait is the transparent cutout at /sachi/portrait.webp.
- *
- * Privacy note (the prompt's open question, still unanswered): the
- * portrait currently shows to everyone (scope 'everyone'). The
- * portrait is an illustration, not a photograph. To show it only to
- * signed-in Sachi/Aarya later, flip WELCOME_PORTRAIT_SCOPE and gate
- * on the signed-in user in app/page.tsx.
+ * code-motion portrait, canvas petals) — no video. The portrait is
+ * the transparent cutout at /sachi/portrait.webp. It shows to everyone
+ * who opens the site: there are no accounts, so the intro is the front
+ * door, not a signed-in extra.
  */
 
 export const GREETING_NAME = 'Sachi';
@@ -18,9 +14,6 @@ export const GREETING_NAME = 'Sachi';
 export const WELCOME_SEEN_KEY = 'dd-welcome-seen';
 
 export const WELCOME_PORTRAIT = '/sachi/portrait.webp';
-
-/** Who sees the welcome portrait: 'everyone' (current) or 'signed-in'. */
-export const WELCOME_PORTRAIT_SCOPE = 'everyone' as const;
 
 export function isWelcomeSeen(
   storage: Pick<Storage, 'getItem'> | null | undefined,

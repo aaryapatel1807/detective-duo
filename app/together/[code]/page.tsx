@@ -12,7 +12,6 @@ import { ArrowLeft, MailOpen, Play, Users } from 'lucide-react';
 import { useMe } from '@/components/together/useMe';
 import { useRoom } from '@/components/together/useRoom';
 import { useTheme } from '@/components/ThemeProvider';
-import { isSupabaseConfigured } from '@/lib/supabase/client';
 import PhotoBooth from '@/components/booth/PhotoBooth';
 import { loadDateLists, rollDateNightSeeded } from '@/lib/datenight';
 import { createSession, saveSession } from '@/lib/together/session';
@@ -138,7 +137,6 @@ export default function LobbyPage({ params }: { params: { code: string } }) {
     const roll = rollDateNightSeeded(loadDateLists(userId), `${code}|${counter}`);
     update({ dateNightRoll: { counter, ...roll } });
   };
-  const isGuest = isSupabaseConfigured && userId === null;
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-16">
@@ -159,13 +157,6 @@ export default function LobbyPage({ params }: { params: { code: string } }) {
           : members.map((m) => m.name).join(' · ')}
         {others.length === 0 && ' — waiting for your partner to join.'}
       </p>
-
-      {isGuest && (
-        <p className="panel mt-3 p-4 text-sm" role="note">
-          You are here as a guest — you can play fully, but your progress will not
-          save unless you sign in.
-        </p>
-      )}
 
       {inProgress && session.game ? (
         <section className="card mt-4 p-5">

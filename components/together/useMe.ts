@@ -1,9 +1,9 @@
 'use client';
 
 /**
- * The current together player: Supabase uid when signed in, otherwise a
- * per-tab local id (local-only mode: rooms work in this browser).
- * Display name comes from localStorage (set on the together landing).
+ * The current together player: a per-tab local id (there are no
+ * accounts). Display name comes from localStorage (set on the
+ * together landing).
  */
 import { useEffect, useState } from 'react';
 import { useTheme } from '@/components/ThemeProvider';

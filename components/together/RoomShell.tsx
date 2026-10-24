@@ -6,9 +6,8 @@
  * shared chat + notes panels underneath.
  *
  * Phase 6 additions: an optional call panel slot (opt-in WebRTC call),
- * an optional photo booth panel (with an auto-snap-on-win toggle), a
- * win-snap banner when a round is won with auto-snap on, and a guest
- * banner for signed-out joiners.
+ * an optional photo booth panel (with an auto-snap-on-win toggle), and
+ * a win-snap banner when a round is won with auto-snap on.
  */
 import { useState, type ReactNode, type MouseEvent } from 'react';
 import Link from 'next/link';
@@ -34,7 +33,6 @@ interface Props {
   backHref: string;
   children: ReactNode;
   call?: ReactNode;
-  isGuest?: boolean;
   boothAutoSnap?: boolean;
   onBoothAutoSnap?: (v: boolean) => void;
   showWinSnap?: boolean;
@@ -79,13 +77,6 @@ export default function RoomShell(props: Props) {
           .join(', ') || 'your partner'}
         . Moves sync live; a refresh restores everything.
       </p>
-
-      {props.isGuest && (
-        <p className="panel mt-3 p-4 text-sm" role="note">
-          You are here as a guest — you can play fully, but your progress will not
-          save unless you sign in.
-        </p>
-      )}
 
       {props.showWinSnap && (
         <div className="panel mt-3 flex flex-wrap items-center justify-between gap-2 p-4">

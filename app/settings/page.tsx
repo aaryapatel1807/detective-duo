@@ -1,11 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import Link from 'next/link';
-import { Check, LogOut } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { THEMES, THEME_IDS, type ThemeId } from '@/lib/themes';
 import { useTheme } from '@/components/ThemeProvider';
-import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client';
 import {
   loadSoundSettings,
   playUiSound,
@@ -15,7 +13,6 @@ import {
   type AmbientKind,
   type SoundSettings,
 } from '@/lib/sound';
-import { useRouter } from 'next/navigation';
 
 function tokenStyle(id: ThemeId): CSSProperties {
   const out: Record<string, string> = {};
@@ -24,29 +21,13 @@ function tokenStyle(id: ThemeId): CSSProperties {
 }
 
 export default function SettingsPage() {
-  const { theme, setTheme, userId } = useTheme();
-  const router = useRouter();
+  const { theme, setTheme } = useTheme();
   const [selected, setSelected] = useState<ThemeId>(theme);
-  const [name, setName] = useState('');
-  const [saved, setSaved] = useState(false);
   const [sound, setSound] = useState<SoundSettings>({ enabled: false, ambient: 'off' });
 
   useEffect(() => setSound(loadSoundSettings()), []);
 
   useEffect(() => setSelected(theme), [theme]);
-
-  useEffect(() => {
-    const sb = getSupabase();
-    if (!sb || !userId) return;
-    void sb
-      .from('profiles')
-      .select('display_name')
-      .eq('id', userId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.display_name) setName(data.display_name);
-      });
-  }, [userId]);
 
   const previewStyle = useMemo(() => tokenStyle(selected), [selected]);
   const dirty = selected !== theme;
@@ -57,20 +38,6 @@ export default function SettingsPage() {
     if (next.enabled) playUiSound(theme);
     if (next.ambient === 'off') stopAmbient();
     else startAmbient(next.ambient);
-  }
-
-  async function saveName() {
-    const sb = getSupabase();
-    if (!sb || !userId) return;
-    await sb.from('profiles').update({ display_name: name }).eq('id', userId);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  }
-
-  async function signOut() {
-    const sb = getSupabase();
-    await sb?.auth.signOut();
-    router.replace('/login');
   }
 
   return (
@@ -227,38 +194,11 @@ export default function SettingsPage() {
       </section>
 
       <section className="card mt-5 p-5 sm:p-6">
-        <h2 className="text-xl font-bold">Account</h2>
-        {!isSupabaseConfigured ? (
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">
-            Sign-in is not connected on this build yet. Your progress is saved on
-            this device until then.
-          </p>
-        ) : userId ? (
-          <>
-            <label className="mt-3 flex flex-col gap-1 text-sm font-semibold">
-              Display name
-              <span className="flex gap-2">
-                <input
-                  className="input min-w-0 flex-1"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Detective"
-                />
-                <button type="button" className="btn" onClick={() => void saveName()}>
-                  {saved ? 'Saved' : 'Save'}
-                </button>
-              </span>
-            </label>
-            <button type="button" className="btn mt-4" onClick={() => void signOut()}>
-              <LogOut size={18} aria-hidden /> Sign out
-            </button>
-          </>
-        ) : (
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">
-            You are not signed in. <Link href="/login" className="underline">Sign in</Link> to
-            sync your progress across devices.
-          </p>
-        )}
+        <h2 className="text-xl font-bold">On this device</h2>
+        <p className="mt-2 text-sm text-[var(--ink-dim)]">
+          No account needed — just open the site and play. Your progress, your
+          date-night lists and your room nickname are saved on this device.
+        </p>
       </section>
     </main>
   );

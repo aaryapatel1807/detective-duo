@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from 'next';
 import { Fraunces, Nunito_Sans, Nunito, Baloo_2, Caveat, Sacramento } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider, ThemeStyle } from '@/components/ThemeProvider';
-import AuthGate from '@/components/AuthGate';
 import Shell from '@/components/Shell';
 
 const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces', display: 'swap' });
@@ -40,7 +39,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <ThemeProvider>
           <Shell />
-          <AuthGate>{children}</AuthGate>
+          {children}
         </ThemeProvider>
       </body>
     </html>

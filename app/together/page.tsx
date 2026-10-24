@@ -2,15 +2,14 @@
 
 /**
  * Together landing: create a room (4-letter code), join by code, or
- * reopen the last room with one tap. Signed-in players use their
- * account; local-only mode uses a per-tab identity.
+ * reopen the last room with one tap. Everyone plays with a per-tab
+ * identity — no account needed.
  */
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, MailOpen, Plus, Users } from 'lucide-react';
 import { useMe } from '@/components/together/useMe';
-import { useTheme } from '@/components/ThemeProvider';
 import { generateRoomCode, isValidRoomCode, normalizeRoomCode } from '@/lib/together/roomCode';
 import {
   createSession,
@@ -28,7 +27,6 @@ import { noLastRoom } from '@/lib/emptyStates';
 export default function TogetherPage() {
   const router = useRouter();
   const me = useMe();
-  const { userId } = useTheme();
   const [name, setName] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -98,14 +96,14 @@ export default function TogetherPage() {
       {!isSupabaseConfigured && (
         <p className="panel mt-4 p-4 text-sm">
           Local mode: this room lives in this browser only, so two devices cannot
-          share it yet. Sign in once accounts are connected to play across devices.
+          share it yet.
         </p>
       )}
 
-      {isSupabaseConfigured && userId === null && (
+      {isSupabaseConfigured && (
         <p className="panel mt-4 p-4 text-sm">
-          No account needed to join a room — just a code and a nickname. Guest
-          progress will not save unless you sign in.
+          No account needed to join a room — just a code and a nickname.
+          Progress is saved on this device.
         </p>
       )}
 

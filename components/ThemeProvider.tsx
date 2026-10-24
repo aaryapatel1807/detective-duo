@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from 'react';
 import { THEMES, isThemeId, type ThemeId } from '@/lib/themes';
-import { getSupabase } from '@/lib/supabase/client';
 import SoundEngine from './SoundEngine';
 
 const STORAGE_KEY = 'dd-v2-theme';
@@ -18,7 +17,11 @@ interface ThemeCtx {
   theme: ThemeId;
   /** Apply + persist a theme choice. */
   setTheme: (t: ThemeId) => void;
-  /** The signed-in user's id, or null (local mode). */
+  /**
+   * Always null: the site has no accounts. Progress, date-night lists
+   * and together identities are per-device (localStorage / per-tab id),
+   * and every consumer already handles a null user id.
+   */
   userId: string | null;
 }
 
@@ -41,9 +44,8 @@ export function ThemeStyle() {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeId>('candy');
-  const [userId, setUserId] = useState<string | null>(null);
 
-  // Pre-login choice lives in localStorage; on sign-in the profile wins.
+  // The theme choice lives in localStorage only.
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -51,52 +53,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
-    const sb = getSupabase();
-    if (!sb) return;
-    let active = true;
-    sb.auth.getSession().then(async ({ data }) => {
-      if (!active) return;
-      const uid = data.session?.user.id ?? null;
-      setUserId(uid);
-      if (uid) {
-        const { data: profile } = await sb
-          .from('profiles')
-          .select('theme')
-          .eq('id', uid)
-          .maybeSingle();
-        if (active && profile && isThemeId(profile.theme)) {
-          setThemeState(profile.theme as ThemeId);
-        }
-      }
-    });
-    const { data: sub } = sb.auth.onAuthStateChange((_evt, session) => {
-      setUserId(session?.user.id ?? null);
-    });
-    return () => {
-      active = false;
-      sub.subscription.unsubscribe();
-    };
   }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
-  const setTheme = useCallback(
-    (t: ThemeId) => {
-      setThemeState(t);
-      try {
-        localStorage.setItem(STORAGE_KEY, t);
-      } catch {
-        /* ignore */
-      }
-      const sb = getSupabase();
-      if (sb && userId) {
-        void sb.from('profiles').update({ theme: t }).eq('id', userId);
-      }
-    },
-    [userId],
-  );
+  const setTheme = useCallback((t: ThemeId) => {
+    setThemeState(t);
+    try {
+      localStorage.setItem(STORAGE_KEY, t);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
-  return <Ctx.Provider value={{ theme, setTheme, userId }}>{children}<SoundEngine /></Ctx.Provider>;
+  return <Ctx.Provider value={{ theme, setTheme, userId: null }}>{children}<SoundEngine /></Ctx.Provider>;
 }

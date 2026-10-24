@@ -69,15 +69,6 @@ export function unknownCase(caseId: string): EmptyStateData {
   };
 }
 
-export function signedOutMidSession(): EmptyStateData {
-  return {
-    title: 'You were signed out',
-    body: 'Your progress is saved on this device. Sign in again to pick up where you left off and sync across devices.',
-    actionLabel: 'Sign in',
-    actionHref: '/login',
-  };
-}
-
 export function emptyDaily(): EmptyStateData {
   return {
     title: 'Nothing ticked off yet today',
