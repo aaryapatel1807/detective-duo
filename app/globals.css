@@ -2,1232 +2,229 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================================
-   Detective Duo — Noir design system
-   Dark-first ("midnight office"); light = "case-file paper"
-   via [data-theme="light"] on <html>. Persisted in localStorage.
-   ============================================================ */
+/*
+ * All visual values come from theme tokens (lib/themes.ts, rendered by
+ * components/ThemeStyle.tsx as [data-theme] blocks). Nothing in this file
+ * names a colour; components consume variables only.
+ */
 
-:root,
-[data-theme='dark'] {
-  --font-type: 'Courier Prime', 'Courier New', monospace;
-  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
-
-  /* surfaces */
-  --glass-bg: rgba(255, 255, 255, 0.055);
-  --glass-bg-strong: rgba(255, 255, 255, 0.09);
-  --glass-border: rgba(255, 255, 255, 0.14);
-  --glass-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
-
-  /* ink */
-  --ink: #f2e9d8;
-  --ink-dim: rgba(242, 233, 216, 0.62);
-  --ink-faint: rgba(242, 233, 216, 0.38);
-
-  /* accents */
-  --amber-glow: #e8a33d;
-  --amber-deep: #8a5a1e;
-  --blood: #b3261e;
-  --blood-bright: #d63a2c;
-  --brass: #c9a227;
-  --brass-deep: #7c5f14;
-
-  /* noir props */
-  --cork: #a97c4f;
-  --cork-deep: #7d5830;
-  --manila: #d9c49b;
-  --manila-deep: #b89f6f;
-  --paper: #efe6cf;
-
-  /* page backdrop */
-  --bg-base: #0a0f1a;
-  --lamp-x: 72%;
-  --lamp-y: -6%;
-
-  /* hub redesign tokens (dark navy noir) */
-  --hub-bg: #0a0f1a;
-  --hub-panel: rgba(13, 20, 36, 0.66);
-  --hub-panel-2: #111a2e;
-  --hub-border: #1f2a3d;
-  --hub-gold: #d9a441;
-  --hub-gold-soft: rgba(217, 164, 65, 0.14);
-  --hub-green: #3ddc84;
-  --hub-red: #b3261e;
-  --hub-ink: #ece7d9;
-  --hub-ink-dim: #8b95a8;
-  --hub-glass-blur: blur(26px) saturate(1.6);
-
-  /* liquid glass — 3 depth tiers, Apple-style layered glass */
-  --lg-tint-hi: rgba(26, 37, 60, 0.74);
-  --lg-tint-lo: rgba(10, 16, 30, 0.58);
-  --lg-rim-hi: rgba(255, 255, 255, 0.44);
-  --lg-rim-mid: rgba(255, 255, 255, 0.16);
-  --lg-rim-lo: rgba(255, 255, 255, 0.025);
-  --lg-spec: rgba(255, 255, 255, 0.13);
-  --lg-edge: rgba(255, 255, 255, 0.18);
-  --lg-inner: rgba(0, 0, 0, 0.26);
-  --lg-blur-1: blur(16px) saturate(170%);
-  --lg-blur-2: blur(26px) saturate(185%);
-  --lg-blur-3: blur(38px) saturate(200%) brightness(1.05);
-  --lg-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px -8px rgba(0, 0, 0, 0.5);
-  --lg-shadow-2: 0 1px 2px rgba(0, 0, 0, 0.28), 0 16px 36px -12px rgba(0, 0, 0, 0.55),
-    0 40px 72px -32px rgba(0, 0, 0, 0.6);
-  --lg-shadow-3: 0 2px 4px rgba(0, 0, 0, 0.3), 0 24px 52px -16px rgba(0, 0, 0, 0.6),
-    0 56px 104px -44px rgba(0, 0, 0, 0.7);
-  --lg-radius-1: 18px;
-  --lg-radius-2: 24px;
-  --lg-radius-3: 28px;
-  --lg-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --lg-ease: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-[data-theme='light'] {
-  --glass-bg: rgba(255, 255, 255, 0.55);
-  --glass-bg-strong: rgba(255, 255, 255, 0.72);
-  --glass-border: rgba(90, 64, 32, 0.22);
-  --glass-shadow: 0 18px 50px rgba(90, 64, 32, 0.22);
-
-  --ink: #2b2118;
-  --ink-dim: rgba(43, 33, 24, 0.66);
-  --ink-faint: rgba(43, 33, 24, 0.42);
-
-  --amber-glow: #b97a1c;
-  --amber-deep: #7c5212;
-  --blood: #a3231a;
-  --blood-bright: #c53a2a;
-  --brass: #9c7c1e;
-  --brass-deep: #6d5612;
-
-  --cork: #c49a63;
-  --cork-deep: #9c7440;
-  --manila: #e3cfA6;
-  --manila-deep: #c4ab7a;
-  --paper: #f7f1df;
-
-  --bg-base: #e9dfc9;
-
-  /* hub tokens — light "case-file paper" values */
-  --hub-bg: #f1e9d6;
-  --hub-panel: rgba(255, 255, 255, 0.68);
-  --hub-panel-2: #fffdf6;
-  --hub-border: rgba(120, 90, 40, 0.28);
-  --hub-gold: #a5691a;
-  --hub-gold-soft: rgba(166, 105, 26, 0.12);
-  --hub-green: #1d9e54;
-  --hub-red: #a3231a;
-  --hub-ink: #2b2118;
-  --hub-ink-dim: rgba(43, 33, 24, 0.66);
-  --hub-glass-blur: blur(26px) saturate(1.4);
-
-  /* liquid glass — case-file paper keeps the same 3 tiers, milkier */
-  --lg-tint-hi: rgba(255, 255, 255, 0.76);
-  --lg-tint-lo: rgba(252, 245, 230, 0.56);
-  --lg-rim-hi: rgba(255, 255, 255, 0.95);
-  --lg-rim-mid: rgba(255, 255, 255, 0.5);
-  --lg-rim-lo: rgba(120, 90, 40, 0.06);
-  --lg-spec: rgba(255, 255, 255, 0.6);
-  --lg-edge: rgba(255, 255, 255, 0.9);
-  --lg-inner: rgba(90, 64, 32, 0.08);
-  --lg-blur-1: blur(16px) saturate(160%);
-  --lg-blur-2: blur(26px) saturate(170%);
-  --lg-blur-3: blur(36px) saturate(180%);
-  --lg-shadow-1: 0 1px 2px rgba(90, 64, 32, 0.12), 0 8px 20px -8px rgba(90, 64, 32, 0.18);
-  --lg-shadow-2: 0 1px 2px rgba(90, 64, 32, 0.1), 0 16px 36px -12px rgba(90, 64, 32, 0.2),
-    0 40px 72px -32px rgba(90, 64, 32, 0.22);
-  --lg-shadow-3: 0 2px 4px rgba(90, 64, 32, 0.12), 0 24px 52px -16px rgba(90, 64, 32, 0.24),
-    0 56px 104px -44px rgba(90, 64, 32, 0.26);
-  --lg-radius-1: 18px;
-  --lg-radius-2: 24px;
-  --lg-radius-3: 28px;
-  --lg-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --lg-ease: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-html,
-body {
-  height: 100%;
+html {
+  background: var(--bg);
 }
 
 body {
-  font-family: var(--font-sans);
-  color: var(--ink);
-  background-color: var(--bg-base);
-  /* Ambient desk-lamp glow over deep charcoal */
-  background-image:
-    radial-gradient(
-      900px 620px at var(--lamp-x) var(--lamp-y),
-      rgba(232, 163, 61, 0.22),
-      rgba(232, 163, 61, 0.05) 55%,
-      transparent 75%
-    ),
-    radial-gradient(
-      1400px 1000px at 20% 110%,
-      rgba(232, 163, 61, 0.07),
-      transparent 60%
-    );
+  background: var(--bg);
+  background-image: var(--texture);
   background-attachment: fixed;
-  -webkit-font-smoothing: antialiased;
-}
-
-[data-theme='light'] body {
-  background-image:
-    radial-gradient(
-      900px 620px at var(--lamp-x) var(--lamp-y),
-      rgba(185, 122, 28, 0.16),
-      transparent 70%
-    );
-}
-
-::selection {
-  background: rgba(232, 163, 61, 0.4);
-}
-
-/* ---------- reusable primitives ---------- */
-
-/* ============================================================
-   LIQUID GLASS — Apple-style layered glass
-   Every surface is built from four stacked layers:
-     1. specular highlight  (radial sheen, top-left light source)
-     2. tinted body         (translucent gradient over the blur)
-     3. refracting rim      (gradient border via background-clip)
-     4. contact + ambient shadows (inset edge, key, wide fill)
-   Three depth tiers: T1 resting, T2 raised, T3 floating.
-   No pseudo-elements — safe on fixed/positioned chrome.
-   ============================================================ */
-
-.glass-card,
-.glass-card-strong,
-.hub-glass,
-.hub-glass-strong,
-.lg-1,
-.lg-2,
-.lg-3 {
-  border: 1px solid transparent;
-  background-image:
-    radial-gradient(120% 90% at 18% -14%, var(--lg-spec) 0%, transparent 58%),
-    linear-gradient(158deg, var(--lg-tint-hi) 0%, var(--lg-tint-lo) 100%),
-    linear-gradient(
-      152deg,
-      var(--lg-rim-hi) 0%,
-      var(--lg-rim-lo) 32%,
-      var(--lg-rim-lo) 64%,
-      var(--lg-rim-mid) 100%
-    );
-  background-origin: border-box;
-  background-clip: padding-box, padding-box, border-box;
-  border-radius: var(--lg-radius-2);
-  box-shadow: var(--lg-shadow-2), inset 0 1px 0 var(--lg-edge), inset 0 -1px 0 var(--lg-inner);
-  -webkit-backdrop-filter: var(--lg-blur-2);
-  backdrop-filter: var(--lg-blur-2);
-}
-
-.glass-card-strong,
-.hub-glass-strong {
-  background-image:
-    radial-gradient(120% 90% at 18% -14%, var(--lg-spec) 0%, transparent 62%),
-    linear-gradient(158deg, var(--lg-tint-hi) 0%, var(--lg-tint-hi) 55%, var(--lg-tint-lo) 100%),
-    linear-gradient(
-      152deg,
-      var(--lg-rim-hi) 0%,
-      var(--lg-rim-lo) 30%,
-      var(--lg-rim-lo) 62%,
-      var(--lg-rim-mid) 100%
-    );
-}
-
-/* Depth tiers — add .lg-1 / .lg-2 / .lg-3 to any surface. */
-.lg-1 {
-  border-radius: var(--lg-radius-1);
-  box-shadow: var(--lg-shadow-1), inset 0 1px 0 var(--lg-edge), inset 0 -1px 0 var(--lg-inner);
-  -webkit-backdrop-filter: var(--lg-blur-1);
-  backdrop-filter: var(--lg-blur-1);
-}
-
-.lg-3 {
-  border-radius: var(--lg-radius-3);
-  box-shadow: var(--lg-shadow-3), inset 0 1px 0 var(--lg-edge), inset 0 -1px 0 var(--lg-inner);
-  -webkit-backdrop-filter: var(--lg-blur-3);
-  backdrop-filter: var(--lg-blur-3);
-}
-
-/* Browsers without backdrop-filter still need readable, tinted glass. */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass-card,
-  .glass-card-strong,
-  .hub-glass,
-  .hub-glass-strong,
-  .lg-1,
-  .lg-2,
-  .lg-3 {
-    background-image:
-      radial-gradient(120% 90% at 18% -14%, var(--lg-spec) 0%, transparent 58%),
-      linear-gradient(158deg, var(--hub-panel) 0%, var(--hub-panel) 100%);
-  }
-}
-
-.type-heading {
-  font-family: var(--font-type);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.eyebrow {
-  font-family: var(--font-type);
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  font-size: 0.72rem;
-  color: var(--ink-dim);
-}
-
-/* ---------- corkboard ---------- */
-
-.corkboard {
-  position: relative;
-  border-radius: 18px;
-  background-color: var(--cork);
-  background-image:
-    radial-gradient(rgba(0, 0, 0, 0.16) 1.1px, transparent 1.2px),
-    radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1.1px),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(0, 0, 0, 0.14));
-  background-size: 9px 9px, 13px 13px, cover;
-  background-position: 0 0, 4px 6px, 0 0;
-  box-shadow:
-    inset 0 0 60px rgba(0, 0, 0, 0.35),
-    inset 0 2px 0 rgba(255, 255, 255, 0.15),
-    0 24px 60px rgba(0, 0, 0, 0.5);
-  border: 10px solid #3a2b1c;
-  outline: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* ---------- manila case folder ---------- */
-
-.manila-folder {
-  position: relative;
-  background: linear-gradient(160deg, var(--manila) 0%, var(--manila-deep) 100%);
-  border-radius: 4px 10px 10px 10px;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  color: #3a2c17;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-.manila-folder::before {
-  /* folder tab */
-  content: '';
-  position: absolute;
-  top: -13px;
-  left: 8px;
-  width: 38%;
-  height: 16px;
-  background: linear-gradient(180deg, var(--manila), var(--manila-deep));
-  border-radius: 6px 8px 0 0;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-.manila-folder:hover {
-  transform: translateY(-4px) rotate(-0.6deg);
-  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-/* ---------- polaroid ---------- */
-
-.polaroid {
-  background: #f5f1e8;
-  padding: 10px 10px 34px 10px;
-  border-radius: 3px;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5);
-  color: #2b2b2b;
-  transition: transform 0.25s ease;
-}
-.polaroid:hover {
-  transform: translateY(-4px) rotate(0.8deg) scale(1.02);
-}
-.polaroid img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-  filter: sepia(0.35) contrast(1.02);
-  background: #222;
-}
-.polaroid .caption {
-  font-family: var(--font-type);
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding-top: 8px;
-  text-align: center;
-}
-
-/* ---------- brass pin ---------- */
-
-.brass-pin {
-  width: 22px;
-  height: 22px;
-  border-radius: 9999px;
-  background: radial-gradient(circle at 32% 28%, #ffe9a8 0%, var(--brass) 38%, var(--brass-deep) 78%, #3d2f08 100%);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.55), inset 0 -2px 4px rgba(0, 0, 0, 0.4);
-  position: relative;
-}
-.brass-pin::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  width: 3px;
-  height: 9px;
-  transform: translateX(-50%);
-  background: linear-gradient(180deg, #5c4a12, #2c2308);
-  border-radius: 0 0 3px 3px;
-}
-
-/* ---------- wax seal ---------- */
-
-.wax-seal {
-  border-radius: 9999px;
-  background: radial-gradient(circle at 35% 30%, var(--blood-bright) 0%, var(--blood) 45%, #5e130d 100%);
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.5),
-    inset 0 2px 6px rgba(255, 255, 255, 0.35),
-    inset 0 -4px 8px rgba(0, 0, 0, 0.45);
-  display: grid;
-  place-items: center;
-  color: rgba(255, 235, 225, 0.85);
-  position: relative;
-}
-.wax-seal::before {
-  content: '';
-  position: absolute;
-  inset: 12%;
-  border-radius: 9999px;
-  border: 2px solid rgba(255, 235, 225, 0.28);
-}
-
-/* ---------- typewriter paper strip ---------- */
-
-.paper-strip {
-  background: linear-gradient(180deg, var(--paper), #e2d5b4);
-  color: #3a2c17;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-
-/* ---------- XP bar ---------- */
-
-.xp-track {
-  height: 10px;
-  border-radius: 9999px;
-  background: rgba(0, 0, 0, 0.45);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
-  overflow: hidden;
-}
-.xp-fill {
-  height: 100%;
-  border-radius: 9999px;
-  background: linear-gradient(90deg, var(--amber-deep), var(--amber-glow));
-  box-shadow: 0 0 12px rgba(232, 163, 61, 0.7);
-}
-
-/* ---------- inputs & buttons ---------- */
-
-.noir-input {
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
   color: var(--ink);
-  padding: 0.6rem 0.9rem;
-  outline: none;
-  width: 100%;
-}
-.noir-input:focus {
-  border-color: var(--amber-glow);
-  box-shadow: 0 0 0 2px rgba(232, 163, 61, 0.25);
-}
-[data-theme='light'] .noir-input {
-  background: rgba(255, 255, 255, 0.6);
+  font-family: var(--font-body);
+  min-height: 100vh;
 }
 
-.noir-btn {
-  font-family: var(--font-type);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-size: 0.8rem;
-  border-radius: 14px;
-  padding: 0.7rem 1.4rem;
-  border: 1px solid var(--amber-glow);
-  background: linear-gradient(180deg, rgba(232, 163, 61, 0.22), rgba(232, 163, 61, 0.08));
-  color: var(--ink);
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.noir-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(232, 163, 61, 0.3);
-}
-.noir-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
 }
 
-.noir-btn-ghost {
-  font-family: var(--font-type);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-size: 0.8rem;
-  border-radius: 14px;
-  padding: 0.7rem 1.4rem;
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  color: var(--ink-dim);
-  cursor: pointer;
-}
-.noir-btn-ghost:hover {
-  color: var(--ink);
-  border-color: var(--amber-glow);
+.font-hand {
+  font-family: var(--font-caveat), cursive;
 }
 
-/* thin scrollbar */
-*::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-*::-webkit-scrollbar-thumb {
-  background: rgba(232, 163, 61, 0.35);
-  border-radius: 8px;
-}
-*::-webkit-scrollbar-track {
-  background: transparent;
+/* ---------------------------------------------------------- surfaces --- */
+
+.card {
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
 }
 
-/* Full-bleed game boards: hide all app chrome while mounted. */
-body.dd-fullbleed [data-sidebar-toggle] {
-  display: none !important;
-}
-body.dd-fullbleed [data-app-sidebar] {
-  display: none !important;
-}
-body.dd-fullbleed [data-bottom-nav] {
-  display: none !important;
-}
-body.dd-fullbleed main {
-  padding: 0 !important;
+.panel {
+  background: var(--surface-2);
+  border: var(--card-border);
+  border-radius: var(--radius);
 }
 
-/* ============================================================
-   HUB REDESIGN — shell chrome (noir)
-   Token utilities + app-shell layout (sidebar / bottom nav).
-   Unlayered rules below intentionally beat Tailwind's layered
-   utilities; responsive display is handled with explicit @media.
-   ============================================================ */
-
-body {
-  font-family: var(--hub-body), var(--font-sans);
+.paper {
+  background: var(--paper);
+  color: var(--paper-ink);
+  border: var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
-/* ---------- font utilities ---------- */
+/* ----------------------------------------------------------- buttons --- */
 
-.hub-display {
-  font-family: var(--hub-display), 'Cinzel', Georgia, serif;
-}
-
-.hub-mono {
-  font-family: var(--hub-mono), 'JetBrains Mono', ui-monospace, monospace;
-}
-
-.hub-hand {
-  font-family: var(--hub-hand), 'Caveat', cursive;
-}
-
-/* ---------- frosted noir panel ---------- */
-
-/* `.hub-glass` itself is painted by the liquid-glass primitives above.
-   Hub chrome keeps its noir identity with a faint brass rim light. */
-.hub-glass {
-  --lg-rim-mid: rgba(217, 164, 65, 0.24);
-}
-
-/* ---------- micro labels / eyebrows ---------- */
-
-.hub-eyebrow {
-  font-family: var(--hub-mono), 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.6875rem; /* 11px — never smaller */
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--hub-ink-dim);
-}
-
-/* ---------- buttons ---------- */
-
-.hub-btn {
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 0.65rem 1.25rem;
   min-height: 44px;
-  padding: 0.7rem 1.4rem;
-  border-radius: 14px;
-  border: 1px solid var(--hub-gold);
-  background: linear-gradient(180deg, rgba(217, 164, 65, 0.28), rgba(217, 164, 65, 0.1));
-  color: var(--hub-ink);
-  font-family: var(--hub-mono), 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 700;
+  box-shadow: var(--btn-shadow);
+  transition: transform var(--motion), background var(--motion), opacity var(--motion);
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(1px); box-shadow: none; }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+}
+
+.btn-accent2 {
+  background: var(--accent-2);
+  color: var(--accent-2-ink);
+  border-color: transparent;
+}
+
+/* ------------------------------------------------------------- tiles --- */
+
+.game-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: left;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 1rem;
+  transition: transform var(--motion);
+}
+.game-tile:not(:disabled):hover { transform: translateY(-2px); }
+
+/* Per-theme tile feel (token colours only; motion differs by theme). */
+[data-theme='candy'] .game-tile:not(:disabled):hover { transform: translateY(-4px) rotate(-0.3deg); }
+[data-theme='candy'] .tile-icon { border-radius: 999px; }
+[data-theme='midnight'] .game-tile:not(:disabled):hover { transform: translateY(-1px); }
+[data-theme='midnight'] .tile-icon { box-shadow: var(--glow); }
+[data-theme='sunny'] .game-tile:not(:disabled):hover { transform: translateY(-2px) rotate(-0.5deg); }
+[data-theme='sunny'] .tile-icon { border: 2px dashed var(--line); transform: rotate(-2deg); }
+[data-theme='noir'] .game-tile:not(:disabled):hover { transform: translateY(-1px); }
+.game-tile:disabled { opacity: 0.75; cursor: default; }
+
+.tile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.tile-icon.alt {
+  background: var(--accent-2);
+  color: var(--accent-2-ink);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  padding: 0.15rem 0.6rem;
   font-size: 0.8rem;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  text-decoration: none;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
-.hub-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(217, 164, 65, 0.35);
+
+/* -------------------------------------------------------------- forms --- */
+
+.input {
+  width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 0.7rem 0.9rem;
+  min-height: 44px;
 }
-.hub-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-.hub-btn:focus-visible,
-.hub-btn-ghost:focus-visible,
-.hub-tab:focus-visible,
-.hub-navlink:focus-visible {
-  outline: 2px solid var(--hub-gold);
+.input::placeholder { color: var(--ink-dim); }
+
+:focus-visible {
+  outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
 
-.hub-btn-ghost {
+/* --------------------------------------------------------- logic grid --- */
+
+.lg-cell {
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 44px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  min-height: 44px;
-  padding: 0.7rem 1.4rem;
-  border-radius: 14px;
-  border: 1px solid var(--hub-border);
-  background: transparent;
-  color: var(--hub-ink-dim);
-  font-family: var(--hub-mono), 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  text-decoration: none;
+  border-radius: calc(var(--radius) * 0.6);
+  border: 1px solid var(--cell-line);
+  background: var(--cell);
+  color: var(--ink);
+  font-weight: 800;
   cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: transform var(--motion), background var(--motion);
+  touch-action: manipulation;
 }
-.hub-btn-ghost:hover {
-  color: var(--hub-ink);
-  border-color: var(--hub-gold);
+.lg-cell:hover { transform: scale(1.06); }
+.lg-cell[data-mark='yes'] { color: var(--good); border-color: var(--good); }
+.lg-cell[data-mark='no'] { color: var(--bad); }
+.lg-cell.flash-wrong { animation: lgshake 0.3s ease; }
+
+@keyframes lgshake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
 }
 
-/* ---------- pill badge ---------- */
+.clue-struck {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
 
-.hub-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.3rem 0.75rem;
-  border-radius: 9999px;
-  border: 1px solid var(--hub-border);
-  background: rgba(13, 20, 36, 0.5);
-  color: var(--hub-ink-dim);
-  font-family: var(--hub-mono), 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.6875rem; /* 11px */
+/* ------------------------------------------------------- home art ------ */
+/* Theme art accents on the home hero. Shapes come from components/ThemeArt;
+ * colours here are tokens only, so art re-themes with everything else. */
+.home-art {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+@keyframes art-float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+[data-theme='midnight'] .home-art { animation: art-float-slow 6s ease-in-out infinite; }
+
+/* ----------------------------------------------------- offline banner --- */
+.offline-banner {
+  background: var(--accent-2);
+  color: var(--accent-2-ink);
+  text-align: center;
+  font-size: 0.875rem;
   font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  white-space: nowrap;
+  padding: 0.5rem 1rem;
 }
 
-/* ---------- app shell: main ---------- */
-
-.hub-main {
-  min-height: 100vh;
-  padding: 1.5rem 1rem 7rem; /* 112px bottom clears the floating tab bar */
-  transition: padding 0.3s ease;
-}
-@media (min-width: 1024px) {
-  .hub-main {
-    padding: 1.5rem 2rem 1.5rem 300px; /* clears the 268px sidebar */
-  }
-}
-
-/* ---------- app shell: sidebar (desktop only, >= lg) ---------- */
-
-.hub-sidebar {
-  display: none;
-}
-@media (min-width: 1024px) {
-  .hub-sidebar {
-    display: flex;
-    flex-direction: column;
-  }
-}
-
-.hub-sidebar-toggle {
-  display: none;
-  place-items: center;
-}
-@media (min-width: 1024px) {
-  .hub-sidebar-toggle {
-    display: grid;
-  }
-}
-
-.hub-icon-btn {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 9999px;
-  border: 1px solid var(--hub-border);
-  background: rgba(13, 20, 36, 0.6);
-  color: var(--hub-ink-dim);
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-.hub-icon-btn:hover {
-  color: var(--hub-gold);
-  border-color: var(--hub-gold);
-}
-
-/* Sidebar nav links: JetBrains Mono labels, gold active pill */
-.hub-navlink {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-height: 44px;
-  padding: 0.625rem 1rem;
-  border-radius: 1rem;
-  border: 1px solid transparent;
-  color: var(--hub-ink-dim);
-  font-family: var(--hub-mono), 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  text-decoration: none;
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-}
-.hub-navlink:hover {
-  color: var(--hub-ink);
-  border-color: var(--hub-border);
-}
-.hub-navlink.active {
-  background: var(--hub-gold-soft);
-  border-color: rgba(217, 164, 65, 0.35);
-  color: var(--hub-gold);
-}
-
-/* ---------- app shell: bottom nav (mobile only, < lg) ---------- */
-
-.hub-bottomnav {
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  z-index: 50;
-  display: none;
-}
-@media (max-width: 1023.98px) {
-  .hub-bottomnav {
-    display: block;
-  }
-}
-
-/* Floating island = tier 3: deepest blur, brightest rim, widest fill light. */
-.hub-bottomnav-inner {
-  display: flex;
-  gap: 2px;
-  padding: 8px;
-  border-radius: 28px;
-  border: 1px solid transparent;
-  background-image:
-    radial-gradient(120% 90% at 22% -18%, var(--lg-spec) 0%, transparent 60%),
-    linear-gradient(158deg, var(--lg-tint-hi) 0%, var(--lg-tint-lo) 100%),
-    linear-gradient(
-      152deg,
-      var(--lg-rim-hi) 0%,
-      var(--lg-rim-lo) 30%,
-      rgba(217, 164, 65, 0.18) 64%,
-      var(--lg-rim-mid) 100%
-    );
-  background-origin: border-box;
-  background-clip: padding-box, padding-box, border-box;
-  box-shadow: var(--lg-shadow-3), inset 0 1px 0 var(--lg-edge), inset 0 -1px 0 var(--lg-inner);
-  -webkit-backdrop-filter: var(--lg-blur-3);
-  backdrop-filter: var(--lg-blur-3);
-}
-
-.hub-tab {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-height: 56px; /* >= 44px touch target */
-  padding: 8px 2px;
-  border-radius: 20px;
-  border: 1px solid transparent;
-  color: var(--hub-ink-dim);
-  text-decoration: none;
-  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
-}
-.hub-tab:active {
-  transform: scale(0.96);
-}
-/* Active tab = gold-tinted pill behind icon + label (shape, not color alone) */
-.hub-tab.active {
-  background: var(--hub-gold-soft);
-  border-color: rgba(217, 164, 65, 0.32);
-  color: var(--hub-gold);
-}
-.hub-tab-icon {
-  width: 22px;
-  height: 22px;
-  flex: none;
-}
-.hub-tab-label {
-  font-family: var(--hub-body), system-ui, sans-serif;
-  font-size: 0.6875rem; /* 11px — never smaller */
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-/* ---------- Apple-style press feedback (spring, not linear) ---------- */
-
-.hub-btn,
-.hub-btn-ghost,
-.hub-tab,
-.hub-icon-btn,
-.hub-navlink,
-.hub-open-file,
-.noir-btn,
-.noir-btn-ghost {
-  transition: transform 0.45s var(--lg-spring), box-shadow 0.45s var(--lg-ease),
-    border-color 0.25s ease, color 0.2s ease, background-color 0.25s ease, opacity 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.hub-btn:active:not(:disabled),
-.hub-btn-ghost:active,
-.hub-tab:active,
-.hub-icon-btn:active,
-.hub-navlink:active,
-.noir-btn:active:not(:disabled),
-.noir-btn-ghost:active {
-  transform: scale(0.96);
-  transition-duration: 0.12s;
-}
+/* ------------------------------------------------------------- motion --- */
 
 @media (prefers-reduced-motion: reduce) {
-  .hub-btn,
-  .hub-btn-ghost,
-  .hub-tab,
-  .hub-icon-btn,
-  .hub-navlink,
-  .hub-open-file,
-  .noir-btn,
-  .noir-btn-ghost {
-    transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-  .hub-btn:active,
-  .hub-btn-ghost:active,
-  .hub-tab:active,
-  .hub-icon-btn:active,
-  .hub-navlink:active,
-  .noir-btn:active,
-  .noir-btn-ghost:active {
-    transform: none;
-  }
-}
-
-/* ============================================================
-   DUO CANDY — warm cream edu-playful theme
-   Third theme alongside noir (dark) and case-file (light).
-   Everything below is gated on [data-theme='duo-candy'],
-   so the other two themes render exactly as before. Play
-   surfaces are untouched: the game panel keeps its pinned
-   always-dark kit tokens (--gk-*) in every theme.
-   Look: warm cream (#fff6e9) backdrop with soft pastel blob
-   washes, chunky white cards (28px radius, soft plum shadow),
-   color-coded sections — coral #f96d7b, teal #0b6e63,
-   mustard #ffb703, lavender #a78bfa, mint #5ec8b4 — deep
-   plum-brown ink (#2e2a38), Baloo 2 display type + Nunito body.
-   Spec: docs/ui-reference/duo-candy/SPEC.md
-   ============================================================ */
-
-[data-theme='duo-candy'] {
-  /* surfaces — solid white cards on warm cream */
-  --glass-bg: rgba(255, 255, 255, 0.92);
-  --glass-bg-strong: #ffffff;
-  --glass-border: rgba(46, 42, 56, 0.1);
-  --glass-shadow: 0 10px 24px rgba(46, 42, 56, 0.12);
-
-  /* ink — deep plum-brown (dim is a solid plum-gray so secondary
-     text stays ≥4.5:1 on cream AND on white cards) */
-  --ink: #2e2a38;
-  --ink-dim: rgba(46, 42, 56, 0.72);
-  --ink-faint: rgba(46, 42, 56, 0.5);
-
-  /* accents — candy palette; "deep" variants carry text duty */
-  --amber-glow: #ffc93c;
-  --amber-deep: #8a5e00;
-  --blood: #c24352;
-  --blood-bright: #f96d7b;
-  --brass: #ffb703;
-  --brass-deep: #8a5e00;
-
-  /* noir props — kept identical to the dark theme so physical
-     props (corkboard, manila, paper) never change with theme */
-  --cork: #a97c4f;
-  --cork-deep: #7d5830;
-  --manila: #d9c49b;
-  --manila-deep: #b89f6f;
-  --paper: #efe6cf;
-
-  /* page backdrop */
-  --bg-base: #fff6e9;
-
-  /* hub tokens — Duo Candy values */
-  --hub-bg: #fff6e9;
-  --hub-panel: #ffffff;
-  --hub-panel-2: #2e2a38;
-  --hub-border: rgba(46, 42, 56, 0.12);
-  --hub-gold: #8a5e00;
-  --hub-gold-soft: rgba(255, 183, 3, 0.3);
-  --hub-green: #0e6b57;
-  --hub-red: #c24352;
-  --hub-ink: #2e2a38;
-  --hub-ink-dim: #57506b;
-  --hub-glass-blur: blur(14px) saturate(1.2);
-
-  /* liquid glass — Duo Candy cards are chunky white, so (like Duo
-     Blue) the tiers keep solid warm-white tints and only the
-     rim/shadow carry the depth. Without this set the theme fell
-     back to the :root DARK tints, and any .hub-glass surface with
-     no explicit candy background override (e.g. the Love Notes
-     composer card) rendered dark slate. */
-  --lg-tint-hi: #ffffff;
-  --lg-tint-lo: #fffaf0;
-  --lg-rim-hi: rgba(255, 255, 255, 0.95);
-  --lg-rim-mid: rgba(46, 42, 56, 0.12);
-  --lg-rim-lo: rgba(46, 42, 56, 0.03);
-  --lg-spec: rgba(255, 255, 255, 0.5);
-  --lg-edge: rgba(255, 255, 255, 0.9);
-  --lg-inner: rgba(46, 42, 56, 0.06);
-  --lg-blur-1: blur(12px) saturate(130%);
-  --lg-blur-2: blur(14px) saturate(140%);
-  --lg-blur-3: blur(20px) saturate(150%);
-  --lg-shadow-1: 0 2px 6px rgba(46, 42, 56, 0.1);
-  --lg-shadow-2: 0 8px 22px -6px rgba(46, 42, 56, 0.16), 0 24px 48px -20px rgba(46, 42, 56, 0.2);
-  --lg-shadow-3: 0 12px 28px -8px rgba(46, 42, 56, 0.18), 0 40px 72px -30px rgba(46, 42, 56, 0.24);
-  --lg-radius-1: 20px;
-  --lg-radius-2: 28px;
-  --lg-radius-3: 32px;
-}
-
-/* Warm cream + soft pastel blob washes in the corners */
-[data-theme='duo-candy'] body {
-  background-color: #fff6e9;
-  background-image:
-    radial-gradient(560px 420px at 108% -6%, rgba(167, 139, 250, 0.35), transparent 62%),
-    radial-gradient(640px 480px at -10% 4%, rgba(249, 109, 123, 0.22), transparent 62%),
-    radial-gradient(700px 520px at 96% 104%, rgba(255, 183, 3, 0.3), transparent 62%),
-    radial-gradient(520px 420px at -6% 96%, rgba(94, 200, 180, 0.26), transparent 62%),
-    linear-gradient(165deg, #fff8ec 0%, #fff6e9 55%, #ffedd6 100%);
-  background-attachment: fixed;
-}
-
-[data-theme='duo-candy'] ::selection {
-  background: rgba(255, 183, 3, 0.5);
-}
-
-[data-theme='duo-candy'] *::-webkit-scrollbar-thumb {
-  background: rgba(46, 42, 56, 0.3);
-}
-
-/* ---------- Duo Candy: Baloo 2 display + Nunito body ---------- */
-
-[data-theme='duo-candy'] body {
-  font-family: var(--font-duo), 'Nunito', var(--font-sans);
-}
-
-[data-theme='duo-candy'] .hub-display {
-  font-family: var(--font-candy), 'Baloo 2', var(--font-duo), sans-serif;
-  font-weight: 800;
-}
-
-[data-theme='duo-candy'] .hub-eyebrow,
-[data-theme='duo-candy'] .hub-btn,
-[data-theme='duo-candy'] .hub-btn-ghost,
-[data-theme='duo-candy'] .hub-navlink,
-[data-theme='duo-candy'] .hub-badge,
-[data-theme='duo-candy'] .hub-tab-label,
-[data-theme='duo-candy'] .noir-btn,
-[data-theme='duo-candy'] .noir-btn-ghost,
-[data-theme='duo-candy'] .eyebrow,
-[data-theme='duo-candy'] .type-heading {
-  font-family: var(--font-candy), 'Baloo 2', var(--font-duo), sans-serif;
-}
-
-/* ---------- Duo Candy: chunky cards ---------- */
-
-[data-theme='duo-candy'] .glass-card,
-[data-theme='duo-candy'] .glass-card-strong {
-  border-radius: 28px;
-  box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px) saturate(1.2);
-  -webkit-backdrop-filter: blur(10px) saturate(1.2);
-}
-
-[data-theme='duo-candy'] .hub-glass {
-  border-color: rgba(46, 42, 56, 0.08);
-  border-radius: 28px;
-  box-shadow: 0 10px 24px rgba(46, 42, 56, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-
-/* ---------- Duo Candy: coral primary, lavender ghost ---------- */
-
-[data-theme='duo-candy'] .hub-btn {
-  border-color: #f26071;
-  background: #f26071;
-  color: #ffffff;
-  border-radius: 9999px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  box-shadow: 0 8px 20px rgba(249, 109, 123, 0.4);
-}
-[data-theme='duo-candy'] .hub-btn:hover {
-  box-shadow: 0 12px 26px rgba(249, 109, 123, 0.5);
-}
-
-[data-theme='duo-candy'] .hub-btn-ghost {
-  border-color: rgba(46, 42, 56, 0.1);
-  background: #a78bfa;
-  color: #2e2a38;
-  border-radius: 9999px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-}
-[data-theme='duo-candy'] .hub-btn-ghost:hover {
-  color: #2e2a38;
-  border-color: #a78bfa;
-  box-shadow: 0 8px 20px rgba(167, 139, 250, 0.45);
-}
-
-[data-theme='duo-candy'] .hub-badge {
-  background: #ffffff;
-  border-color: rgba(46, 42, 56, 0.1);
-  color: var(--hub-ink-dim);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-}
-
-[data-theme='duo-candy'] .noir-btn {
-  border-color: #f26071;
-  background: #f26071;
-  color: #ffffff;
-  border-radius: 9999px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  box-shadow: 0 8px 20px rgba(249, 109, 123, 0.4);
-}
-[data-theme='duo-candy'] .noir-btn:hover {
-  box-shadow: 0 12px 26px rgba(249, 109, 123, 0.5);
-}
-
-[data-theme='duo-candy'] .noir-btn-ghost {
-  border-color: rgba(46, 42, 56, 0.12);
-  background: #ffffff;
-  color: var(--hub-ink-dim);
-  border-radius: 9999px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-[data-theme='duo-candy'] .noir-btn-ghost:hover {
-  color: var(--hub-ink);
-  border-color: #2e2a38;
-}
-
-/* cream-filled chunky inputs */
-[data-theme='duo-candy'] .noir-input {
-  background: #fff6e9;
-  border-color: rgba(46, 42, 56, 0.16);
-  color: var(--ink);
-  border-radius: 18px;
-}
-[data-theme='duo-candy'] .noir-input:focus {
-  border-color: #f96d7b;
-  box-shadow: 0 0 0 3px rgba(249, 109, 123, 0.25);
-}
-
-/* ---------- Duo Candy: sidebar — peach panel, color pills ---------- */
-
-/* The sidebar shell itself: peach-tinted panel with blob washes
-   (overrides the white .hub-glass; nested cards handled below). */
-[data-theme='duo-candy'] .hub-sidebar {
-  background:
-    radial-gradient(300px 220px at 115% -4%, rgba(167, 139, 250, 0.4), transparent 65%),
-    radial-gradient(280px 240px at -18% 88%, rgba(255, 183, 3, 0.35), transparent 65%),
-    linear-gradient(170deg, #fde9dc 0%, #fbdcc9 100%);
-  border-color: rgba(46, 42, 56, 0.08);
-}
-
-/* Logo badge circle: mustard chip (inline gradient uses --hub-gold,
-   which is the deep text mustard here — repaint it bright). */
-[data-theme='duo-candy'] .hub-sidebar > div:first-child > div:first-child > div:first-child {
-  background: linear-gradient(135deg, #ffc93c, #ffb703) !important;
-  box-shadow: 0 6px 16px rgba(255, 183, 3, 0.45) !important;
-}
-
-/* Nav pills: white chunky pills, icon in a section-colored circle
-   chip; the ACTIVE pill fills with its section color (white text).
-   Order: 1 Case Hub coral · 2 Solo Files teal · 3 Love Notes
-   lavender · 4 Scoreboard mustard · 5 Settings mint. */
-[data-theme='duo-candy'] .hub-navlink {
-  border-radius: 9999px;
-  border-color: rgba(46, 42, 56, 0.06);
-  background: #ffffff;
-  color: var(--hub-ink);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  box-shadow: 0 6px 14px rgba(46, 42, 56, 0.1);
-}
-[data-theme='duo-candy'] .hub-navlink:hover {
-  border-color: rgba(46, 42, 56, 0.16);
-  color: var(--hub-ink);
-}
-[data-theme='duo-candy'] .hub-navlink > span:first-child {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  flex: none;
-  border-radius: 9999px;
-  font-size: 1rem;
-  background: #f96d7b;
-}
-[data-theme='duo-candy'] .hub-navlink:nth-child(2) > span:first-child {
-  background: #5ec8b4;
-}
-[data-theme='duo-candy'] .hub-navlink:nth-child(3) > span:first-child {
-  background: #b8a9e8;
-}
-[data-theme='duo-candy'] .hub-navlink:nth-child(4) > span:first-child {
-  background: #ffc93c;
-}
-[data-theme='duo-candy'] .hub-navlink:nth-child(5) > span:first-child {
-  background: #a7e8d8;
-}
-[data-theme='duo-candy'] .hub-navlink.active {
-  color: #ffffff;
-  box-shadow: 0 10px 22px rgba(46, 42, 56, 0.2);
-}
-[data-theme='duo-candy'] .hub-navlink.active > span:first-child {
-  background: rgba(255, 255, 255, 0.9);
-}
-[data-theme='duo-candy'] .hub-navlink:nth-child(1).active {
-  background: #f26071;
-  border-color: #f26071;
-}
-[data-theme='duo-candy'] .hub-navlink:nth-child(2).active {
-  background: #0b6e63;
-  border-color: #0b6e63;
-}
-[data-theme='duo-candy'] .hub-navlink:nth-child(3).active {
-  background: #a78bfa;
-  border-color: #a78bfa;
-  color: #2e2a38;
-}
-[data-theme='duo-candy'] .hub-navlink:nth-child(4).active {
-  background: #ffb703;
-  border-color: #ffb703;
-  color: #2e2a38;
-}
-[data-theme='duo-candy'] .hub-navlink:nth-child(5).active {
-  background: #5ec8b4;
-  border-color: #5ec8b4;
-  color: #2e2a38;
-}
-
-/* Nested sidebar cards: status = teal tint, sync = lavender tint
-   (the two .hub-glass cards after the nav, in DOM order). */
-[data-theme='duo-candy'] .hub-sidebar .hub-glass {
-  border-color: rgba(46, 42, 56, 0.07);
-  box-shadow: none;
-}
-[data-theme='duo-candy'] .hub-sidebar > .hub-glass:nth-of-type(2) {
-  background: #bfe8df;
-}
-[data-theme='duo-candy'] .hub-sidebar > .hub-glass:nth-of-type(3) {
-  background: #e4def9;
-}
-
-/* Sidebar footer pills: sound = mustard tint; theme = deep teal
-   with a lavender tag chip (matches the hub reference). */
-[data-theme='duo-candy'] .hub-sidebar .noir-btn-ghost {
-  border-color: rgba(46, 42, 56, 0.08);
-}
-[data-theme='duo-candy'] .hub-sidebar > div:last-child .noir-btn-ghost:first-child {
-  background: #ffe9b8;
-  color: var(--hub-ink);
-}
-[data-theme='duo-candy'] .hub-sidebar > div:last-child .noir-btn-ghost:last-child {
-  background: #0b6e63;
-  border-color: #0b6e63;
-  color: #fff6e9;
-}
-[data-theme='duo-candy'] .hub-sidebar > div:last-child .noir-btn-ghost:last-child > span:last-child {
-  background: #a78bfa;
-  color: #2e2a38;
-  border-radius: 9999px;
-  padding: 0.15rem 0.55rem;
-}
-
-[data-theme='duo-candy'] .hub-icon-btn {
-  background: #ffffff;
-  border-color: rgba(46, 42, 56, 0.08);
-  color: var(--hub-ink-dim);
-  box-shadow: 0 6px 14px rgba(46, 42, 56, 0.12);
-}
-[data-theme='duo-candy'] .hub-icon-btn:hover {
-  color: var(--hub-ink);
-  border-color: rgba(46, 42, 56, 0.2);
-}
-
-/* ---------- Duo Candy: bottom nav — white bar, plum pill ---------- */
-
-[data-theme='duo-candy'] .hub-bottomnav-inner {
-  background: #ffffff;
-  border-color: rgba(46, 42, 56, 0.08);
-  border-radius: 32px;
-  box-shadow: 0 10px 24px rgba(46, 42, 56, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-[data-theme='duo-candy'] .hub-tab {
-  border-radius: 24px;
-}
-[data-theme='duo-candy'] .hub-tab.active {
-  background: #2e2a38;
-  border-color: #2e2a38;
-  color: #ffffff;
-}
-
-/* XP track: cream groove on white cards; fill turns coral
-   (the home XP bar in the references fills coral on cream). */
-[data-theme='duo-candy'] .xp-track {
-  background: #ffedd6;
-  box-shadow: inset 0 1px 3px rgba(46, 42, 56, 0.14);
-}
-[data-theme='duo-candy'] .xp-fill {
-  background: linear-gradient(90deg, #f96d7b, #ff6b81);
-  box-shadow: 0 0 10px rgba(249, 109, 123, 0.45);
+  .btn:hover, .game-tile:not(:disabled):hover, .lg-cell:hover { transform: none; }
 }
