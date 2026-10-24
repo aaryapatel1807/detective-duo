@@ -32,6 +32,7 @@ import { isWelcomeSeen } from '@/lib/welcome';
 import { listLeftCases, type LeftCase } from '@/lib/together/leftCases';
 import { ALL_CASES } from '@/lib/cases/bank';
 import { getDailySet, getISTDateString, loadDailyState } from '@/lib/daily';
+import { greetingForHour, type DayGreeting } from '@/lib/greeting';
 import {
   createSession,
   getDisplayName,
@@ -134,6 +135,13 @@ export default function HomePage() {
   const [joinCode, setJoinCode] = useState('');
   const [roomError, setRoomError] = useState<string | null>(null);
   const [roomBusy, setRoomBusy] = useState(false);
+  const [greeting, setGreeting] = useState<DayGreeting | null>(null);
+
+  // Time greeting from the visitor's own clock, set after mount so the
+  // server render never disagrees with the device clock.
+  useEffect(() => {
+    setGreeting(greetingForHour(new Date().getHours()));
+  }, []);
 
   // The welcome intro plays once per session, before the home screen.
   useEffect(() => {
@@ -285,6 +293,7 @@ export default function HomePage() {
         <section className="dash-masthead">
           <div className="flex items-start justify-between gap-3">
             <div>
+              {greeting && <p className="dash-greet">{greeting},</p>}
               <h1 className="dash-title">Sachi</h1>
               <p className="mt-1 text-[var(--ink-dim)]">
                 Games and little gifts, made for you. Pick up where you left off, or try

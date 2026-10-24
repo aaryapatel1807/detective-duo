@@ -333,6 +333,13 @@ h1, h2, h3, .font-display {
   line-height: 1.1;
 }
 
+.dash-greet {
+  font-size: 0.8125rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
 .dash-room {
   display: flex;
   flex-direction: column;
