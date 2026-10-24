@@ -136,9 +136,9 @@ export default function SettingsPage() {
       <section className="card mt-5 p-5 sm:p-6">
         <h2 className="text-xl font-bold">Sound</h2>
         <p className="mt-1 text-sm text-[var(--ink-dim)]">
-          Off by default, and kept on this device only — it is not part of your
-          account, so no extra setup is needed. Sounds are made on the spot in
-          your browser; nothing is downloaded, and nothing ever plays by itself.
+          Off by default, and kept on this device only — no setup needed.
+          Sounds are made on the spot in your browser; nothing is downloaded,
+          and nothing ever plays by itself.
         </p>
         <label className="mt-3 flex items-center justify-between gap-3 text-sm font-semibold">
           Soft sounds when you tap buttons
