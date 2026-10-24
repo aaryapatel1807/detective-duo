@@ -545,3 +545,91 @@ h1, h2, h3, .font-display {
     opacity: 0.5;
   }
 }
+
+/* Blue sky life: clouds drifting across the sky, gold stars twinkling.
+   Rendered only while the blue theme is active. Still under
+   prefers-reduced-motion. */
+.theme-sky {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.theme-cloud {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 999px;
+  filter: blur(12px);
+  animation: cloud-drift var(--cloud-d) linear infinite;
+  animation-delay: var(--cloud-dl);
+}
+
+.theme-cloud::before {
+  content: '';
+  position: absolute;
+  width: 55%;
+  height: 150%;
+  left: 20%;
+  top: -75%;
+  background: inherit;
+  border-radius: 50%;
+}
+
+@keyframes cloud-drift {
+  from {
+    transform: translateX(-35vw);
+  }
+  to {
+    transform: translateX(115vw);
+  }
+}
+
+.theme-bstar {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff7d6;
+  box-shadow:
+    0 0 8px 2px rgba(255, 201, 60, 0.9),
+    0 0 20px 6px rgba(255, 201, 60, 0.45);
+  animation: star-twinkle 4.5s ease-in-out infinite;
+  animation-delay: var(--star-bl);
+}
+
+@keyframes star-twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-cloud {
+    animation: none;
+  }
+  .theme-cloud:nth-of-type(1) {
+    left: 5%;
+  }
+  .theme-cloud:nth-of-type(2) {
+    left: 25%;
+  }
+  .theme-cloud:nth-of-type(3) {
+    left: 45%;
+  }
+  .theme-cloud:nth-of-type(4) {
+    left: 65%;
+  }
+  .theme-cloud:nth-of-type(5) {
+    left: 85%;
+  }
+  .theme-bstar {
+    animation: none;
+    opacity: 0.7;
+  }
+}

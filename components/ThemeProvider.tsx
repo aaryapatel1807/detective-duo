@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { THEMES, isThemeId, type ThemeId } from '@/lib/themes';
+import BlueSky from './BlueSky';
 import Fireflies from './Fireflies';
 import SoundEngine from './SoundEngine';
 
@@ -73,6 +74,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     <Ctx.Provider value={{ theme, setTheme, userId: null }}>
       {children}
       {theme === 'violet' && <Fireflies />}
+      {theme === 'blue' && <BlueSky />}
       <SoundEngine />
     </Ctx.Provider>
   );
