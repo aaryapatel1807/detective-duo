@@ -1,10 +1,12 @@
 /**
  * How Well Do You Know Me question bank (Duo Corner).
  *
- * Questions are tagged light, silly or deep. A game picks six, balanced
- * across tags. Together mode: both players answer privately, then guess
- * each other's answers, then the app reveals them together — including
- * async (answer now, partner answers later, reveal when both are in).
+ * Every question is about the couple — us, together, each other —
+ * not about one person alone. Questions are tagged light, silly or
+ * deep. A game picks six, balanced across tags. Together mode: both
+ * players answer privately, then guess each other's answers, then
+ * the app reveals them together — including async (answer now,
+ * partner answers later, reveal when both are in).
  * Solo mode: the bot persona Pip answers from canned lines, and she
  * guesses Pip's answers.
  */
@@ -29,45 +31,45 @@ const Q = (
 ): KnowQuestion => ({ id, text, tag, botAnswers });
 
 export const KNOW_QUESTIONS: KnowQuestion[] = [
-  // light
-  Q('food', 'Your favourite food, no thinking', 'light', ['Butter noodles', 'Roast potatoes', 'Mango sticky rice']),
-  Q('laugh', 'The last thing that made you laugh', 'light', ['A cat falling off a sofa', 'My own typo in a serious email', 'A pigeon stealing chips']),
-  Q('morning', 'Your ideal morning', 'light', ['Slow coffee and no alarm', 'A walk before anyone wakes', 'Pancakes, then a nap']),
-  Q('season', 'Your favourite season, and why in five words', 'light', ['Autumn, crunchy leaves everywhere', 'Winter, blankets and soup', 'Summer, long light evenings']),
-  Q('song', 'A song you never skip', 'light', ['Something with a big chorus', 'An old song from school days', 'Whatever is stuck in my head']),
-  Q('place-home', 'The coziest place you know', 'light', ['My grandmother’s kitchen', 'A corner seat in a cafe', 'Under a blanket, anywhere']),
-  Q('drink', 'Tea, coffee, or something else', 'light', ['Tea, strong, with milk', 'Coffee, black, no fuss', 'Hot chocolate with cream']),
-  Q('weekend', 'Your perfect weekend', 'light', ['Nothing planned at all', 'One good walk, one good film', 'Cooking something slow']),
-  Q('book', 'A book you would press into someone’s hands', 'light', ['A mystery with a twist', 'A book of poems', 'The one I reread yearly']),
-  Q('smell', 'A smell that feels like home', 'light', ['Rain on warm pavement', 'Fresh bread', 'Old books']),
-  Q('city', 'A city you would live in tomorrow', 'light', ['Somewhere by the sea', 'A quiet town with hills', 'Anywhere with good trains']),
-  Q('animal', 'If you were an animal for a day', 'light', ['A cat, obviously', 'An otter, for the sliding', 'A sleepy tortoise']),
-  // silly
-  Q('superpower', 'Your dream superpower, useless division', 'silly', ['Teleporting to the fridge', 'Perfect parallel parking', 'Never queueing again']),
-  Q('cereal', 'Cereal: before or after the milk', 'silly', ['Before, like a normal person', 'After, chaos is fine', 'Dry, straight from the box']),
-  Q('socks', 'Do socks have to match', 'silly', ['Always, or the day is ruined', 'Never, life is short', 'Only if someone will see them']),
-  Q('dance', 'Your go-to dance move', 'silly', ['The awkward shuffle', 'Dramatic pointing', 'Standing very still, vibing']),
-  Q('alien', 'First thing you would ask an alien', 'silly', ['Do you have snacks', 'Can I see your ship', 'Is your planet hiring']),
-  Q('toaster', 'If your toaster had a name', 'silly', ['Sir Crispalot', 'Bready Mercury', 'Just Toaster']),
-  Q('puddle', 'Jump in the puddle or walk around', 'silly', ['Jump, every time', 'Walk around, I have dry socks', 'Jump, but only if no one watches']),
-  Q('nap', 'The ideal nap length', 'silly', ['Twenty minutes, precisely', 'Three hours, accidentally', 'Naps are for the weak']),
-  Q('ghost', 'If you were a ghost, where would you haunt', 'silly', ['A library, shushing people', 'My own kitchen, for snacks', 'A lighthouse, for the view']),
-  Q('hat', 'A hat you would wear every day if you could', 'silly', ['A very large sun hat', 'A classic fedora', 'A crown, why not']),
-  Q('pickle', 'Pickles: love, hate, or indifferent', 'silly', ['Love, extra pickles', 'Hate, keep them away', 'Indifferent, I eat around them']),
-  Q('sneeze', 'Your sneeze style', 'silly', ['One polite achoo', 'A dramatic triple', 'Silent, then red-faced']),
-  // deep
-  Q('fear', 'A fear you are working on', 'deep', ['Being misunderstood', 'Running out of time', 'Letting people down']),
-  Q('trip', 'A dream trip, and who comes with you', 'deep', ['Japan, with my favourite person', 'A cabin, alone, for a week', 'Everywhere, slowly, with family']),
-  Q('proud', 'Something you are quietly proud of', 'deep', ['Showing up when it was hard', 'Something I built myself', 'How far I have come']),
-  Q('change', 'One thing you would change about your life', 'deep', ['More time with loved ones', 'Less worrying, more doing', 'A braver career move']),
-  Q('memory', 'A childhood memory you keep returning to', 'deep', ['Summer evenings outside', 'Cooking with family', 'A long car journey']),
-  Q('kind', 'The kindest thing someone did for you', 'deep', ['They just listened', 'They showed up unasked', 'They believed in me first']),
-  Q('lesson', 'A hard lesson that turned out useful', 'deep', ['Rest is not laziness', 'Asking for help is strength', 'Small steps still count']),
-  Q('future', 'Where do you hope to be in five years', 'deep', ['Doing work I love', 'Closer to the people I love', 'Somewhere I chose, not settled for']),
-  Q('miss', 'Who or what do you miss most', 'deep', ['Home, as it used to be', 'A person, always', 'A version of myself']),
-  Q('brave', 'When did you last feel brave', 'deep', ['Saying the hard thing', 'Starting something new', 'Admitting I was wrong']),
-  Q('enough', 'What does a good life look like to you', 'deep', ['People, warmth, enough', 'Freedom and a full shelf', 'Laughter, daily']),
-  Q('advice', 'Advice you would give your younger self', 'deep', ['It is okay to be slow', 'You are not behind', 'Take the chance']),
+  // light — everyday us
+  Q('us-date', 'Our ideal date, no budget limit', 'light', ['A slow dinner, then a long walk', 'A road trip with no destination', 'Blankets, a film, and no phones']),
+  Q('us-cook', 'The dish you would cook for us on a lazy Sunday', 'light', ['Butter noodles, extra cheese', 'Something slow from my grandmother’s book', 'Whatever we can make together']),
+  Q('us-song', 'The song that feels like us', 'light', ['Something with a big chorus we sing badly', 'An old song from when we met', 'Whatever was playing on our best day']),
+  Q('us-morning', 'Your ideal morning with me', 'light', ['Slow coffee and no alarm', 'A walk before anyone wakes', 'Pancakes, then a nap together']),
+  Q('us-place', 'The coziest place we have been together', 'light', ['A corner seat in a cafe', 'Under one blanket, anywhere', 'That walk we still talk about']),
+  Q('us-text', 'Who texts first in the morning, you or me', 'light', ['Me, always', 'You, before I wake', 'Whoever misses the other first']),
+  Q('us-film', 'The film we should rewatch together', 'light', ['A comfort film we quote', 'Something we fell asleep to', 'The one we argue about loving']),
+  Q('us-weekend', 'Our perfect weekend, just us', 'light', ['Nothing planned at all', 'One good walk, one good film', 'Cooking something slow together']),
+  Q('us-photo', 'Your favourite photo of us', 'light', ['The silly one, mid-laugh', 'The quiet one, no posing', 'The first one we ever took']),
+  Q('us-gift', 'The best gift you could get from me', 'light', ['Something handmade, even badly', 'A day with no plans, just us', 'A letter, not a thing']),
+  Q('us-city', 'A city we should visit together', 'light', ['Somewhere by the sea', 'A quiet town with hills', 'Anywhere with good trains']),
+  Q('us-smell', 'A smell that feels like home when we are together', 'light', ['Rain on warm pavement', 'Fresh bread', 'Their shampoo']),
+  // silly — playful us
+  Q('us-blanket', 'Who steals the blanket at night', 'silly', ['Me, and I deny it', 'You, every single night', 'We fight over it fairly']),
+  Q('us-snack', 'Who finishes the snacks first', 'silly', ['Me, no contest', 'You, while I am cooking', 'We blame each other']),
+  Q('us-alarm', 'Who snoozes the alarm more', 'silly', ['Me, five times minimum', 'You, then I wake you', 'We both pretend not to hear it']),
+  Q('us-selfie', 'Who takes more selfies of us', 'silly', ['Me, obviously', 'You, secretly', 'We take turns badly']),
+  Q('us-argument', 'Our silliest argument ever', 'silly', ['What to watch tonight', 'Who left the light on', 'The correct way to load the dishwasher']),
+  Q('us-petname', 'The pet name you secretly like most', 'silly', ['Something food-related', 'Something tiny and cute', 'I will never admit it']),
+  Q('us-driver', 'Who is the better backseat driver', 'silly', ['Me, I navigate loudly', 'You, with full commentary', 'Neither, we trust the map']),
+  Q('us-pick', 'Who picks what we watch, really', 'silly', ['Me, after asking you', 'You, I just agree', 'We scroll for an hour']),
+  Q('us-sleep', 'Who falls asleep first', 'silly', ['Me, mid-sentence', 'You, instantly', 'Whoever had the longer day']),
+  Q('us-dance', 'Our go-to dance move, together', 'silly', ['The awkward shuffle, in sync', 'Dramatic pointing at each other', 'Standing very still, vibing']),
+  Q('us-socks', 'Do our socks have to match', 'silly', ['Always, or the day is ruined', 'Never, life is short', 'Only if someone will see them']),
+  Q('us-toaster', 'If our toaster had a name', 'silly', ['Sir Crispalot', 'Bready Mercury', 'Just Toaster']),
+  // deep — us, honestly
+  Q('us-first', 'Your favourite first with me', 'deep', ['Our first walk', 'Our first proper laugh', 'The first time it felt easy']),
+  Q('us-proud', 'Something about us you are quietly proud of', 'deep', ['How we show up for each other', 'How far we have come', 'That we still make each other laugh']),
+  Q('us-lesson', 'A hard lesson our relationship taught you', 'deep', ['Rest is not laziness', 'Asking for help is strength', 'Small kindnesses still count']),
+  Q('us-future', 'Where do you hope we are in five years', 'deep', ['Doing work we love, together', 'Closer, wherever we live', 'Somewhere we chose, not settled for']),
+  Q('us-miss', 'What do you miss most when we are apart', 'deep', ['Their laugh, in the room', 'The small daily things', 'Just the quiet company']),
+  Q('us-kind', 'The kindest thing I ever did for you', 'deep', ['I just listened', 'I showed up unasked', 'I believed in you first']),
+  Q('us-brave', 'When did you last feel brave with me around', 'deep', ['Saying the hard thing', 'Starting something new', 'Admitting I was wrong']),
+  Q('us-home', 'What does home mean to you now', 'deep', ['A person, not a place', 'Warmth, laughter, enough', 'Wherever we are, together']),
+  Q('us-fear', 'A fear you are working on, that I should know', 'deep', ['Being misunderstood', 'Running out of time', 'Letting you down']),
+  Q('us-trip', 'A dream trip for just the two of us', 'deep', ['Japan, slowly, together', 'A cabin, no signal, for a week', 'Everywhere, slowly, just us']),
+  Q('us-change', 'One thing you would change about our days', 'deep', ['More time, just us', 'Less worrying, more doing', 'More small adventures']),
+  Q('us-advice', 'Advice you would give us on a hard day', 'deep', ['It is okay to be slow', 'We are not behind', 'Take the chance, together']),
 ];
 
 export const KNOW_TAG_LABEL: Record<KnowTag, string> = {
