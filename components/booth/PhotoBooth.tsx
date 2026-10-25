@@ -127,8 +127,8 @@ function FilterRail({
       aria-label="Photo filters"
       className={
         layout === 'side'
-          ? 'flex gap-2 overflow-x-auto sm:max-h-[min(68vh,820px)] sm:w-28 sm:shrink-0 sm:flex-col sm:overflow-y-auto sm:overflow-x-hidden sm:pr-1'
-          : 'flex gap-2 overflow-x-auto pb-1'
+          ? 'flex gap-2.5 overflow-x-auto sm:max-h-[min(68vh,820px)] sm:w-40 sm:shrink-0 sm:flex-col sm:overflow-y-auto sm:overflow-x-hidden sm:pr-2'
+          : 'flex gap-2.5 overflow-x-auto pb-1'
       }
     >
       {BOOTH_FILTERS.map((f) => {
@@ -139,19 +139,20 @@ function FilterRail({
             type="button"
             onClick={() => onSelect(f.id)}
             aria-pressed={active}
-            className={`btn !justify-start !px-2 !py-1.5 text-xs ${active ? 'btn-primary' : ''} ${
+            title={f.name}
+            className={`btn !justify-start whitespace-nowrap !px-2 !py-1.5 text-xs ${active ? 'btn-primary' : ''} ${
               layout === 'side' ? 'sm:w-full' : ''
             }`}
           >
             <span
               aria-hidden
-              className="block h-10 w-10 shrink-0 rounded-lg"
+              className="block h-9 w-9 shrink-0 rounded-lg"
               style={{
                 background: 'linear-gradient(135deg,#ff4da6,#ffd98a 50%,#46a758)',
                 filter: f.css || undefined,
               }}
             />
-            <span>{f.name}</span>
+            <span className="truncate">{f.name}</span>
           </button>
         );
       })}
