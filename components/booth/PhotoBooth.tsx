@@ -127,8 +127,8 @@ function FilterRail({
       aria-label="Photo filters"
       className={
         layout === 'side'
-          ? 'flex gap-2.5 overflow-x-auto sm:max-h-[min(68vh,820px)] sm:w-40 sm:shrink-0 sm:flex-col sm:overflow-y-auto sm:overflow-x-hidden sm:pr-2'
-          : 'flex gap-2.5 overflow-x-auto pb-1'
+          ? 'no-scrollbar flex gap-2.5 overflow-x-auto sm:max-h-[min(68vh,820px)] sm:w-40 sm:shrink-0 sm:flex-col sm:overflow-y-auto sm:overflow-x-hidden sm:pr-2'
+          : 'no-scrollbar flex gap-2.5 overflow-x-auto pb-1'
       }
     >
       {BOOTH_FILTERS.map((f) => {
