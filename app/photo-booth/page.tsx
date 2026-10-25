@@ -12,7 +12,7 @@ import PhotoBooth from '@/components/booth/PhotoBooth';
 
 export default function PhotoBoothPage() {
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 pb-16">
+    <main className="mx-auto w-full max-w-3xl px-4 pb-16 lg:max-w-6xl">
       <Link href="/" className="btn !px-3 !py-2 text-sm">
         <ArrowLeft size={16} aria-hidden /> Home
       </Link>

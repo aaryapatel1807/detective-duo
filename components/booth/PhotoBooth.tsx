@@ -26,6 +26,10 @@
  * style; poses without a photo yet fall back to their emoji. The
  * camera is a real (unmirrored) image by default; Mirror preview is
  * an opt-in toggle, saved on the device.
+ * Desktop fit: on lg screens the booth is a two-column grid — the
+ * camera sized by viewport height (68vh, 3:4) on the left, controls
+ * in a 320px column on the right — so the whole booth fits one
+ * screen instead of a huge camera column with empty sides.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -123,7 +127,7 @@ function FilterRail({
       aria-label="Photo filters"
       className={
         layout === 'side'
-          ? 'flex gap-2 overflow-x-auto sm:max-h-[540px] sm:w-28 sm:shrink-0 sm:flex-col sm:overflow-y-auto sm:overflow-x-hidden sm:pr-1'
+          ? 'flex gap-2 overflow-x-auto sm:max-h-[min(68vh,820px)] sm:w-28 sm:shrink-0 sm:flex-col sm:overflow-y-auto sm:overflow-x-hidden sm:pr-1'
           : 'flex gap-2 overflow-x-auto pb-1'
       }
     >
@@ -1076,32 +1080,32 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
   const totalShots = shotCount;
 
   return (
-    <section className="panel p-4">
-      <h2 className="flex items-center gap-2 font-display text-lg font-bold">
+    <section className="panel p-4 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-x-5">
+      <h2 className="flex items-center gap-2 font-display text-lg font-bold lg:col-span-2">
         <Camera size={18} aria-hidden /> Photo booth
       </h2>
-      <p className="mt-1 text-sm text-[var(--ink-dim)]">
+      <p className="mt-1 text-sm text-[var(--ink-dim)] lg:col-span-2">
         Pose, count down, shoot — a timer before every shot, so you always get
         time to change pose. Nothing leaves this device, except the shared strip
         between two phones in a room.
       </p>
-      {error && <p className="mt-2 text-sm">{error}</p>}
+      {error && <p className="mt-2 text-sm lg:col-span-2">{error}</p>}
       {!cameraOn && (
-        <button type="button" className="btn mt-3" onClick={() => void startCamera()}>
+        <button type="button" className="btn mt-3 lg:col-span-2" onClick={() => void startCamera()}>
           <RefreshCw size={16} aria-hidden /> Try camera again
         </button>
       )}
 
       {showCamera && (
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start">
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start lg:col-start-1 lg:mt-0 lg:justify-center">
           <FilterRail selected={filterId} onSelect={setFilterId} layout="side" />
-          <div className="relative flex-1 overflow-hidden rounded-xl bg-black">
+          <div className="relative flex-1 overflow-hidden rounded-xl bg-black lg:h-[min(68vh,820px)] lg:aspect-[3/4] lg:w-auto lg:max-w-full lg:flex-none">
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
-              className="aspect-[3/4] w-full object-cover"
+              className="aspect-[3/4] w-full object-cover lg:aspect-auto lg:h-full"
               style={{ transform: mirror ? 'scaleX(-1)' : undefined, filter: filterCss || undefined }}
               aria-label="Booth camera preview"
             />
@@ -1145,7 +1149,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
       )}
 
       {phase === 'review' && (
-        <div className="mt-3">
+        <div className="mt-3 lg:col-span-2">
           <h3 className="font-display text-lg font-bold">Review your shots</h3>
           <p className="mt-1 text-sm text-[var(--ink-dim)]">
             Retake or upload any shot, then make the strip. The strip only builds
@@ -1200,7 +1204,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
       )}
 
       {phase === 'done' && stripUrl && (
-        <div className="mt-3">
+        <div className="mt-3 lg:col-span-2">
           <p className="text-sm font-semibold">Filter</p>
           <div className="mt-2">
             <FilterRail selected={filterId} onSelect={setFilterId} layout="row" />
@@ -1380,8 +1384,8 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
       )}
 
       {phase === 'idle' && (
-        <>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="lg:col-start-2">
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:mt-0 lg:grid-cols-1">
             <label className="flex flex-col gap-1 text-sm font-semibold">
               Strip style
               <select className="input" value={styleId} onChange={(e) => setStyleId(e.target.value)} aria-label="Strip style">
@@ -1517,7 +1521,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
             {manual && !roomCode ? ' In manual mode you press Ready for each shot.' : ''}
             {roomCode ? ' In a room, both phones count down together.' : ''}
           </p>
-        </>
+        </div>
       )}
     </section>
   );
