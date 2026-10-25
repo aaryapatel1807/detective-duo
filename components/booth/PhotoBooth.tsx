@@ -23,10 +23,17 @@
  * the real camera feed with its own filter, so every look is visible
  * at once (2 columns beside the preview on desktop, 5 across under
  * it on phones); without a camera they fall back to a filtered
- * gradient. Strip style and layout are tap cards with mini drawings,
- * shots and pose pack are chips, and every option (Mirror, Pose
- * ideas, Date, Manual, Duo turns, Sound) is a toggle chip — no
- * dropdowns, no checkboxes. The shutter is a big gold round button
+ * gradient. Strip design is a Template picker — Classic (the original
+ * 9), From the reel (papers and finishes: satin, blue/pink paper, ink
+ * dots, stripes, corduroy, denim, star mix, bedazzle, lace), and
+ * Templates (chalk lights, glitz, rustic lace, polka stars, stamp
+ * memories, limited edition, checker, cherry doodle, floral corners)
+ * — every template is code-drawn on the export canvas (dots, stripes,
+ * checker, stars, glitter, lace, string lights, stamp edges, bows,
+ * doodles), seeded so re-composites look identical, and decorations
+ * never cover faces. Layout is tap cards, shots and pose pack are
+ * chips, and every option is a toggle chip — no dropdowns, no
+ * checkboxes. The shutter is a big gold round button
  * under the preview; the countdown is full-screen with a pulsing
  * number and a full-screen flash per shot. The camera is a real
  * (unmirrored) image by default; Mirror preview is an opt-in chip,
@@ -56,10 +63,12 @@ import {
   pickPoses,
   posePackById,
   scrapbookPageSize,
+  seededPoints,
   shotTimeline,
   stripDateLine,
   textStyleById,
   type BoothLayout,
+  type BoothStyle,
   type PoseIdea,
   type StripOverlay,
 } from '@/lib/booth';
@@ -103,6 +112,338 @@ function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, r: number
   }
   ctx.closePath();
   ctx.fill();
+}
+
+/** True when a point sits inside (or near) any photo slot. Foreground
+ * decorations skip these points so stars, glitter and doodles never
+ * cover faces — they live on the paper around the photos. */
+function insideSlot(
+  x: number,
+  y: number,
+  slots: { x: number; y: number; w: number; h: number }[],
+  pad: number,
+): boolean {
+  return slots.some(
+    (s) => x >= s.x - pad && x <= s.x + s.w + pad && y >= s.y - pad && y <= s.y + s.h + pad,
+  );
+}
+
+/** Background patterns: painted full-canvas behind the photos, so
+ * only the margins show them. */
+function drawPatternBackground(
+  ctx: CanvasRenderingContext2D,
+  style: BoothStyle,
+  w: number,
+  h: number,
+) {
+  const p = style.pattern;
+  if (!p) return;
+  ctx.save();
+  if (p.kind === 'dots') {
+    ctx.fillStyle = p.color;
+    for (let y = p.gap / 2; y < h; y += p.gap) {
+      for (let x = p.gap / 2; x < w; x += p.gap) {
+        ctx.beginPath();
+        ctx.arc(x, y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  } else if (p.kind === 'stripes') {
+    for (let x = 0, i = 0; x < w; x += p.width, i++) {
+      ctx.fillStyle = p.colors[i % p.colors.length]!;
+      ctx.fillRect(x, 0, p.width, h);
+    }
+  } else if (p.kind === 'checker') {
+    ctx.fillStyle = p.color;
+    const s = p.size;
+    for (let y = 0, row = 0; y < h; y += s, row++) {
+      for (let x = row % 2 === 0 ? 0 : s; x < w; x += s * 2) ctx.fillRect(x, y, s, s);
+    }
+  }
+  ctx.restore();
+}
+
+function drawCherry(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
+  ctx.strokeStyle = '#3d5a3a';
+  ctx.lineWidth = Math.max(2, s * 0.08);
+  ctx.beginPath();
+  ctx.moveTo(x - s * 0.3, y);
+  ctx.quadraticCurveTo(x, y - s * 0.9, x + s * 0.4, y - s * 0.7);
+  ctx.stroke();
+  ctx.fillStyle = '#e5484d';
+  ctx.beginPath();
+  ctx.arc(x - s * 0.35, y + s * 0.15, s * 0.32, 0, Math.PI * 2);
+  ctx.arc(x + s * 0.3, y + s * 0.25, s * 0.28, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawMiniFlower(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  s: number,
+  petal: string,
+) {
+  ctx.fillStyle = petal;
+  for (let i = 0; i < 5; i++) {
+    const a = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+    ctx.beginPath();
+    ctx.arc(x + Math.cos(a) * s * 0.5, y + Math.sin(a) * s * 0.5, s * 0.32, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#ffd98a';
+  ctx.beginPath();
+  ctx.arc(x, y, s * 0.25, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawSmiley(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
+  ctx.fillStyle = '#ffd98a';
+  ctx.beginPath();
+  ctx.arc(x, y, s * 0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#2b2118';
+  ctx.beginPath();
+  ctx.arc(x - s * 0.18, y - s * 0.1, s * 0.06, 0, Math.PI * 2);
+  ctx.arc(x + s * 0.18, y - s * 0.1, s * 0.06, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#2b2118';
+  ctx.lineWidth = Math.max(2, s * 0.05);
+  ctx.beginPath();
+  ctx.arc(x, y + s * 0.05, s * 0.25, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.stroke();
+}
+
+function zigzagRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  step: number,
+  tooth: number,
+) {
+  ctx.beginPath();
+  for (let px = x, i = 0; px <= x + w; px += step, i++) {
+    const py = y + (i % 2 === 0 ? -tooth : 0);
+    if (px === x) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  for (let py = y, i = 0; py <= y + h; py += step, i++) {
+    ctx.lineTo(x + w + (i % 2 === 0 ? tooth : 0), py);
+  }
+  for (let px = x + w, i = 0; px >= x; px -= step, i++) {
+    ctx.lineTo(px, y + h + (i % 2 === 0 ? tooth : 0));
+  }
+  for (let py = y + h, i = 0; py >= y; py -= step, i++) {
+    ctx.lineTo(x + (i % 2 === 0 ? -tooth : 0), py);
+  }
+  ctx.closePath();
+  ctx.stroke();
+}
+
+/** Foreground decorations: margins only, never over the photos. */
+function drawPatternForeground(
+  ctx: CanvasRenderingContext2D,
+  style: BoothStyle,
+  slots: { x: number; y: number; w: number; h: number }[],
+  w: number,
+  h: number,
+) {
+  const p = style.pattern;
+  if (!p) return;
+  ctx.save();
+  if (p.kind === 'stars') {
+    const pts = seededPoints(style.id, p.count, w, h, 48).filter(
+      (pt) => !insideSlot(pt.x, pt.y, slots, 16),
+    );
+    pts.forEach((pt, i) => {
+      ctx.fillStyle = p.colors[i % p.colors.length]!;
+      drawStar(ctx, pt.x, pt.y, 14 + (i % 3) * 6);
+    });
+  } else if (p.kind === 'glitter') {
+    const pts = seededPoints(style.id, p.count, w, h, 48).filter(
+      (pt) => !insideSlot(pt.x, pt.y, slots, 16),
+    );
+    pts.forEach((pt, i) => {
+      ctx.fillStyle = p.colors[i % p.colors.length]!;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 3 + (i % 4), 0, Math.PI * 2);
+      ctx.fill();
+    });
+  } else if (p.kind === 'lace') {
+    ctx.strokeStyle = p.color;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(18, 18, w - 36, h - 36);
+    ctx.fillStyle = p.color;
+    const r = 15;
+    const step = r * 2;
+    for (let x = 18; x <= w - 18; x += step) {
+      ctx.beginPath();
+      ctx.arc(x, 18, r, 0, Math.PI * 2);
+      ctx.arc(x, h - 18, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    for (let y = 18; y <= h - 18; y += step) {
+      ctx.beginPath();
+      ctx.arc(18, y, r, 0, Math.PI * 2);
+      ctx.arc(w - 18, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (p.kind === 'lights') {
+    // The strip reserves a taller top margin for this template (see
+    // composite), so the wire hangs in the header band, never over a
+    // photo. Wire sags gently; bulbs hang just below it.
+    const topY = slots.length > 0 ? Math.min(...slots.map((s) => s.y)) : 200;
+    const wireY = topY * 0.45;
+    const sag = topY * 0.3;
+    ctx.strokeStyle = '#3a2c1c';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, wireY);
+    ctx.quadraticCurveTo(w / 2, wireY + sag, w, wireY);
+    ctx.stroke();
+    const bulbs = ['#ffd98a', '#ff8fb3', '#8fd0ff', '#b6ff8f'];
+    for (let i = 0; i < 12; i++) {
+      const t = (i + 1) / 13;
+      const x = t * w;
+      const y = (1 - t) * (1 - t) * wireY + 2 * (1 - t) * t * (wireY + sag) + t * t * wireY;
+      ctx.fillStyle = bulbs[i % bulbs.length]!;
+      ctx.beginPath();
+      ctx.arc(x, y + 12, 12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (p.kind === 'floral') {
+    const corners: [number, number][] = [
+      [70, 70],
+      [w - 70, 70],
+      [70, h - 70],
+      [w - 70, h - 70],
+    ];
+    corners.forEach(([cx, cy], ci) => {
+      drawMiniFlower(ctx, cx, cy, 56, p.colors[ci % p.colors.length]!);
+      drawMiniFlower(ctx, cx + (cx < w / 2 ? 44 : -44), cy + 30, 34, p.colors[(ci + 1) % p.colors.length]!);
+    });
+  } else if (p.kind === 'stamp') {
+    ctx.strokeStyle = style.caption;
+    ctx.globalAlpha = 0.9;
+    ctx.lineWidth = 3;
+    for (const slot of slots) zigzagRect(ctx, slot.x, slot.y, slot.w, slot.h, 26, 9);
+    ctx.globalAlpha = 1;
+    // Bows where the gaps between photos are.
+    for (let i = 0; i < slots.length - 1; i++) {
+      const gapY = (slots[i]!.y + slots[i]!.h + slots[i + 1]!.y) / 2;
+      const cx = w / 2;
+      ctx.fillStyle = style.caption;
+      ctx.beginPath();
+      ctx.moveTo(cx, gapY);
+      ctx.lineTo(cx - 34, gapY - 20);
+      ctx.lineTo(cx - 34, gapY + 20);
+      ctx.closePath();
+      ctx.moveTo(cx, gapY);
+      ctx.lineTo(cx + 34, gapY - 20);
+      ctx.lineTo(cx + 34, gapY + 20);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx, gapY, 10, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (p.kind === 'doodles') {
+    const pts = seededPoints(style.id, 24, w, h, 48).filter(
+      (pt) => !insideSlot(pt.x, pt.y, slots, 20),
+    );
+    pts.forEach((pt, i) => {
+      if (i % 3 === 0) drawCherry(ctx, pt.x, pt.y, 44);
+      else if (i % 3 === 1) drawMiniFlower(ctx, pt.x, pt.y, 48, i % 2 === 0 ? '#ff8fb3' : '#7fb6e8');
+      else drawSmiley(ctx, pt.x, pt.y, 48);
+    });
+  }
+  ctx.restore();
+}
+
+/** CSS hint of a template's pattern for its picker card. */
+function patternCardStyle(s: BoothStyle): React.CSSProperties {
+  const base: React.CSSProperties = { background: s.frame };
+  const p = s.pattern;
+  if (!p) return base;
+  if (p.kind === 'dots') {
+    return {
+      ...base,
+      backgroundImage: `radial-gradient(${p.color} 3px, transparent 4px)`,
+      backgroundSize: '20px 20px',
+    };
+  }
+  if (p.kind === 'stripes') {
+    const [c0, c1] = [p.colors[0]!, p.colors[1] ?? p.colors[0]!];
+    return { ...base, backgroundImage: `repeating-linear-gradient(90deg, ${c0} 0 10px, ${c1} 10px 20px)` };
+  }
+  if (p.kind === 'checker') {
+    return {
+      ...base,
+      backgroundImage: `conic-gradient(${p.color} 25%, transparent 0 50%, ${p.color} 0 75%, transparent 0)`,
+      backgroundSize: '16px 16px',
+    };
+  }
+  if (p.kind === 'glitter') {
+    return {
+      ...base,
+      backgroundImage: [
+        'radial-gradient(circle at 20% 25%, #ffd98a 2px, transparent 3px)',
+        'radial-gradient(circle at 70% 60%, #ffffff 2px, transparent 3px)',
+        'radial-gradient(circle at 40% 80%, #ffd98a 2px, transparent 3px)',
+      ].join(', '),
+    };
+  }
+  if (p.kind === 'lace') return { ...base, outline: '2px dashed #ffffff', outlineOffset: '-4px' };
+  if (p.kind === 'lights') return { ...base, borderTop: '4px dotted #ffd98a' };
+  return base;
+}
+
+/** One template card: mini strip in the template's own frame + pattern. */
+function TemplateCard({
+  s,
+  active,
+  onSelect,
+  caption,
+  small,
+}: {
+  s: BoothStyle;
+  active: boolean;
+  onSelect: () => void;
+  caption: string;
+  small?: boolean;
+}) {
+  const glyph =
+    s.pattern?.kind === 'stars' ? '★' : s.pattern?.kind === 'floral' ? '✿' : s.pattern?.kind === 'doodles' ? '🍒' : null;
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={active}
+      title={`${s.name} — ${s.note}`}
+      className={`rounded-xl border-[3px] p-1.5 text-left transition hover:-translate-y-0.5 ${
+        small ? 'w-28 shrink-0' : ''
+      } ${active ? 'booth-tile-active border-[#ffc83d]' : 'border-transparent'}`}
+    >
+      <span className="relative block rounded-lg p-1.5" style={patternCardStyle(s)}>
+        <span className="flex flex-col gap-1">
+          <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#ff4da6,#ffd98a 50%,#46a758)' }} />
+          <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#ffd98a,#46a758 50%,#ff4da6)' }} />
+          <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#46a758,#ff4da6 50%,#ffd98a)' }} />
+        </span>
+        {glyph && (
+          <span className="pointer-events-none absolute right-1 top-1 text-[10px] leading-none" aria-hidden>
+            {glyph}
+          </span>
+        )}
+        <span className="mt-1.5 block text-center text-[10px] font-bold leading-none" style={{ color: s.caption }}>
+          {caption || 'Sachi'}
+        </span>
+      </span>
+      <span className="mt-1 block truncate text-xs font-semibold">{s.name}</span>
+    </button>
+  );
 }
 
 type Phase = 'idle' | 'countdown' | 'review' | 'done';
@@ -723,7 +1064,11 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
       if (!ctx) return;
       ctx.fillStyle = style.frame;
       ctx.fillRect(0, 0, STORY_WIDTH, STORY_HEIGHT);
-      const { slots, caption: cap } = layoutSlots(layoutId, STORY_WIDTH, STORY_HEIGHT, shotCount);
+      drawPatternBackground(ctx, style, STORY_WIDTH, STORY_HEIGHT);
+      // String lights need a header band: this template alone gets a
+      // taller top margin, so the wire hangs above the first photo.
+      const margin = style.pattern?.kind === 'lights' ? 110 : 48;
+      const { slots, caption: cap } = layoutSlots(layoutId, STORY_WIDTH, STORY_HEIGHT, shotCount, margin);
       shotsRef.current.slice(0, slots.length).forEach((shotCanvas, i) => {
         const slot = slots[i];
         if (!slot) return;
@@ -773,9 +1118,16 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
           ctx.fillRect(STORY_WIDTH - 36, y, 24, 48);
         }
       }
+      drawPatternForeground(ctx, style, slots, STORY_WIDTH, STORY_HEIGHT);
       const text = (caption.trim() || 'Sachi').slice(0, 40);
       ctx.fillStyle = style.caption;
-      ctx.font = '600 64px Georgia, serif';
+      const captionFonts: Record<string, string> = {
+        serif: '600 64px Georgia, serif',
+        typewriter: '64px "Courier New", monospace',
+        script: 'italic 64px Georgia, serif',
+        bubble: '800 64px Arial, sans-serif',
+      };
+      ctx.font = captionFonts[style.captionFont ?? 'serif']!;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(text, cap.x + cap.w / 2, cap.y + cap.h / 2 - (dateStamp ? 30 : 0), cap.w);
@@ -1290,6 +1642,19 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
               columns="grid-cols-5"
             />
           </div>
+          <p className="mt-3 text-sm font-semibold">Template</p>
+          <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+            {BOOTH_STYLES.map((s) => (
+              <TemplateCard
+                key={s.id}
+                s={s}
+                active={s.id === styleId}
+                onSelect={() => setStyleId(s.id)}
+                caption={caption}
+                small
+              />
+            ))}
+          </div>
           <div className="relative mx-auto mt-3 w-full max-w-xs">
             <canvas
               ref={studioCanvasRef}
@@ -1467,36 +1832,25 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
       {phase === 'idle' && (
         <div className="lg:col-start-2">
           <div className="mt-3 lg:mt-0">
-            <p className="text-sm font-semibold">Strip style</p>
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              {BOOTH_STYLES.map((s) => {
-                const active = s.id === styleId;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setStyleId(s.id)}
-                    aria-pressed={active}
-                    title={`${s.name} — ${s.note}`}
-                    className={`rounded-xl border-[3px] p-1.5 text-left transition hover:-translate-y-0.5 ${
-                      active ? 'booth-tile-active border-[#ffc83d]' : 'border-transparent'
-                    }`}
-                  >
-                    <span className="block rounded-lg p-1.5" style={{ background: s.frame }}>
-                      <span className="flex flex-col gap-1">
-                        <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#ff4da6,#ffd98a 50%,#46a758)' }} />
-                        <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#ffd98a,#46a758 50%,#ff4da6)' }} />
-                        <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#46a758,#ff4da6 50%,#ffd98a)' }} />
-                      </span>
-                      <span className="mt-1.5 block text-center text-[10px] font-bold leading-none" style={{ color: s.caption }}>
-                        {caption || 'Sachi'}
-                      </span>
-                    </span>
-                    <span className="mt-1 block truncate text-xs font-semibold">{s.name}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <p className="text-sm font-semibold">Template</p>
+            {(['classic', 'reel', 'template'] as const).map((g) => (
+              <div key={g}>
+                <p className="mt-3 text-xs font-semibold text-[var(--ink-dim)]">
+                  {g === 'classic' ? 'Classic' : g === 'reel' ? 'From the reel' : 'Templates'}
+                </p>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {BOOTH_STYLES.filter((s) => s.group === g).map((s) => (
+                    <TemplateCard
+                      key={s.id}
+                      s={s}
+                      active={s.id === styleId}
+                      onSelect={() => setStyleId(s.id)}
+                      caption={caption}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
             <p className="mt-4 text-sm font-semibold">Layout</p>
             <div className="mt-2 grid grid-cols-3 gap-2">
               {BOOTH_LAYOUTS.map((l) => {

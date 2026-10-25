@@ -17,14 +17,15 @@ import {
   layoutSlots,
   pickPoses,
   scrapbookPageSize,
+  seededPoints,
   shotTimeline,
   stripDateLine,
   stripLayout,
 } from './booth';
 
 describe('photo booth', () => {
-  it('ships the original five styles plus the new frame styles', () => {
-    expect(BOOTH_STYLES.map((s) => s.id)).toEqual([
+  it('ships the original nine classic styles first, then reel and template designs', () => {
+    expect(BOOTH_STYLES.slice(0, 9).map((s) => s.id)).toEqual([
       'classic',
       '35mm',
       'love-note',
@@ -35,6 +36,30 @@ describe('photo booth', () => {
       'birthday',
       'doodle',
     ]);
+    expect(BOOTH_STYLES.length).toBe(29);
+    expect(new Set(BOOTH_STYLES.map((s) => s.id)).size).toBe(29);
+    expect(BOOTH_STYLES.filter((s) => s.group === 'classic')).toHaveLength(9);
+    expect(BOOTH_STYLES.filter((s) => s.group === 'reel')).toHaveLength(10);
+    expect(BOOTH_STYLES.filter((s) => s.group === 'template')).toHaveLength(10);
+    for (const s of BOOTH_STYLES) {
+      expect(s.name.length).toBeGreaterThan(0);
+      expect(s.frame).toMatch(/^#[0-9a-f]{6}$/);
+      expect(s.caption).toMatch(/^#[0-9a-f]{6}$/);
+    }
+  });
+
+  it('seeds decoration points deterministically and inside the canvas', () => {
+    const a = seededPoints('dark-denim', 20, 1080, 1920, 48);
+    const b = seededPoints('dark-denim', 20, 1080, 1920, 48);
+    expect(a).toEqual(b);
+    expect(a).toHaveLength(20);
+    for (const p of a) {
+      expect(p.x).toBeGreaterThanOrEqual(48);
+      expect(p.x).toBeLessThanOrEqual(1080 - 48);
+      expect(p.y).toBeGreaterThanOrEqual(48);
+      expect(p.y).toBeLessThanOrEqual(1920 - 48);
+    }
+    expect(seededPoints('other', 20, 1080, 1920, 48)).not.toEqual(a);
   });
 
   it('falls back to the classic strip for an unknown style', () => {

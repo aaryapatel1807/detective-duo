@@ -10,16 +10,65 @@
  * module holds the pure parts so they are unit-tested.
  */
 
+import { rngFromSeed } from './generators/rng';
+
+/** Code-drawn strip decoration. All motifs are drawn from scratch in
+ * the composite — no artwork, photos, or brand marks are copied in.
+ * Seeded decorations (stars, glitter, doodles) use seededPoints below
+ * so a strip renders identically every time it composites. */
+export type StripPattern =
+  | { kind: 'dots'; color: string; gap: number; r: number }
+  | { kind: 'stars'; colors: string[]; count: number }
+  | { kind: 'glitter'; colors: string[]; count: number }
+  | { kind: 'checker'; color: string; size: number }
+  | { kind: 'stripes'; colors: string[]; width: number }
+  | { kind: 'lace'; color: string }
+  | { kind: 'lights' }
+  | { kind: 'floral'; colors: string[] }
+  | { kind: 'stamp' }
+  | { kind: 'bows'; color: string }
+  | { kind: 'doodles' };
+
+export type StripCaptionFont = 'serif' | 'typewriter' | 'script' | 'bubble';
+
+export type StripGroup = 'classic' | 'reel' | 'template';
+
 export interface BoothStyle {
   id: string;
   name: string;
   frame: string;
   caption: string;
   note: string;
+  /** Which picker section this design lives in. */
+  group: StripGroup;
   /** Small shapes drawn in the strip margins. */
   motif?: 'hearts' | 'stars';
   /** Words printed in the gaps between photos. */
   dividerText?: string;
+  /** Code-drawn background / foreground decoration. */
+  pattern?: StripPattern;
+  /** Caption typeface; default is the classic serif. */
+  captionFont?: StripCaptionFont;
+}
+
+/** Deterministic scatter points for a strip canvas (seeded by template
+ * id, so re-composites look identical). Points stay inside `margin`. */
+export function seededPoints(
+  seed: string,
+  count: number,
+  w: number,
+  h: number,
+  margin = 0,
+): { x: number; y: number }[] {
+  const rng = rngFromSeed(seed);
+  const out: { x: number; y: number }[] = [];
+  for (let i = 0; i < count; i++) {
+    out.push({
+      x: margin + rng() * Math.max(1, w - margin * 2),
+      y: margin + rng() * Math.max(1, h - margin * 2),
+    });
+  }
+  return out;
 }
 
 export const BOOTH_STYLES: BoothStyle[] = [
@@ -29,6 +78,7 @@ export const BOOTH_STYLES: BoothStyle[] = [
     frame: '#fdf8ec',
     caption: '#2b2118',
     note: 'The old-school booth strip, warm paper and a plain border.',
+    group: 'classic',
   },
   {
     id: '35mm',
@@ -36,6 +86,7 @@ export const BOOTH_STYLES: BoothStyle[] = [
     frame: '#1c1c1e',
     caption: '#f5f0e6',
     note: 'Dark film edges with little sprocket holes, like a photo roll.',
+    group: 'classic',
   },
   {
     id: 'love-note',
@@ -43,6 +94,7 @@ export const BOOTH_STYLES: BoothStyle[] = [
     frame: '#ffe9f0',
     caption: '#7a2e4a',
     note: 'Soft pink paper, for the soppy ones.',
+    group: 'classic',
   },
   {
     id: 'after-hours',
@@ -50,6 +102,7 @@ export const BOOTH_STYLES: BoothStyle[] = [
     frame: '#1e2a4a',
     caption: '#ffd98a',
     note: 'Deep night blue with a warm lamp glow.',
+    group: 'classic',
   },
   {
     id: 'date-plan',
@@ -57,6 +110,7 @@ export const BOOTH_STYLES: BoothStyle[] = [
     frame: '#fff6d8',
     caption: '#3d5a3a',
     note: 'Butter yellow, made for the date-night dice roll.',
+    group: 'classic',
   },
   {
     id: 'hearts',
@@ -65,6 +119,7 @@ export const BOOTH_STYLES: BoothStyle[] = [
     caption: '#7a2e4a',
     note: 'Pink paper with little hearts in the margins.',
     motif: 'hearts',
+    group: 'classic',
   },
   {
     id: 'stars',
@@ -73,6 +128,7 @@ export const BOOTH_STYLES: BoothStyle[] = [
     caption: '#ffd98a',
     note: 'Night blue with gold stars in the margins.',
     motif: 'stars',
+    group: 'classic',
   },
   {
     id: 'birthday',
@@ -81,6 +137,7 @@ export const BOOTH_STYLES: BoothStyle[] = [
     caption: '#b34700',
     note: 'Butter yellow with HAPPY BIRTHDAY between the shots.',
     dividerText: 'HAPPY BIRTHDAY',
+    group: 'classic',
   },
   {
     id: 'doodle',
@@ -89,6 +146,195 @@ export const BOOTH_STYLES: BoothStyle[] = [
     caption: '#2b2118',
     note: 'Warm paper with star doodles in the margins.',
     motif: 'stars',
+    group: 'classic',
+  },
+  // From the reel — papers and finishes, as named there.
+  {
+    id: 'white-satin',
+    name: 'White satin',
+    frame: '#fbf6ee',
+    caption: '#2b2118',
+    note: 'Plain white satin paper, from the reel.',
+    group: 'reel',
+  },
+  {
+    id: 'blue-paper',
+    name: 'Blue paper',
+    frame: '#a9c6de',
+    caption: '#1e2a4a',
+    note: 'Light blue paper, from the reel.',
+    group: 'reel',
+  },
+  {
+    id: 'pink-paper',
+    name: 'Pink paper',
+    frame: '#f5c3d3',
+    caption: '#7a2e4a',
+    note: 'Pink paper, from the reel.',
+    group: 'reel',
+  },
+  {
+    id: 'ink-dots',
+    name: 'Ink dots',
+    frame: '#fdf8ec',
+    caption: '#2b2118',
+    note: 'Cream paper with ink dots, from the reel.',
+    pattern: { kind: 'dots', color: '#2b2118', gap: 120, r: 6 },
+    group: 'reel',
+  },
+  {
+    id: 'pink-stripes',
+    name: 'Pink stripes',
+    frame: '#f5c3d3',
+    caption: '#7a2e4a',
+    note: 'Pink stripes paper, from the reel.',
+    pattern: { kind: 'stripes', colors: ['#f5c3d3', '#fdf8ec'], width: 26 },
+    group: 'reel',
+  },
+  {
+    id: 'burgundy-corduroy',
+    name: 'Burgundy corduroy',
+    frame: '#6e1423',
+    caption: '#ffd98a',
+    note: 'Burgundy corduroy paper, from the reel.',
+    pattern: { kind: 'stripes', colors: ['#6e1423', '#57101d'], width: 18 },
+    group: 'reel',
+  },
+  {
+    id: 'dark-denim',
+    name: 'Dark denim',
+    frame: '#232e4a',
+    caption: '#ffd98a',
+    note: 'Dark denim paper with gold stars, from the reel.',
+    motif: 'stars',
+    pattern: { kind: 'stripes', colors: ['#232e4a', '#2c3a5e'], width: 20 },
+    group: 'reel',
+  },
+  {
+    id: 'star-mix',
+    name: 'Star mix',
+    frame: '#fdf8ec',
+    caption: '#2b2118',
+    note: 'Scattered stars finish, from the reel.',
+    pattern: { kind: 'stars', colors: ['#ffd98a', '#ffffff', '#ff8fb3'], count: 42 },
+    group: 'reel',
+  },
+  {
+    id: 'bedazzle',
+    name: 'Bedazzle',
+    frame: '#f5c3d3',
+    caption: '#7a2e4a',
+    note: 'Gem-dot bedazzle finish, from the reel.',
+    pattern: { kind: 'glitter', colors: ['#ffffff', '#ffd98a', '#ff8fb3'], count: 70 },
+    group: 'reel',
+  },
+  {
+    id: 'vintage-lace',
+    name: 'Vintage lace',
+    frame: '#fdf8ec',
+    caption: '#2b2118',
+    note: 'White lace doily frame, from the reel.',
+    pattern: { kind: 'lace', color: '#ffffff' },
+    captionFont: 'script',
+    group: 'reel',
+  },
+  // Templates — drawn from the template inspirations, original code art.
+  {
+    id: 'chalk-lights',
+    name: 'Chalk lights',
+    frame: '#1e1a17',
+    caption: '#f5f0e6',
+    note: 'Chalkboard with string lights along the top.',
+    pattern: { kind: 'lights' },
+    captionFont: 'typewriter',
+    group: 'template',
+  },
+  {
+    id: 'gold-glitz',
+    name: 'Gold glitz',
+    frame: '#1c1c1e',
+    caption: '#ffd98a',
+    note: 'Black with a gold glitter border.',
+    pattern: { kind: 'glitter', colors: ['#ffd98a', '#fff3c4', '#d9a441'], count: 90 },
+    group: 'template',
+  },
+  {
+    id: 'pink-glitz',
+    name: 'Pink glitz',
+    frame: '#f5c3d3',
+    caption: '#7a2e4a',
+    note: 'Pink with a glitter border.',
+    pattern: { kind: 'glitter', colors: ['#ffffff', '#ff8fb3', '#ffd98a'], count: 90 },
+    group: 'template',
+  },
+  {
+    id: 'rustic-lace',
+    name: 'Rustic lace',
+    frame: '#8a6a4d',
+    caption: '#fdf8ec',
+    note: 'Rustic wood brown with a lace frame.',
+    pattern: { kind: 'lace', color: '#f5ead6' },
+    captionFont: 'script',
+    group: 'template',
+  },
+  {
+    id: 'polka-stars',
+    name: 'Polka stars',
+    frame: '#fdf8ec',
+    caption: '#c93a3a',
+    note: 'Cream with red polka dots and stars.',
+    motif: 'stars',
+    pattern: { kind: 'dots', color: '#c93a3a', gap: 120, r: 15 },
+    group: 'template',
+  },
+  {
+    id: 'stamp-memories',
+    name: 'Stamp memories',
+    frame: '#211d1a',
+    caption: '#f5f0e6',
+    note: 'Stamp-edged photos with bows, Memories between shots.',
+    pattern: { kind: 'stamp' },
+    dividerText: 'Memories',
+    captionFont: 'typewriter',
+    group: 'template',
+  },
+  {
+    id: 'limited-edition',
+    name: 'Limited edition',
+    frame: '#4a3626',
+    caption: '#f2e3b3',
+    note: 'Brown with cream dots and a bubble caption.',
+    pattern: { kind: 'dots', color: '#f2e3b3', gap: 96, r: 13 },
+    captionFont: 'bubble',
+    group: 'template',
+  },
+  {
+    id: 'checker-pop',
+    name: 'Checker pop',
+    frame: '#fdf8ec',
+    caption: '#2b2118',
+    note: 'Bold checkerboard border.',
+    pattern: { kind: 'checker', color: '#2b2118', size: 36 },
+    group: 'template',
+  },
+  {
+    id: 'cherry-doodle',
+    name: 'Cherry doodle',
+    frame: '#ffe9f0',
+    caption: '#7a2e4a',
+    note: 'Pastel pink with cherry, flower and smiley doodles.',
+    pattern: { kind: 'doodles' },
+    group: 'template',
+  },
+  {
+    id: 'floral-corners',
+    name: 'Floral corners',
+    frame: '#fdf8ec',
+    caption: '#7a2e4a',
+    note: 'Cream with flower clusters in the corners.',
+    pattern: { kind: 'floral', colors: ['#ff8fb3', '#ffd98a', '#46a758'] },
+    captionFont: 'script',
+    group: 'template',
   },
 ];
 
