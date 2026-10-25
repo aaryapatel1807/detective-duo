@@ -271,7 +271,7 @@ export default function AlbumsPage() {
                   <li key={u.name} className="text-sm">
                     <span className="font-semibold">{u.name}</span>{' '}
                     <span className="text-[var(--ink-dim)]">
-                      — {u.state === 'uploading' ? 'Uploading…' : u.state === 'failed' ? 'Failed' : u.detail}
+                      — {u.state === 'uploading' ? 'Uploading…' : u.state === 'failed' ? `Failed — ${u.detail}` : u.detail}
                     </span>
                   </li>
                 ))}

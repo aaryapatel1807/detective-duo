@@ -4,8 +4,7 @@ import {
   BOOTH_STYLES,
   COUNTDOWN_SECONDS,
   MEME_POSES,
-  POSE_IDEAS,
-  STORY_HEIGHT,
+  POSE_IDEAS,  STORY_HEIGHT,
   STORY_WIDTH,
   STRIP_SHOTS,
   boothStyleById,
@@ -154,5 +153,17 @@ describe('photo booth upgrade (phases 1–6)', () => {
   it('phase 6: duo turns alternate shooters', () => {
     expect(duoTurnNames(4, 'You', 'Partner')).toEqual(['You', 'Partner', 'You', 'Partner']);
     expect(duoTurnNames(1, 'A', 'B')).toEqual(['A']);
+  });
+});
+
+describe('photo booth meme photos + mirror', () => {
+  it('meme poses with photos use real pose images, not emoji', () => {
+    const withPhoto = MEME_POSES.filter((p) => p.image);
+    expect(withPhoto.map((p) => p.id)).toEqual(['cat-ears', 'heart-hands', 'cheek-heart', 'back-hug']);
+    for (const p of withPhoto) {
+      expect(p.image).toMatch(/^\/booth\/meme-poses\/[a-z-]+\.jpg$/);
+    }
+    // The rest still fall back to their emoji until their photos arrive.
+    expect(MEME_POSES.filter((p) => !p.image).length).toBe(6);
   });
 });

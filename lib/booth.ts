@@ -173,6 +173,8 @@ export interface PoseIdea {
   title: string;
   hint: string;
   emoji: string;
+  /** Real pose photo shown on the meme card instead of the emoji. */
+  image?: string;
 }
 
 export const POSE_IDEAS: PoseIdea[] = [
@@ -332,11 +334,11 @@ export function stripDateLine(d: Date = new Date()): string {
 // ------------------------------------------------------- Phase 4: meme booth ----
 
 export const MEME_POSES: PoseIdea[] = [
-  { id: 'cat-ears', title: 'Cat ears', hint: 'Both do cat ears above your heads.', emoji: '🐱' },
-  { id: 'heart-hands', title: 'Heart hands', hint: 'Make one big heart with all four hands.', emoji: '🫶' },
-  { id: 'cheek-heart', title: 'Cheek heart', hint: 'Cheek to cheek, finger heart on the cheek.', emoji: '😘' },
+  { id: 'cat-ears', title: 'Cat ears', hint: 'Both do cat ears above your heads.', emoji: '🐱', image: '/booth/meme-poses/cat-ears.jpg' },
+  { id: 'heart-hands', title: 'Heart hands', hint: 'Make one big heart with all four hands.', emoji: '🫶', image: '/booth/meme-poses/heart-hands.jpg' },
+  { id: 'cheek-heart', title: 'Cheek heart', hint: 'Cheek to cheek, finger heart on the cheek.', emoji: '😘', image: '/booth/meme-poses/cheek-heart.jpg' },
   { id: 'forehead-kiss', title: 'Forehead kiss', hint: 'Foreheads together, eyes closed, soft smile.', emoji: '💋' },
-  { id: 'back-hug', title: 'Back hug', hint: 'One hugs the other from behind.', emoji: '🤗' },
+  { id: 'back-hug', title: 'Back hug', hint: 'One hugs the other from behind.', emoji: '🤗', image: '/booth/meme-poses/back-hug.jpg' },
   { id: 'piggyback', title: 'Piggyback', hint: 'Piggyback, both laughing.', emoji: '🐴' },
   { id: 'mirror-twins', title: 'Mirror twins', hint: 'Copy each other’s pose exactly.', emoji: '🪞' },
   { id: 'silly-tongues', title: 'Silly tongues', hint: 'Both stick your tongues out.', emoji: '😜' },

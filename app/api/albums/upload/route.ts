@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { SHARED_ALBUM_ROOM, checkAlbumKey } from '@/lib/albums/auth';
-import { classifyPhoto } from '@/lib/albums/classify';
 import { parseExif } from '@/lib/albums/exif';
 import { MAX_UPLOAD_BYTES, processImage } from '@/lib/albums/images';
-import { getServiceClient, insertPhoto, updatePhoto, uploadFiles } from '@/lib/albums/store';
+import { getServiceClient, insertPhoto, uploadFiles } from '@/lib/albums/store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,9 +12,11 @@ export const dynamic = 'force-dynamic';
  * POST /api/albums/upload — multipart: key, uploader, file.
  * The key is the one shared secret (x-album-key header also works).
  * Stores a compressed photo + thumbnail in the private bucket, records
- * its EXIF date/place, then classifies it (faces + scene). If the
- * classification step fails or runs long, the row stays 'pending' and
- * /api/albums/process picks it up later — the upload still succeeds.
+ * its EXIF date/place, and returns 'pending' right away. Classification
+ * (faces + scene) runs afterwards via /api/albums/process, which the
+ * album page calls after uploads — it used to run inline here, but a
+ * cold model load can outlast the function's time limit and turn a
+ * stored photo into a failed upload, so uploads never wait on it.
  * Photos stay in the private bucket permanently: there is no expiry
  * and no delete path; only the signed view links expire (1 hour) and
  * are re-signed on every list.
@@ -77,24 +78,13 @@ export async function POST(request: Request) {
     lat: exif.lat,
     lon: exif.lon,
   });
-  // Best-effort inline classification; the process route retries the rest.
-  try {
-    const assetBase = new URL(request.url).origin;
-    const result = await classifyPhoto(processed.full, assetBase);
-    await updatePhoto(sb, row.id, {
-      status: 'ready',
-      face_count: result.faceCount,
-      scene_tags: result.sceneTags,
-    });
-    return NextResponse.json({
-      id: row.id,
-      status: 'ready',
-      faceCount: result.faceCount,
-      sceneTags: result.sceneTags,
-      takenAt: exif.takenAt,
-    });
-  } catch (e) {
-    console.error('album classify failed, leaving pending:', e);
-    return NextResponse.json({ id: row.id, status: 'pending', faceCount: null, sceneTags: [], takenAt: exif.takenAt });
-  }
+  // Pending by design: /api/albums/process classifies it next. The
+  // photo is already stored permanently at this point.
+  return NextResponse.json({
+    id: row.id,
+    status: 'pending',
+    faceCount: null,
+    sceneTags: [],
+    takenAt: exif.takenAt,
+  });
 }

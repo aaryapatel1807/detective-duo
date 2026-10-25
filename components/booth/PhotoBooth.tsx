@@ -18,6 +18,14 @@
  *    phone. Strips are composited on canvas and handed back as an
  *    image; nothing is uploaded anywhere except the room broadcast
  *    of compressed shots between the two phones in a room.
+ *
+ * UI notes (Oct 2026): filters live in a visible rail — left of the
+ * camera on desktop, a scroll strip on phones — so one tap changes
+ * the look before (or during) a run, no dropdown to open. Meme poses
+ * with a real pose photo show it in a "copy this!" card, RollBooth
+ * style; poses without a photo yet fall back to their emoji. The
+ * camera is a real (unmirrored) image by default; Mirror preview is
+ * an opt-in toggle, saved on the device.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -94,6 +102,99 @@ function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, r: number
 
 type Phase = 'idle' | 'countdown' | 'review' | 'done';
 
+/**
+ * One-tap filter rail: every filter visible at once, no dropdown to
+ * open. Each swatch wears its own filter, and the camera preview (and
+ * the finished strip) updates the moment you tap. Side layout sits
+ * left of the camera on desktop; row layout scrolls horizontally.
+ */
+function FilterRail({
+  selected,
+  onSelect,
+  layout,
+}: {
+  selected: string;
+  onSelect: (id: string) => void;
+  layout: 'side' | 'row';
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Photo filters"
+      className={
+        layout === 'side'
+          ? 'flex gap-2 overflow-x-auto sm:max-h-[540px] sm:w-28 sm:shrink-0 sm:flex-col sm:overflow-y-auto sm:overflow-x-hidden sm:pr-1'
+          : 'flex gap-2 overflow-x-auto pb-1'
+      }
+    >
+      {BOOTH_FILTERS.map((f) => {
+        const active = f.id === selected;
+        return (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => onSelect(f.id)}
+            aria-pressed={active}
+            className={`btn !justify-start !px-2 !py-1.5 text-xs ${active ? 'btn-primary' : ''} ${
+              layout === 'side' ? 'sm:w-full' : ''
+            }`}
+          >
+            <span
+              aria-hidden
+              className="block h-10 w-10 shrink-0 rounded-lg"
+              style={{
+                background: 'linear-gradient(135deg,#ff4da6,#ffd98a 50%,#46a758)',
+                filter: f.css || undefined,
+              }}
+            />
+            <span>{f.name}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Pose card: a real pose photo when the pose has one, else its emoji. */
+function PoseCard({
+  pose,
+  shot,
+  total,
+  shooter,
+  heading,
+}: {
+  pose: PoseIdea;
+  shot: number;
+  total: number;
+  shooter: string | null;
+  heading: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      {pose.image ? (
+        <div className="w-44 overflow-hidden rounded-xl border-2 border-white/80 shadow-lg">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={pose.image} alt={`${pose.title} pose`} className="aspect-[4/3] w-full object-cover" />
+          <p className="bg-black/70 px-2 py-1 text-center text-xs font-bold">
+            Pose {shot + 1} of {total}: copy this!
+          </p>
+        </div>
+      ) : (
+        <span className="text-6xl" aria-hidden>
+          {pose.emoji}
+        </span>
+      )}
+      <p className="text-xl font-bold">{heading}</p>
+      <p className="text-lg font-semibold">{pose.title}</p>
+      <p className="text-sm opacity-90">{pose.hint}</p>
+      {shooter && <p className="text-sm font-semibold">{shooter}&rsquo;s turn</p>}
+      <p className="text-xs opacity-80">
+        Shot {shot + 1} of {total}
+      </p>
+    </div>
+  );
+}
+
 export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
   const [styleId, setStyleId] = useState(BOOTH_STYLES[0]!.id);
   const [filterId, setFilterId] = useState('original');
@@ -105,6 +206,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
   const [showPoses, setShowPoses] = useState(true);
   const [manual, setManual] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
+  const [mirror, setMirror] = useState(false);
   const [duoTurns, setDuoTurns] = useState(false);
   const [playerA, setPlayerA] = useState('You');
   const [playerB, setPlayerB] = useState('Partner');
@@ -151,6 +253,23 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
   const manualShotRef = useRef(0);
 
   const filterCss = boothFilterById(filterId).css;
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('sachi-booth-mirror') === '1') setMirror(true);
+    } catch {
+      /* private mode: mirror just defaults off */
+    }
+  }, []);
+
+  const toggleMirror = useCallback((v: boolean) => {
+    setMirror(v);
+    try {
+      localStorage.setItem('sachi-booth-mirror', v ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach(clearTimeout);
@@ -270,16 +389,19 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
       canvas.height = h;
       const ctx = canvas.getContext('2d');
       if (!ctx) return false;
-      // Mirror the capture so the photo matches the selfie preview.
-      ctx.translate(w, 0);
-      ctx.scale(-1, 1);
+      // Mirror only when asked: by default the capture is the real
+      // image, as others see you — and it always matches the preview.
+      if (mirror) {
+        ctx.translate(w, 0);
+        ctx.scale(-1, 1);
+      }
       drawCover(ctx, video, 0, 0, w, h);
       if (slot !== undefined) shotsRef.current[slot] = canvas;
       else shotsRef.current.push(canvas);
       refreshShotUrls();
       return true;
     },
-    [refreshShotUrls],
+    [mirror, refreshShotUrls],
   );
 
   const abortRun = useCallback(
@@ -971,61 +1093,54 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
       )}
 
       {showCamera && (
-        <div className="relative mt-3 overflow-hidden rounded-xl bg-black">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="aspect-[3/4] w-full object-cover"
-            style={{ transform: 'scaleX(-1)', filter: filterCss || undefined }}
-            aria-label="Booth camera preview"
-          />
-          {flash && <div className="absolute inset-0 bg-white" aria-hidden />}
-          {phase === 'countdown' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/30 p-4 text-center text-white">
-              {awaitingReady && poseCardPose ? (
-                <>
-                  <span className="text-6xl" aria-hidden>{poseCardPose.emoji}</span>
-                  <p className="text-xl font-bold">Copy this!</p>
-                  <p className="text-lg font-semibold">{poseCardPose.title}</p>
-                  <p className="text-sm opacity-90">{poseCardPose.hint}</p>
-                  {shooter && <p className="text-sm font-semibold">{shooter}&rsquo;s turn</p>}
-                  <p className="text-xs opacity-80">Shot {shot + 1} of {totalShots}</p>
-                  <button type="button" className="btn btn-primary mt-2" onClick={manualReady}>
-                    Ready — take it
-                  </button>
-                  <button type="button" className="btn mt-1" onClick={cancelRun}>
-                    Cancel
-                  </button>
-                </>
-              ) : poseCardPose && count === 0 ? (
-                <>
-                  <span className="text-6xl" aria-hidden>{poseCardPose.emoji}</span>
-                  <p className="text-xl font-bold">Get ready…</p>
-                  <p className="text-lg font-semibold">{poseCardPose.title}</p>
-                  <p className="text-sm opacity-90">{poseCardPose.hint}</p>
-                  {shooter && <p className="text-sm font-semibold">{shooter}&rsquo;s turn</p>}
-                  <p className="text-xs opacity-80">Shot {shot + 1} of {totalShots}</p>
-                  <button type="button" className="btn mt-2" onClick={cancelRun}>
-                    Cancel
-                  </button>
-                </>
-              ) : count > 0 ? (
-                <>
-                  <span className="text-7xl font-bold drop-shadow">{count}</span>
-                  <p className="text-sm font-semibold">
-                    {retakeSlot !== null ? `Retaking shot ${retakeSlot + 1}` : `Shot ${shot + 1} of ${totalShots}`}
-                  </p>
-                  <button type="button" className="btn mt-2" onClick={cancelRun}>
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <p className="text-sm font-semibold">Shot {shot} of {totalShots} taken</p>
-              )}
-            </div>
-          )}
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start">
+          <FilterRail selected={filterId} onSelect={setFilterId} layout="side" />
+          <div className="relative flex-1 overflow-hidden rounded-xl bg-black">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="aspect-[3/4] w-full object-cover"
+              style={{ transform: mirror ? 'scaleX(-1)' : undefined, filter: filterCss || undefined }}
+              aria-label="Booth camera preview"
+            />
+            {flash && <div className="absolute inset-0 bg-white" aria-hidden />}
+            {phase === 'countdown' && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/30 p-4 text-center text-white">
+                {awaitingReady && poseCardPose ? (
+                  <>
+                    <PoseCard pose={poseCardPose} shot={shot} total={totalShots} shooter={shooter} heading="Copy this!" />
+                    <button type="button" className="btn btn-primary mt-2" onClick={manualReady}>
+                      Ready — take it
+                    </button>
+                    <button type="button" className="btn mt-1" onClick={cancelRun}>
+                      Cancel
+                    </button>
+                  </>
+                ) : poseCardPose && count === 0 ? (
+                  <>
+                    <PoseCard pose={poseCardPose} shot={shot} total={totalShots} shooter={shooter} heading="Get ready…" />
+                    <button type="button" className="btn mt-2" onClick={cancelRun}>
+                      Cancel
+                    </button>
+                  </>
+                ) : count > 0 ? (
+                  <>
+                    <span className="text-7xl font-bold drop-shadow">{count}</span>
+                    <p className="text-sm font-semibold">
+                      {retakeSlot !== null ? `Retaking shot ${retakeSlot + 1}` : `Shot ${shot + 1} of ${totalShots}`}
+                    </p>
+                    <button type="button" className="btn mt-2" onClick={cancelRun}>
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-sm font-semibold">Shot {shot} of {totalShots} taken</p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -1086,7 +1201,11 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
 
       {phase === 'done' && stripUrl && (
         <div className="mt-3">
-          <div className="relative mx-auto w-full max-w-xs">
+          <p className="text-sm font-semibold">Filter</p>
+          <div className="mt-2">
+            <FilterRail selected={filterId} onSelect={setFilterId} layout="row" />
+          </div>
+          <div className="relative mx-auto mt-3 w-full max-w-xs">
             <canvas
               ref={studioCanvasRef}
               width={360}
@@ -1274,14 +1393,6 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
               </select>
             </label>
             <label className="flex flex-col gap-1 text-sm font-semibold">
-              Filter (live preview)
-              <select className="input" value={filterId} onChange={(e) => setFilterId(e.target.value)} aria-label="Photo filter">
-                {BOOTH_FILTERS.map((f) => (
-                  <option key={f.id} value={f.id}>{f.name}</option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1 text-sm font-semibold">
               Layout
               <select
                 className="input"
@@ -1349,6 +1460,10 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
               <input type="checkbox" checked={dateStamp} onChange={(e) => setDateStamp(e.target.checked)} />
               Date on the strip
             </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={mirror} onChange={(e) => toggleMirror(e.target.checked)} />
+              Mirror preview
+            </label>
             {!roomCode && (
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={manual} onChange={(e) => setManual(e.target.checked)} />
@@ -1396,6 +1511,9 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
           </div>
           <p className="mt-2 text-xs text-[var(--ink-dim)]">
             How it runs: a pose card, then 3-2-1, then the shot — for every shot.
+            Tap any filter on the left (or above, on phones) to change the look
+            live, before you start. Mirror off shows the real image, as others
+            see you; turn Mirror on for the selfie view.
             {manual && !roomCode ? ' In manual mode you press Ready for each shot.' : ''}
             {roomCode ? ' In a room, both phones count down together.' : ''}
           </p>
