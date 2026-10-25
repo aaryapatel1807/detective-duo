@@ -33,8 +33,11 @@
  * doodles), seeded so re-composites look identical, and decorations
  * never cover faces. Layout: the camera column holds the filter rail,
  * a bigger preview (up to 78vh on desktop) kept blank — no stickers
- * or emojis on the camera screen, on his word — and the Template
- * picker below it; the right column keeps
+ * or emojis on the camera screen, on his word, and it sits above the
+ * drifting theme layer (z-41 over the ambience's z-40) so hearts,
+ * rain, clouds and fireflies pass behind it, never over it; the
+ * full-screen countdown (z-50) and flash (z-60) still sit above the
+ * preview — and the Template picker below it; the right column keeps
  * Layout, Shots, Pose pack, Caption and Options. "Try this template"
  * renders the current look onto sample photos through the same strip
  * painter, so a template can be previewed before shooting or with no
@@ -1692,7 +1695,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
             />
           </div>
           <div className="order-1 flex min-w-0 flex-1 flex-col items-center lg:order-2">
-            <div className="relative w-full overflow-hidden rounded-xl bg-black lg:h-[min(78vh,920px)] lg:aspect-[3/4] lg:w-auto lg:max-w-full lg:flex-none">
+            <div className="relative z-[41] w-full overflow-hidden rounded-xl bg-black lg:h-[min(78vh,920px)] lg:aspect-[3/4] lg:w-auto lg:max-w-full lg:flex-none">
               <video
                 ref={videoRef}
                 autoPlay
