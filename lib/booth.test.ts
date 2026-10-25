@@ -4,7 +4,9 @@ import {
   BOOTH_STYLES,
   COUNTDOWN_SECONDS,
   MEME_POSES,
-  POSE_IDEAS,  STORY_HEIGHT,
+  POSE_IDEAS,
+  POSE_PACKS,
+  STORY_HEIGHT,
   STORY_WIDTH,
   STRIP_SHOTS,
   boothStyleById,
@@ -165,5 +167,18 @@ describe('photo booth meme photos + mirror', () => {
     }
     // The rest still fall back to their emoji until their photos arrive.
     expect(MEME_POSES.filter((p) => !p.image).length).toBe(6);
+  });
+});
+
+describe('photo booth practice panel', () => {
+  it('every pose pack has at least one pose with a title and hint', () => {
+    expect(POSE_PACKS.length).toBeGreaterThan(0);
+    for (const pack of POSE_PACKS) {
+      expect(pack.poses.length).toBeGreaterThan(0);
+      for (const p of pack.poses) {
+        expect(p.title).toBeTruthy();
+        expect(p.hint).toBeTruthy();
+      }
+    }
   });
 });
