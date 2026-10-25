@@ -31,7 +31,13 @@
  * — every template is code-drawn on the export canvas (dots, stripes,
  * checker, stars, glitter, lace, string lights, stamp edges, bows,
  * doodles), seeded so re-composites look identical, and decorations
- * never cover faces. Layout is tap cards, shots and pose pack are
+ * never cover faces. Layout: the camera column holds the filter rail,
+ * a bigger preview (up to 78vh on desktop) with floating cute emojis
+ * on it, and the Template picker below it; the right column keeps
+ * Layout, Shots, Pose pack, Caption and Options. "Try this template"
+ * renders the current look onto sample photos through the same strip
+ * painter, so a template can be previewed before shooting or with no
+ * camera at all. Layout is tap cards, shots and pose pack are
  * chips, and every option is a toggle chip — no dropdowns, no
  * checkboxes. The shutter is a big gold round button
  * under the preview; the countdown is full-screen with a pulsing
@@ -360,6 +366,130 @@ function drawPatternForeground(
     });
   }
   ctx.restore();
+}
+
+/** The strip painting itself: frame, pattern, photos, caption. Used by
+ * the real composite AND by the try-a-template sample preview, so the
+ * preview shows exactly what the export will look like — same code,
+ * only the photos differ (sample gradients instead of camera shots).
+ * Overlays and doodles are NOT painted here; the real composite adds
+ * those afterwards. */
+function paintStripBase(
+  ctx: CanvasRenderingContext2D,
+  opts: {
+    style: BoothStyle;
+    filterCss: string;
+    layoutId: BoothLayout;
+    shotCount: number;
+    caption: string;
+    dateStamp: boolean;
+    shots: (HTMLCanvasElement | HTMLImageElement)[];
+  },
+) {
+  const { style, layoutId, shotCount, caption, dateStamp, shots } = opts;
+  ctx.fillStyle = style.frame;
+  ctx.fillRect(0, 0, STORY_WIDTH, STORY_HEIGHT);
+  drawPatternBackground(ctx, style, STORY_WIDTH, STORY_HEIGHT);
+  // String lights need a header band: this template alone gets a
+  // taller top margin, so the wire hangs above the first photo.
+  const margin = style.pattern?.kind === 'lights' ? 110 : 48;
+  const { slots, caption: cap } = layoutSlots(layoutId, STORY_WIDTH, STORY_HEIGHT, shotCount, margin);
+  shots.slice(0, slots.length).forEach((shotCanvas, i) => {
+    const slot = slots[i];
+    if (!slot) return;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(slot.x, slot.y, slot.w, slot.h);
+    ctx.clip();
+    ctx.filter = opts.filterCss || 'none';
+    drawCover(ctx, shotCanvas, slot.x, slot.y, slot.w, slot.h);
+    ctx.filter = 'none';
+    ctx.restore();
+    ctx.strokeStyle = style.caption;
+    ctx.globalAlpha = 0.35;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(slot.x, slot.y, slot.w, slot.h);
+    ctx.globalAlpha = 1;
+    if (style.dividerText && i < slots.length - 1) {
+      const next = slots[i + 1]!;
+      const gapY = (slot.y + slot.h + next.y) / 2;
+      ctx.fillStyle = style.caption;
+      ctx.globalAlpha = 0.8;
+      ctx.font = '700 22px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(style.dividerText, STORY_WIDTH / 2, gapY, STORY_WIDTH - 96);
+      ctx.globalAlpha = 1;
+    }
+  });
+  if (style.motif) {
+    ctx.fillStyle = style.caption;
+    ctx.globalAlpha = 0.85;
+    for (let x = 96; x < STORY_WIDTH - 48; x += 160) {
+      if (style.motif === 'hearts') {
+        drawHeart(ctx, x, 14, 28);
+        drawHeart(ctx, x + 80, STORY_HEIGHT - 42, 28);
+      } else {
+        drawStar(ctx, x, 28, 18);
+        drawStar(ctx, x + 80, STORY_HEIGHT - 28, 18);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  if (style.id === '35mm') {
+    ctx.fillStyle = style.caption;
+    for (let y = 48; y < STORY_HEIGHT - 48; y += 96) {
+      ctx.fillRect(12, y, 24, 48);
+      ctx.fillRect(STORY_WIDTH - 36, y, 24, 48);
+    }
+  }
+  drawPatternForeground(ctx, style, slots, STORY_WIDTH, STORY_HEIGHT);
+  const text = (caption.trim() || 'Sachi').slice(0, 40);
+  ctx.fillStyle = style.caption;
+  const captionFonts: Record<string, string> = {
+    serif: '600 64px Georgia, serif',
+    typewriter: '64px "Courier New", monospace',
+    script: 'italic 64px Georgia, serif',
+    bubble: '800 64px Arial, sans-serif',
+  };
+  ctx.font = captionFonts[style.captionFont ?? 'serif']!;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, cap.x + cap.w / 2, cap.y + cap.h / 2 - (dateStamp ? 30 : 0), cap.w);
+  if (dateStamp) {
+    ctx.globalAlpha = 0.8;
+    ctx.font = '400 32px Georgia, serif';
+    ctx.fillText(stripDateLine(), cap.x + cap.w / 2, cap.y + cap.h / 2 + 48, cap.w);
+    ctx.globalAlpha = 1;
+  }
+}
+
+/** One gradient stand-in photo for the try-a-template preview. */
+function samplePhotoCanvas(i: number): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = 480;
+  c.height = 640;
+  const g = c.getContext('2d');
+  if (g) {
+    const grads: [string, string][] = [
+      ['#ff4da6', '#ffd98a'],
+      ['#ffd98a', '#46a758'],
+      ['#46a758', '#ff4da6'],
+      ['#8fd0ff', '#ff8fb3'],
+    ];
+    const [a, b] = grads[i % grads.length]!;
+    const grad = g.createLinearGradient(0, 0, 480, 640);
+    grad.addColorStop(0, a);
+    grad.addColorStop(1, b);
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 480, 640);
+    const glow = g.createRadialGradient(240, 220, 40, 240, 220, 320);
+    glow.addColorStop(0, 'rgba(255,255,255,0.55)');
+    glow.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = glow;
+    g.fillRect(0, 0, 480, 640);
+  }
+  return c;
 }
 
 /** CSS hint of a template's pattern for its picker card. */
@@ -1062,81 +1192,15 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
       canvas.height = STORY_HEIGHT;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      ctx.fillStyle = style.frame;
-      ctx.fillRect(0, 0, STORY_WIDTH, STORY_HEIGHT);
-      drawPatternBackground(ctx, style, STORY_WIDTH, STORY_HEIGHT);
-      // String lights need a header band: this template alone gets a
-      // taller top margin, so the wire hangs above the first photo.
-      const margin = style.pattern?.kind === 'lights' ? 110 : 48;
-      const { slots, caption: cap } = layoutSlots(layoutId, STORY_WIDTH, STORY_HEIGHT, shotCount, margin);
-      shotsRef.current.slice(0, slots.length).forEach((shotCanvas, i) => {
-        const slot = slots[i];
-        if (!slot) return;
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(slot.x, slot.y, slot.w, slot.h);
-        ctx.clip();
-        ctx.filter = filter.css || 'none';
-        drawCover(ctx, shotCanvas, slot.x, slot.y, slot.w, slot.h);
-        ctx.filter = 'none';
-        ctx.restore();
-        ctx.strokeStyle = style.caption;
-        ctx.globalAlpha = 0.35;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(slot.x, slot.y, slot.w, slot.h);
-        ctx.globalAlpha = 1;
-        if (style.dividerText && i < slots.length - 1) {
-          const next = slots[i + 1]!;
-          const gapY = (slot.y + slot.h + next.y) / 2;
-          ctx.fillStyle = style.caption;
-          ctx.globalAlpha = 0.8;
-          ctx.font = '700 22px Arial, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(style.dividerText, STORY_WIDTH / 2, gapY, STORY_WIDTH - 96);
-          ctx.globalAlpha = 1;
-        }
+      paintStripBase(ctx, {
+        style,
+        filterCss: filter.css,
+        layoutId,
+        shotCount,
+        caption,
+        dateStamp,
+        shots: shotsRef.current,
       });
-      if (style.motif) {
-        ctx.fillStyle = style.caption;
-        ctx.globalAlpha = 0.85;
-        for (let x = 96; x < STORY_WIDTH - 48; x += 160) {
-          if (style.motif === 'hearts') {
-            drawHeart(ctx, x, 14, 28);
-            drawHeart(ctx, x + 80, STORY_HEIGHT - 42, 28);
-          } else {
-            drawStar(ctx, x, 28, 18);
-            drawStar(ctx, x + 80, STORY_HEIGHT - 28, 18);
-          }
-        }
-        ctx.globalAlpha = 1;
-      }
-      if (style.id === '35mm') {
-        ctx.fillStyle = style.caption;
-        for (let y = 48; y < STORY_HEIGHT - 48; y += 96) {
-          ctx.fillRect(12, y, 24, 48);
-          ctx.fillRect(STORY_WIDTH - 36, y, 24, 48);
-        }
-      }
-      drawPatternForeground(ctx, style, slots, STORY_WIDTH, STORY_HEIGHT);
-      const text = (caption.trim() || 'Sachi').slice(0, 40);
-      ctx.fillStyle = style.caption;
-      const captionFonts: Record<string, string> = {
-        serif: '600 64px Georgia, serif',
-        typewriter: '64px "Courier New", monospace',
-        script: 'italic 64px Georgia, serif',
-        bubble: '800 64px Arial, sans-serif',
-      };
-      ctx.font = captionFonts[style.captionFont ?? 'serif']!;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(text, cap.x + cap.w / 2, cap.y + cap.h / 2 - (dateStamp ? 30 : 0), cap.w);
-      if (dateStamp) {
-        ctx.globalAlpha = 0.8;
-        ctx.font = '400 32px Georgia, serif';
-        ctx.fillText(stripDateLine(), cap.x + cap.w / 2, cap.y + cap.h / 2 + 48, cap.w);
-        ctx.globalAlpha = 1;
-      }
       drawOverlaysOnto(ctx);
       const doodle = doodleCanvasRef.current;
       if (doodle) {
@@ -1177,6 +1241,37 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [styleId, filterId, layoutId, dateStamp, caption]);
+
+  // Try-a-template: render the current look onto sample photos through
+  // the same strip painter, so a template can be previewed before
+  // shooting — or with no camera at all. Rebuilds live as the look
+  // changes while the preview is open.
+  const [showSample, setShowSample] = useState(false);
+  const [sampleUrl, setSampleUrl] = useState<string | null>(null);
+  const buildSampleStrip = useCallback(() => {
+    const style = boothStyleById(styleId);
+    const filter = boothFilterById(filterId);
+    const margin = style.pattern?.kind === 'lights' ? 110 : 48;
+    const { slots } = layoutSlots(layoutId, STORY_WIDTH, STORY_HEIGHT, shotCount, margin);
+    const canvas = document.createElement('canvas');
+    canvas.width = STORY_WIDTH;
+    canvas.height = STORY_HEIGHT;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    paintStripBase(ctx, {
+      style,
+      filterCss: filter.css,
+      layoutId,
+      shotCount,
+      caption,
+      dateStamp,
+      shots: slots.map((_, i) => samplePhotoCanvas(i)),
+    });
+    setSampleUrl(canvas.toDataURL('image/png'));
+  }, [styleId, filterId, layoutId, shotCount, caption, dateStamp]);
+  useEffect(() => {
+    if (showSample && phase === 'idle') buildSampleStrip();
+  }, [showSample, phase, buildSampleStrip]);
 
   const makeTogetherStrip = useCallback(async () => {
     if (partnerShots.length === 0) return;
@@ -1509,7 +1604,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
             />
           </div>
           <div className="order-1 flex min-w-0 flex-1 flex-col items-center lg:order-2">
-            <div className="relative w-full overflow-hidden rounded-xl bg-black lg:h-[min(68vh,820px)] lg:aspect-[3/4] lg:w-auto lg:max-w-full lg:flex-none">
+            <div className="relative w-full overflow-hidden rounded-xl bg-black lg:h-[min(78vh,920px)] lg:aspect-[3/4] lg:w-auto lg:max-w-full lg:flex-none">
               <video
                 ref={videoRef}
                 autoPlay
@@ -1519,6 +1614,12 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
                 style={{ transform: mirror ? 'scaleX(-1)' : undefined, filter: filterCss || undefined }}
                 aria-label="Booth camera preview"
               />
+              <span aria-hidden className="booth-float-emoji pointer-events-none absolute left-2 top-2 z-10 text-2xl drop-shadow">💖</span>
+              <span aria-hidden className="booth-float-emoji pointer-events-none absolute right-2 top-10 z-10 text-2xl drop-shadow" style={{ animationDelay: '0.7s' }}>✨</span>
+              <span aria-hidden className="booth-float-emoji pointer-events-none absolute bottom-12 left-2 z-10 text-2xl drop-shadow" style={{ animationDelay: '1.4s' }}>🌸</span>
+              <span aria-hidden className="booth-float-emoji pointer-events-none absolute bottom-3 right-3 z-10 text-2xl drop-shadow" style={{ animationDelay: '0.4s' }}>🎀</span>
+              <span aria-hidden className="booth-float-emoji pointer-events-none absolute left-2 top-[48%] z-10 text-xl drop-shadow" style={{ animationDelay: '1.1s' }}>⭐</span>
+              <span aria-hidden className="booth-float-emoji pointer-events-none absolute right-2 top-[48%] z-10 text-xl drop-shadow" style={{ animationDelay: '1.8s' }}>🦋</span>
             </div>
             {phase === 'idle' && (
               <>
@@ -1570,6 +1671,53 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
               ) : (
                 <p className="text-sm font-semibold">Shot {shot} of {totalShots} taken</p>
               )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {phase === 'idle' && (
+        <div className="mt-4 lg:col-start-1">
+          <p className="text-sm font-semibold">Template 🎀</p>
+          {(['classic', 'reel', 'template'] as const).map((g) => (
+            <div key={g}>
+              <p className="mt-3 text-xs font-semibold text-[var(--ink-dim)]">
+                {g === 'classic' ? 'Classic' : g === 'reel' ? 'From the reel' : 'Templates'}
+              </p>
+              <div className="mt-2 grid grid-cols-3 gap-2 lg:grid-cols-4">
+                {BOOTH_STYLES.filter((s) => s.group === g).map((s) => (
+                  <TemplateCard
+                    key={s.id}
+                    s={s}
+                    active={s.id === styleId}
+                    onSelect={() => setStyleId(s.id)}
+                    caption={caption}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => setShowSample((v) => !v)}
+              aria-expanded={showSample}
+            >
+              ✨ {showSample ? 'Hide sample strip' : 'Try this template'}
+            </button>
+            {showSample && (
+              <span className="text-xs text-[var(--ink-dim)]">Sample photos — your shots will replace these.</span>
+            )}
+          </div>
+          {showSample && sampleUrl && (
+            <div className="mt-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={sampleUrl}
+                alt={`Sample strip in the ${boothStyleById(styleId).name} template`}
+                className="mx-auto w-full max-w-[240px] rounded-xl"
+              />
             </div>
           )}
         </div>
@@ -1832,26 +1980,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
       {phase === 'idle' && (
         <div className="lg:col-start-2">
           <div className="mt-3 lg:mt-0">
-            <p className="text-sm font-semibold">Template</p>
-            {(['classic', 'reel', 'template'] as const).map((g) => (
-              <div key={g}>
-                <p className="mt-3 text-xs font-semibold text-[var(--ink-dim)]">
-                  {g === 'classic' ? 'Classic' : g === 'reel' ? 'From the reel' : 'Templates'}
-                </p>
-                <div className="mt-2 grid grid-cols-3 gap-2">
-                  {BOOTH_STYLES.filter((s) => s.group === g).map((s) => (
-                    <TemplateCard
-                      key={s.id}
-                      s={s}
-                      active={s.id === styleId}
-                      onSelect={() => setStyleId(s.id)}
-                      caption={caption}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
-            <p className="mt-4 text-sm font-semibold">Layout</p>
+            <p className="text-sm font-semibold">Layout</p>
             <div className="mt-2 grid grid-cols-3 gap-2">
               {BOOTH_LAYOUTS.map((l) => {
                 const active = l.id === layoutId;

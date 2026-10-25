@@ -767,3 +767,6 @@ h1, h2, h3, .font-display {
 /* Full-screen countdown pulse. */
 @keyframes booth-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 .booth-count-pulse { animation: booth-pulse 1s ease-in-out infinite; }
+/* Cute emojis drifting on the camera preview. */
+@keyframes booth-float { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-9px) rotate(5deg); } }
+.booth-float-emoji { animation: booth-float 3.5s ease-in-out infinite; }
