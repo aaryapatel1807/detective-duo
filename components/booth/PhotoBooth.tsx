@@ -30,10 +30,6 @@
  * camera sized by viewport height (68vh, 3:4) on the left, controls
  * in a 320px column on the right — so the whole booth fits one
  * screen instead of a huge camera column with empty sides.
- * Practice panel: under the camera in idle, one pose from the
- * selected pack to try first (photo when the pose has one), with
- * Shuffle / Next — it fills the space under the camera and makes
- * the booth feel alive before Start.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -212,7 +208,6 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
   const [caption, setCaption] = useState('');
   const [dateStamp, setDateStamp] = useState(false);
   const [posePackId, setPosePackId] = useState('classic');
-  const [practiceIndex, setPracticeIndex] = useState(0);
   const [showPoses, setShowPoses] = useState(true);
   const [manual, setManual] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
@@ -1084,30 +1079,6 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
   const showCamera = phase === 'idle' || phase === 'countdown';
   const poseCardPose = currentPose;
   const totalShots = shotCount;
-  // Practice panel (idle only): one pose from the selected pack to try
-  // before starting, with Shuffle / Next. Follows the pack picker, and
-  // hides when pose ideas are off.
-  const practicePack = posePackById(posePackId);
-  const practicePose =
-    practicePack.poses.length > 0
-      ? practicePack.poses[practiceIndex % practicePack.poses.length]!
-      : null;
-  const practiceNumber =
-    practicePack.poses.length > 0 ? (practiceIndex % practicePack.poses.length) + 1 : 0;
-  const shufflePractice = useCallback(() => {
-    const len = posePackById(posePackId).poses.length;
-    if (len <= 1) return;
-    setPracticeIndex((i) => {
-      let next = Math.floor(Math.random() * len);
-      if (next === i % len) next = (next + 1) % len;
-      return next;
-    });
-  }, [posePackId]);
-  const nextPractice = useCallback(() => {
-    const len = posePackById(posePackId).poses.length;
-    if (len === 0) return;
-    setPracticeIndex((i) => (i + 1) % len);
-  }, [posePackId]);
 
   return (
     <section className="panel p-4 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-x-5">
@@ -1127,8 +1098,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
       )}
 
       {showCamera && (
-        <div className="lg:col-start-1">
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start lg:mt-0 lg:justify-center">
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start lg:col-start-1 lg:mt-0 lg:justify-center">
           <FilterRail selected={filterId} onSelect={setFilterId} layout="side" />
           <div className="relative flex-1 overflow-hidden rounded-xl bg-black lg:h-[min(68vh,820px)] lg:aspect-[3/4] lg:w-auto lg:max-w-full lg:flex-none">
             <video
@@ -1177,41 +1147,6 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
             )}
           </div>
         </div>
-        {phase === 'idle' && showPoses && practicePose && (
-          <div className="mt-3 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={shufflePractice}
-              aria-label={`Shuffle pose (now showing ${practicePose.title})`}
-              className="shrink-0 overflow-hidden rounded-xl"
-            >
-              {practicePose.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={practicePose.image} alt={`${practicePose.title} pose`} className="h-20 w-20 object-cover" />
-              ) : (
-                <span className="text-6xl" aria-hidden>
-                  {practicePose.emoji}
-                </span>
-              )}
-            </button>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">
-                Practice the pose — {practiceNumber} of {practicePack.poses.length}
-              </p>
-              <p className="font-bold">{practicePose.title}</p>
-              <p className="text-sm opacity-80">{practicePose.hint}</p>
-            </div>
-            <div className="flex shrink-0 flex-col gap-2">
-              <button type="button" className="btn !px-3 !py-1.5 text-xs" onClick={shufflePractice}>
-                Shuffle
-              </button>
-              <button type="button" className="btn !px-3 !py-1.5 text-xs" onClick={nextPractice}>
-                Next pose
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
       )}
 
       {phase === 'review' && (

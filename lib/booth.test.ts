@@ -170,7 +170,7 @@ describe('photo booth meme photos + mirror', () => {
   });
 });
 
-describe('photo booth practice panel', () => {
+describe('photo booth pose packs', () => {
   it('every pose pack has at least one pose with a title and hint', () => {
     expect(POSE_PACKS.length).toBeGreaterThan(0);
     for (const pack of POSE_PACKS) {
