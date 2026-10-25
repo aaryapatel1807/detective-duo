@@ -441,7 +441,7 @@ function TemplateCard({
           {caption || 'Sachi'}
         </span>
       </span>
-      <span className="mt-1 block truncate text-xs font-semibold">{s.name}</span>
+      <span className="mt-1 block text-xs font-semibold leading-tight">{s.name}</span>
     </button>
   );
 }
