@@ -207,3 +207,45 @@ describe('photo booth pose packs', () => {
     }
   });
 });
+
+describe('booth filters', () => {
+  it('ships the original 10 plus the 12 researched cute looks', () => {
+    expect(BOOTH_FILTERS.length).toBe(22);
+    expect(new Set(BOOTH_FILTERS.map((f) => f.id)).size).toBe(22);
+    for (const f of BOOTH_FILTERS) {
+      expect(f.name.length).toBeGreaterThan(0);
+      expect(typeof f.css).toBe('string');
+      for (const o of f.overlays ?? []) {
+        expect(['tint', 'gradient', 'vignette', 'glow', 'stars', 'scanlines', 'grain', 'orton']).toContain(o.kind);
+        if ('alpha' in o) {
+          expect(o.alpha).toBeGreaterThan(0);
+          expect(o.alpha).toBeLessThanOrEqual(1);
+        }
+        if ('color' in o) expect(o.color).toMatch(/^#[0-9a-f]{6}$/);
+        if ('colors' in o) for (const c of o.colors) expect(c).toMatch(/^#[0-9a-f]{6}$/);
+      }
+    }
+  });
+
+  it('never combines high brightness + low saturation + high contrast (skin-tone guard)', () => {
+    const num = (css: string, fn: string, fallback: number): number => {
+      const m = css.match(new RegExp(`${fn}\\(([-0-9.]+)\\)`));
+      return m ? Number(m[1]) : fallback;
+    };
+    for (const f of BOOTH_FILTERS) {
+      for (const css of [f.css, f.exportCss].filter((c): c is string => !!c)) {
+        const b = num(css, 'brightness', 1);
+        const s = num(css, 'saturate', 1);
+        const c = num(css, 'contrast', 1);
+        expect(!(b > 1.1 && s < 0.9 && c > 1.1)).toBe(true);
+      }
+    }
+  });
+
+  it('dreamy haze drops its blur on export and gets the orton bloom instead', () => {
+    const haze = BOOTH_FILTERS.find((f) => f.id === 'dreamy-haze')!;
+    expect(haze.css).toContain('blur(');
+    expect(haze.exportCss ?? '').not.toContain('blur(');
+    expect(haze.overlays?.some((o) => o.kind === 'orton')).toBe(true);
+  });
+});

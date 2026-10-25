@@ -73,6 +73,7 @@ import {
   shotTimeline,
   stripDateLine,
   textStyleById,
+  type BoothFilter,
   type BoothLayout,
   type BoothStyle,
   type PoseIdea,
@@ -368,17 +369,101 @@ function drawPatternForeground(
   ctx.restore();
 }
 
+/** Export-only texture/wash pass for a filter: painted over the photos
+ * (and the template's margins) and under the caption, so the caption
+ * stays crisp. Live tiles show the colour grade only. Seeded, so
+ * re-composites render identically. */
+function drawFilterOverlay(
+  ctx: CanvasRenderingContext2D,
+  filter: BoothFilter,
+  w: number,
+  h: number,
+) {
+  const overlays = filter.overlays;
+  if (!overlays || overlays.length === 0) return;
+  ctx.save();
+  for (const o of overlays) {
+    if (o.kind === 'tint') {
+      ctx.globalCompositeOperation = o.blend;
+      ctx.globalAlpha = o.alpha;
+      ctx.fillStyle = o.color;
+      ctx.fillRect(0, 0, w, h);
+    } else if (o.kind === 'gradient') {
+      const g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, o.colors[0]!);
+      g.addColorStop(1, o.colors[1] ?? o.colors[0]!);
+      ctx.globalCompositeOperation = o.blend;
+      ctx.globalAlpha = o.alpha;
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    } else if (o.kind === 'vignette') {
+      const r = Math.hypot(w, h) / 2;
+      const g = ctx.createRadialGradient(w / 2, h / 2, r * 0.35, w / 2, h / 2, r);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, o.color);
+      ctx.globalCompositeOperation = o.blend;
+      ctx.globalAlpha = o.alpha;
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    } else if (o.kind === 'glow') {
+      const r = Math.hypot(w, h) / 2;
+      const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, r * 0.75);
+      g.addColorStop(0, o.color);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.globalCompositeOperation = o.blend;
+      ctx.globalAlpha = o.alpha;
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    } else if (o.kind === 'stars') {
+      const pts = seededPoints(`filter-${filter.id}`, o.count, w, h, 48);
+      ctx.globalCompositeOperation = 'screen';
+      pts.forEach((pt, i) => {
+        ctx.globalAlpha = o.alpha * (0.6 + (i % 4) * 0.1);
+        ctx.fillStyle = o.colors[i % o.colors.length]!;
+        drawStar(ctx, pt.x, pt.y, 10 + (i % 3) * 6);
+      });
+    } else if (o.kind === 'scanlines') {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = o.alpha;
+      ctx.fillStyle = '#000000';
+      for (let y = 0; y < h; y += 4) ctx.fillRect(0, y, w, 1);
+    } else if (o.kind === 'grain') {
+      const pts = seededPoints(`grain-${filter.id}`, Math.round((w * h) / 2600), w, h, 0);
+      ctx.globalCompositeOperation = 'source-over';
+      pts.forEach((pt, i) => {
+        ctx.globalAlpha = o.alpha * (0.5 + (i % 3) * 0.25);
+        ctx.fillStyle = i % 2 === 0 ? '#ffffff' : '#000000';
+        ctx.fillRect(pt.x, pt.y, 2, 2);
+      });
+    } else if (o.kind === 'orton') {
+      // Bloom: a blurred copy of the strip screened back over itself.
+      const tmp = document.createElement('canvas');
+      tmp.width = w;
+      tmp.height = h;
+      const tctx = tmp.getContext('2d');
+      if (!tctx) continue;
+      tctx.filter = `blur(${o.blur}px)`;
+      tctx.drawImage(ctx.canvas, 0, 0, w, h);
+      tctx.filter = 'none';
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = o.alpha;
+      ctx.drawImage(tmp, 0, 0, w, h);
+    }
+  }
+  ctx.restore();
+}
+
 /** The strip painting itself: frame, pattern, photos, caption. Used by
  * the real composite AND by the try-a-template sample preview, so the
  * preview shows exactly what the export will look like — same code,
  * only the photos differ (sample gradients instead of camera shots).
- * Overlays and doodles are NOT painted here; the real composite adds
- * those afterwards. */
+ * Filter overlays ARE painted here (texture/wash, under the caption);
+ * studio overlays and doodles are added by the real composite after. */
 function paintStripBase(
   ctx: CanvasRenderingContext2D,
   opts: {
     style: BoothStyle;
-    filterCss: string;
+    filter: BoothFilter;
     layoutId: BoothLayout;
     shotCount: number;
     caption: string;
@@ -387,6 +472,7 @@ function paintStripBase(
   },
 ) {
   const { style, layoutId, shotCount, caption, dateStamp, shots } = opts;
+  const grade = opts.filter.exportCss ?? opts.filter.css;
   ctx.fillStyle = style.frame;
   ctx.fillRect(0, 0, STORY_WIDTH, STORY_HEIGHT);
   drawPatternBackground(ctx, style, STORY_WIDTH, STORY_HEIGHT);
@@ -401,7 +487,7 @@ function paintStripBase(
     ctx.beginPath();
     ctx.rect(slot.x, slot.y, slot.w, slot.h);
     ctx.clip();
-    ctx.filter = opts.filterCss || 'none';
+    ctx.filter = grade || 'none';
     drawCover(ctx, shotCanvas, slot.x, slot.y, slot.w, slot.h);
     ctx.filter = 'none';
     ctx.restore();
@@ -444,6 +530,7 @@ function paintStripBase(
     }
   }
   drawPatternForeground(ctx, style, slots, STORY_WIDTH, STORY_HEIGHT);
+  drawFilterOverlay(ctx, opts.filter, STORY_WIDTH, STORY_HEIGHT);
   const text = (caption.trim() || 'Sachi').slice(0, 40);
   ctx.fillStyle = style.caption;
   const captionFonts: Record<string, string> = {
@@ -608,7 +695,7 @@ function FilterGrid({
             type="button"
             onClick={() => onSelect(f.id)}
             aria-pressed={active}
-            title={f.name}
+            title={f.note ? `${f.name} — ${f.note}` : f.name}
             className={`relative aspect-square overflow-hidden rounded-2xl border-[3px] transition duration-150 hover:-translate-y-1 hover:scale-[1.04] hover:shadow-xl ${
               active ? 'booth-tile-active border-[#ffc83d]' : 'border-transparent'
             }`}
@@ -1194,7 +1281,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
       if (!ctx) return;
       paintStripBase(ctx, {
         style,
-        filterCss: filter.css,
+        filter,
         layoutId,
         shotCount,
         caption,
@@ -1260,7 +1347,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
     if (!ctx) return;
     paintStripBase(ctx, {
       style,
-      filterCss: filter.css,
+      filter,
       layoutId,
       shotCount,
       caption,

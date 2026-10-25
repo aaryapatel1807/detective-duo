@@ -500,11 +500,33 @@ export const SHOT_COUNT_OPTIONS = [3, 4] as const;
 
 // ------------------------------------------------------------- Phase 3: looks ----
 
+/** A texture or wash painted over the exported strip, on top of the
+ * colour grade. Live tiles show the grade only (they play the camera
+ * feed through the CSS string); the overlays appear on export — and
+ * in the try-a-template sample, which renders through the same
+ * painter. All overlays are code-drawn: no image assets. */
+export type FilterOverlay =
+  | { kind: 'tint'; color: string; alpha: number; blend: 'screen' | 'soft-light' | 'multiply' }
+  | { kind: 'gradient'; colors: [string, string]; alpha: number; blend: 'screen' | 'soft-light' | 'multiply' }
+  | { kind: 'vignette'; color: string; alpha: number; blend: 'screen' | 'soft-light' | 'multiply' }
+  | { kind: 'glow'; color: string; alpha: number; blend: 'screen' | 'soft-light' }
+  | { kind: 'stars'; colors: string[]; count: number; alpha: number }
+  | { kind: 'scanlines'; alpha: number }
+  | { kind: 'grain'; alpha: number }
+  | { kind: 'orton'; alpha: number; blur: number };
+
 export interface BoothFilter {
   id: string;
   name: string;
   /** CSS filter string: used live on the preview and on the canvas. */
   css: string;
+  /** Export-only grade when it differs from live (Dreamy Haze drops
+   * its blur on export and gets the Orton bloom instead). */
+  exportCss?: string;
+  /** Export-only overlays, painted over the photos, under the caption. */
+  overlays?: FilterOverlay[];
+  /** Short note shown on the tile (e.g. a pairing hint). */
+  note?: string;
 }
 
 export const BOOTH_FILTERS: BoothFilter[] = [
@@ -518,6 +540,107 @@ export const BOOTH_FILTERS: BoothFilter[] = [
   { id: 'soft', name: 'Soft', css: 'brightness(1.1) saturate(0.9)' },
   { id: 'film', name: 'Film', css: 'contrast(1.15) saturate(1.2)' },
   { id: 'golden', name: 'Golden', css: 'sepia(0.4) saturate(1.4) contrast(1.05)' },
+  // Cute / aesthetic / girly-pop set (researched Oct 2026 — see the
+  // Cute Filters catalogue). Grades are starting values: tune on
+  // real couple photos, darkest skin first, before calling them final.
+  {
+    id: 'strawberry-milk',
+    name: 'Strawberry Milk',
+    css: 'brightness(1.07) contrast(0.88) saturate(1.02) hue-rotate(-8deg) sepia(0.08)',
+    overlays: [{ kind: 'tint', color: '#ffc9d6', alpha: 0.12, blend: 'screen' }],
+    note: 'Milky, faded peach-pink.',
+  },
+  {
+    id: 'rosy-blush',
+    name: 'Rosy Blush',
+    css: 'brightness(1.06) contrast(1.05) saturate(1.18) hue-rotate(-6deg) sepia(0.05)',
+    overlays: [{ kind: 'vignette', color: '#ff8fb3', alpha: 0.2, blend: 'soft-light' }],
+    note: 'Flushed, lively pink.',
+  },
+  {
+    id: 'coquette-pink',
+    name: 'Coquette Pink',
+    css: 'brightness(1.10) contrast(0.94) saturate(0.95) hue-rotate(-10deg) sepia(0.04)',
+    overlays: [{ kind: 'vignette', color: '#ffd9e6', alpha: 0.22, blend: 'soft-light' }],
+    note: 'Pale porcelain ballet-pink.',
+  },
+  {
+    id: 'pastel-dream',
+    name: 'Pastel Dream',
+    css: 'brightness(1.08) contrast(0.92) saturate(0.85) hue-rotate(-8deg)',
+    overlays: [{ kind: 'gradient', colors: ['#d9c8ff', '#ffc9d6'], alpha: 0.12, blend: 'soft-light' }],
+    note: 'Airy all-pastel wash. Cool + desaturated: check on brown skin.',
+  },
+  {
+    id: 'sparkle-pop',
+    name: 'Sparkle Pop',
+    css: 'brightness(1.12) contrast(1.02) saturate(1.12)',
+    overlays: [
+      { kind: 'tint', color: '#ffffff', alpha: 0.1, blend: 'screen' },
+      { kind: 'stars', colors: ['#ffffff', '#ffd98a'], count: 90, alpha: 0.4 },
+    ],
+    note: 'Bright + glitter stars.',
+  },
+  {
+    id: 'chrome-bubble',
+    name: 'Chrome Bubble',
+    css: 'brightness(1.05) contrast(1.18) saturate(0.95) hue-rotate(8deg)',
+    overlays: [{ kind: 'gradient', colors: ['#c8d8e8', '#e8eef5'], alpha: 0.15, blend: 'soft-light' }],
+    note: 'Cool metallic Y2K. Cool + contrasty: check on brown skin.',
+  },
+  {
+    id: 'clean-girl',
+    name: 'Clean Girl Glow',
+    css: 'brightness(1.06) contrast(1.02) saturate(1.05)',
+    overlays: [{ kind: 'tint', color: '#fff6e8', alpha: 0.08, blend: 'screen' }],
+    note: 'Dewy, natural — skin but better. Safest across skin tones.',
+  },
+  {
+    id: 'latte-cream',
+    name: 'Latte Cream',
+    css: 'brightness(1.03) contrast(0.98) saturate(0.92) sepia(0.22) hue-rotate(-5deg)',
+    overlays: [{ kind: 'tint', color: '#d9a066', alpha: 0.14, blend: 'soft-light' }],
+    note: 'Warm caramel-beige, muted. Safest across skin tones.',
+  },
+  {
+    id: 'golden-hour',
+    name: 'Golden Hour',
+    css: 'brightness(1.08) contrast(1.08) saturate(1.20) sepia(0.15) hue-rotate(-8deg)',
+    overlays: [{ kind: 'gradient', colors: ['#ffe1a8', '#ffb347'], alpha: 0.18, blend: 'soft-light' }],
+    note: 'Honey-amber sunset. Safest across skin tones.',
+  },
+  {
+    id: 'film-flash',
+    name: 'Film Flash',
+    css: 'brightness(1.12) contrast(1.18) saturate(1.22)',
+    overlays: [
+      { kind: 'vignette', color: '#000000', alpha: 0.25, blend: 'multiply' },
+      { kind: 'glow', color: '#ffffff', alpha: 0.15, blend: 'screen' },
+      { kind: 'grain', alpha: 0.08 },
+    ],
+    note: 'Bright digicam flash, punchy. Watch couple shots: can blow one partner out.',
+  },
+  {
+    id: 'retro-camcorder',
+    name: 'Retro Camcorder',
+    css: 'brightness(0.98) contrast(1.05) saturate(0.85) sepia(0.18) hue-rotate(-4deg)',
+    overlays: [
+      { kind: 'scanlines', alpha: 0.15 },
+      { kind: 'grain', alpha: 0.1 },
+    ],
+    note: 'Warm muted VHS + scanlines. Pair with the Date chip for the camcorder date stamp.',
+  },
+  {
+    id: 'dreamy-haze',
+    name: 'Dreamy Haze',
+    css: 'brightness(1.10) contrast(0.90) saturate(0.95) blur(0.4px)',
+    exportCss: 'brightness(1.10) contrast(0.90) saturate(0.95)',
+    overlays: [
+      { kind: 'tint', color: '#ffffff', alpha: 0.12, blend: 'screen' },
+      { kind: 'orton', alpha: 0.35, blur: 8 },
+    ],
+    note: 'Soft bloom, romantic. Bright + low contrast: check on brown skin.',
+  },
 ];
 
 export function boothFilterById(id: string): BoothFilter {
