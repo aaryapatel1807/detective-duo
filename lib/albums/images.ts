@@ -1,6 +1,14 @@
 import sharp from 'sharp';
 
-export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+/**
+ * Server-side guard, kept UNDER the platform's ~4.5MB request-body cap
+ * so an oversized upload fails here with a readable error instead of
+ * being rejected by the platform before the route ever runs (413 with
+ * no body). Normal uploads never reach this: the page shrinks big
+ * photos in the browser first (see compressPhotoForUpload), so what
+ * arrives is usually well under 1MB.
+ */
+export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const ALLOWED_FORMATS = new Set(['jpeg', 'png', 'webp']);
 
 /**

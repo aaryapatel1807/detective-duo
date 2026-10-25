@@ -20,6 +20,12 @@ export const dynamic = 'force-dynamic';
  * Photos stay in the private bucket permanently: there is no expiry
  * and no delete path; only the signed view links expire (1 hour) and
  * are re-signed on every list.
+ *
+ * The page shrinks big photos in the browser before sending (the
+ * platform rejects bodies over ~4.5MB before this route ever runs),
+ * and a canvas redraw strips EXIF — so the page may also send
+ * takenAt/lat/lon fields read from the original file. Those fields,
+ * when valid, win over parsing the uploaded bytes.
  */
 export async function POST(request: Request) {
   const sb = getServiceClient();
@@ -46,7 +52,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'file is required' }, { status: 400 });
   }
   if (file.size > MAX_UPLOAD_BYTES) {
-    return NextResponse.json({ error: 'photo is larger than 15MB' }, { status: 400 });
+    return NextResponse.json({ error: 'photo is larger than 4MB' }, { status: 400 });
   }
   if (!file.type.startsWith('image/')) {
     return NextResponse.json({ error: 'file must be an image' }, { status: 400 });
@@ -59,6 +65,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'unreadable image' }, { status: 400 });
   }
   const exif = await parseExif(original);
+  // Fields carried from the original file win when valid (a shrunk
+  // upload has no EXIF left in its bytes); otherwise the parsed bytes.
+  const fieldTakenAt = form.get('takenAt');
+  let takenAt = exif.takenAt;
+  if (typeof fieldTakenAt === 'string' && fieldTakenAt) {
+    const d = new Date(fieldTakenAt);
+    if (!Number.isNaN(d.getTime())) takenAt = d.toISOString();
+  }
+  const fieldNumber = (v: FormDataEntryValue | null, max: number): number | null => {
+    if (typeof v !== 'string' || v.trim() === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) && Math.abs(n) <= max ? n : null;
+  };
+  const lat = fieldNumber(form.get('lat'), 90) ?? exif.lat;
+  const lon = fieldNumber(form.get('lon'), 180) ?? exif.lon;
   const id = randomUUID();
   let paths;
   try {
@@ -72,11 +93,11 @@ export async function POST(request: Request) {
     storage_path: paths.storagePath,
     thumb_path: paths.thumbPath,
     status: 'pending',
-    taken_at: exif.takenAt,
+    taken_at: takenAt,
     face_count: null,
     scene_tags: [],
-    lat: exif.lat,
-    lon: exif.lon,
+    lat,
+    lon,
   });
   // Pending by design: /api/albums/process classifies it next. The
   // photo is already stored permanently at this point.
@@ -85,6 +106,6 @@ export async function POST(request: Request) {
     status: 'pending',
     faceCount: null,
     sceneTags: [],
-    takenAt: exif.takenAt,
+    takenAt,
   });
 }

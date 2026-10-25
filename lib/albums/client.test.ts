@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  ALBUM_UPLOAD_PASSTHROUGH_BYTES,
   AlbumsKeyError,
   AlbumsNotConfiguredError,
   faceLabel,
   fetchAlbumPhotos,
   fetchAlbumSummary,
+  needsCompression,
   uploadAlbumPhoto,
 } from './client';
 
@@ -63,5 +65,22 @@ describe('album client', () => {
     expect(faceLabel(0)).toBe('No faces');
     expect(faceLabel(1)).toBe('1 face');
     expect(faceLabel(3)).toBe('3 faces');
+  });
+  it('only shrinks big redraw-able photos before upload', () => {
+    const small = new File(['x'], 'photo.jpg', { type: 'image/jpeg' });
+    expect(needsCompression(small)).toBe(false);
+    const bigJpeg = new File([new ArrayBuffer(ALBUM_UPLOAD_PASSTHROUGH_BYTES + 1)], 'big.jpg', {
+      type: 'image/jpeg',
+    });
+    expect(needsCompression(bigJpeg)).toBe(true);
+    const bigGif = new File([new ArrayBuffer(ALBUM_UPLOAD_PASSTHROUGH_BYTES + 1)], 'big.gif', {
+      type: 'image/gif',
+    });
+    expect(needsCompression(bigGif)).toBe(false);
+  });
+  it('maps a 413 to a plain too-large error', async () => {
+    mockFetchOnce(413, {});
+    await expect(fetchAlbumSummary('KEY1')).rejects.toThrow(/too large/);
+    vi.unstubAllGlobals();
   });
 });
