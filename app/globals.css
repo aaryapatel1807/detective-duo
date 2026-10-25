@@ -761,6 +761,9 @@ h1, h2, h3, .font-display {
 .album-lightbox-card { background: var(--surface); border: var(--card-border); border-radius: 22px; max-width: 720px; width: 100%; max-height: 90vh; overflow: auto; padding: 16px; }
 .album-lightbox-card img { width: 100%; height: auto; border-radius: 14px; }
 
-/* Scrollable, but the scrollbar itself stays invisible (filter rail). */
-.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-.no-scrollbar::-webkit-scrollbar { display: none; }
+/* Photo booth tiles: a quick pop when a tile becomes selected. */
+@keyframes booth-pop { 50% { transform: scale(1.08); } }
+.booth-tile-active { animation: booth-pop .25s; }
+/* Full-screen countdown pulse. */
+@keyframes booth-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+.booth-count-pulse { animation: booth-pulse 1s ease-in-out infinite; }

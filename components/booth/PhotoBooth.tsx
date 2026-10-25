@@ -19,17 +19,18 @@
  *    image; nothing is uploaded anywhere except the room broadcast
  *    of compressed shots between the two phones in a room.
  *
- * UI notes (Oct 2026): filters live in a visible rail — left of the
- * camera on desktop, a scroll strip on phones — so one tap changes
- * the look before (or during) a run, no dropdown to open. Meme poses
- * with a real pose photo show it in a "copy this!" card, RollBooth
- * style; poses without a photo yet fall back to their emoji. The
- * camera is a real (unmirrored) image by default; Mirror preview is
- * an opt-in toggle, saved on the device.
- * Desktop fit: on lg screens the booth is a two-column grid — the
- * camera sized by viewport height (68vh, 3:4) on the left, controls
- * in a 320px column on the right — so the whole booth fits one
- * screen instead of a huge camera column with empty sides.
+ * UI notes (Oct 2026): filters are a grid of LIVE tiles — each plays
+ * the real camera feed with its own filter, so every look is visible
+ * at once (2 columns beside the preview on desktop, 5 across under
+ * it on phones); without a camera they fall back to a filtered
+ * gradient. Strip style and layout are tap cards with mini drawings,
+ * shots and pose pack are chips, and every option (Mirror, Pose
+ * ideas, Date, Manual, Duo turns, Sound) is a toggle chip — no
+ * dropdowns, no checkboxes. The shutter is a big gold round button
+ * under the preview; the countdown is full-screen with a pulsing
+ * number and a full-screen flash per shot. The camera is a real
+ * (unmirrored) image by default; Mirror preview is an opt-in chip,
+ * saved on the device.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -107,30 +108,27 @@ function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, r: number
 type Phase = 'idle' | 'countdown' | 'review' | 'done';
 
 /**
- * One-tap filter rail: every filter visible at once, no dropdown to
- * open. Each swatch wears its own filter, and the camera preview (and
- * the finished strip) updates the moment you tap. Side layout sits
- * left of the camera on desktop; row layout scrolls horizontally.
+ * Live filter grid: every tile plays the real camera feed with its
+ * own filter applied, so you see all the looks side by side instead
+ * of guessing from a swatch. All tiles share the one camera stream
+ * (no extra getUserMedia calls); without a camera they fall back to
+ * a gradient swatch wearing the same filter.
  */
-function FilterRail({
+function FilterGrid({
   selected,
   onSelect,
-  layout,
+  stream,
+  mirror,
+  columns,
 }: {
   selected: string;
   onSelect: (id: string) => void;
-  layout: 'side' | 'row';
+  stream: MediaStream | null;
+  mirror: boolean;
+  columns: string;
 }) {
   return (
-    <div
-      role="group"
-      aria-label="Photo filters"
-      className={
-        layout === 'side'
-          ? 'no-scrollbar flex gap-2.5 overflow-x-auto sm:max-h-[min(68vh,820px)] sm:w-40 sm:shrink-0 sm:flex-col sm:overflow-y-auto sm:overflow-x-hidden sm:pr-2'
-          : 'no-scrollbar flex gap-2.5 overflow-x-auto pb-1'
-      }
-    >
+    <div role="group" aria-label="Photo filters" className={`grid gap-2.5 ${columns}`}>
       {BOOTH_FILTERS.map((f) => {
         const active = f.id === selected;
         return (
@@ -140,23 +138,67 @@ function FilterRail({
             onClick={() => onSelect(f.id)}
             aria-pressed={active}
             title={f.name}
-            className={`btn !justify-start whitespace-nowrap !px-2 !py-1.5 text-xs ${active ? 'btn-primary' : ''} ${
-              layout === 'side' ? 'sm:w-full' : ''
+            className={`relative aspect-square overflow-hidden rounded-2xl border-[3px] transition duration-150 hover:-translate-y-1 hover:scale-[1.04] hover:shadow-xl ${
+              active ? 'booth-tile-active border-[#ffc83d]' : 'border-transparent'
             }`}
           >
-            <span
-              aria-hidden
-              className="block h-9 w-9 shrink-0 rounded-lg"
-              style={{
-                background: 'linear-gradient(135deg,#ff4da6,#ffd98a 50%,#46a758)',
-                filter: f.css || undefined,
-              }}
-            />
-            <span className="truncate">{f.name}</span>
+            {stream ? (
+              <video
+                ref={(v) => {
+                  if (v && v.srcObject !== stream) {
+                    v.srcObject = stream;
+                    void v.play().catch(() => {});
+                  }
+                }}
+                autoPlay
+                playsInline
+                muted
+                className="h-full w-full object-cover"
+                style={{ transform: mirror ? 'scaleX(-1)' : undefined, filter: f.css || undefined }}
+                aria-hidden
+              />
+            ) : (
+              <span
+                aria-hidden
+                className="block h-full w-full"
+                style={{
+                  background: 'linear-gradient(135deg,#ff4da6,#ffd98a 50%,#46a758)',
+                  filter: f.css || undefined,
+                }}
+              />
+            )}
+            <span className="absolute bottom-1.5 left-2 text-xs font-bold text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+              {f.name}
+            </span>
           </button>
         );
       })}
     </div>
+  );
+}
+
+/** Toggle chip: a boolean option as a tappable pill, not a checkbox. */
+function Chip({
+  active,
+  onClick,
+  label,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      aria-label={label}
+      className={`btn inline-flex items-center gap-1 !rounded-full !px-3 !py-1.5 text-xs ${active ? 'btn-primary' : ''}`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -212,6 +254,8 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
   const [manual, setManual] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [mirror, setMirror] = useState(false);
+  // The one camera stream, shared with the live filter tiles.
+  const [tileStream, setTileStream] = useState<MediaStream | null>(null);
   const [duoTurns, setDuoTurns] = useState(false);
   const [playerA, setPlayerA] = useState('You');
   const [playerB, setPlayerB] = useState('Partner');
@@ -310,17 +354,21 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
     try {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: deviceId ? { deviceId: { exact: deviceId } } : true,
+        video: deviceId
+          ? { deviceId: { exact: deviceId } }
+          : { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
         audio: false,
       });
       streamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
       setCameraOn(true);
+      setTileStream(stream);
       setError(null);
       const all = await navigator.mediaDevices.enumerateDevices();
       setDevices(all.filter((d) => d.kind === 'videoinput'));
     } catch {
       setCameraOn(false);
+      setTileStream(null);
       setError('No camera here — allow camera access to use the booth.');
     }
   }, []);
@@ -1098,54 +1146,80 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
       )}
 
       {showCamera && (
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start lg:col-start-1 lg:mt-0 lg:justify-center">
-          <FilterRail selected={filterId} onSelect={setFilterId} layout="side" />
-          <div className="relative flex-1 overflow-hidden rounded-xl bg-black lg:h-[min(68vh,820px)] lg:aspect-[3/4] lg:w-auto lg:max-w-full lg:flex-none">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="aspect-[3/4] w-full object-cover lg:aspect-auto lg:h-full"
-              style={{ transform: mirror ? 'scaleX(-1)' : undefined, filter: filterCss || undefined }}
-              aria-label="Booth camera preview"
+        <div className="mt-3 flex flex-col gap-3 lg:col-start-1 lg:mt-0 lg:flex-row lg:items-start">
+          <div className="order-2 lg:order-1 lg:w-[220px] lg:shrink-0">
+            <FilterGrid
+              selected={filterId}
+              onSelect={setFilterId}
+              stream={tileStream}
+              mirror={mirror}
+              columns="grid-cols-5 lg:grid-cols-2"
             />
-            {flash && <div className="absolute inset-0 bg-white" aria-hidden />}
-            {phase === 'countdown' && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/30 p-4 text-center text-white">
-                {awaitingReady && poseCardPose ? (
-                  <>
-                    <PoseCard pose={poseCardPose} shot={shot} total={totalShots} shooter={shooter} heading="Copy this!" />
-                    <button type="button" className="btn btn-primary mt-2" onClick={manualReady}>
-                      Ready — take it
-                    </button>
-                    <button type="button" className="btn mt-1" onClick={cancelRun}>
-                      Cancel
-                    </button>
-                  </>
-                ) : poseCardPose && count === 0 ? (
-                  <>
-                    <PoseCard pose={poseCardPose} shot={shot} total={totalShots} shooter={shooter} heading="Get ready…" />
-                    <button type="button" className="btn mt-2" onClick={cancelRun}>
-                      Cancel
-                    </button>
-                  </>
-                ) : count > 0 ? (
-                  <>
-                    <span className="text-7xl font-bold drop-shadow">{count}</span>
-                    <p className="text-sm font-semibold">
-                      {retakeSlot !== null ? `Retaking shot ${retakeSlot + 1}` : `Shot ${shot + 1} of ${totalShots}`}
-                    </p>
-                    <button type="button" className="btn mt-2" onClick={cancelRun}>
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <p className="text-sm font-semibold">Shot {shot} of {totalShots} taken</p>
-                )}
-              </div>
+          </div>
+          <div className="order-1 flex min-w-0 flex-1 flex-col items-center lg:order-2">
+            <div className="relative w-full overflow-hidden rounded-xl bg-black lg:h-[min(68vh,820px)] lg:aspect-[3/4] lg:w-auto lg:max-w-full lg:flex-none">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="aspect-[3/4] w-full object-cover lg:aspect-auto lg:h-full"
+                style={{ transform: mirror ? 'scaleX(-1)' : undefined, filter: filterCss || undefined }}
+                aria-label="Booth camera preview"
+              />
+            </div>
+            {phase === 'idle' && (
+              <>
+                <button
+                  type="button"
+                  disabled={!cameraOn}
+                  onClick={roomCode ? startTogether : startSolo}
+                  aria-label={roomCode ? 'Start together' : manual ? 'Start (manual)' : `Take ${shotCount} shots`}
+                  className="mt-4 flex h-20 w-20 items-center justify-center rounded-full bg-[#ffc83d] text-black shadow-xl transition hover:scale-105 disabled:opacity-50"
+                >
+                  <Camera size={32} aria-hidden />
+                </button>
+                <p className="mt-2 text-sm font-semibold">
+                  {roomCode ? 'Start together' : manual ? 'Start (manual)' : `Take ${shotCount} shots`}
+                </p>
+              </>
             )}
           </div>
+          {flash && <div className="pointer-events-none fixed inset-0 z-[60] bg-white" aria-hidden />}
+          {phase === 'countdown' && (
+            <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-2 bg-black/70 p-4 text-center text-white">
+              {awaitingReady && poseCardPose ? (
+                <>
+                  <PoseCard pose={poseCardPose} shot={shot} total={totalShots} shooter={shooter} heading="Copy this!" />
+                  <button type="button" className="btn btn-primary mt-2" onClick={manualReady}>
+                    Ready — take it
+                  </button>
+                  <button type="button" className="btn mt-1" onClick={cancelRun}>
+                    Cancel
+                  </button>
+                </>
+              ) : poseCardPose && count === 0 ? (
+                <>
+                  <PoseCard pose={poseCardPose} shot={shot} total={totalShots} shooter={shooter} heading="Get ready…" />
+                  <button type="button" className="btn mt-2" onClick={cancelRun}>
+                    Cancel
+                  </button>
+                </>
+              ) : count > 0 ? (
+                <>
+                  <span className="booth-count-pulse text-[26vw] font-bold leading-none drop-shadow lg:text-[14rem]">{count}</span>
+                  <p className="text-sm font-semibold">
+                    {retakeSlot !== null ? `Retaking shot ${retakeSlot + 1}` : `Shot ${shot + 1} of ${totalShots}`}
+                  </p>
+                  <button type="button" className="btn mt-2" onClick={cancelRun}>
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <p className="text-sm font-semibold">Shot {shot} of {totalShots} taken</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -1208,7 +1282,13 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
         <div className="mt-3 lg:col-span-2">
           <p className="text-sm font-semibold">Filter</p>
           <div className="mt-2">
-            <FilterRail selected={filterId} onSelect={setFilterId} layout="row" />
+            <FilterGrid
+              selected={filterId}
+              onSelect={setFilterId}
+              stream={tileStream}
+              mirror={mirror}
+              columns="grid-cols-5"
+            />
           </div>
           <div className="relative mx-auto mt-3 w-full max-w-xs">
             <canvas
@@ -1386,64 +1466,106 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
 
       {phase === 'idle' && (
         <div className="lg:col-start-2">
-          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:mt-0 lg:grid-cols-1">
-            <label className="flex flex-col gap-1 text-sm font-semibold">
-              Strip style
-              <select className="input" value={styleId} onChange={(e) => setStyleId(e.target.value)} aria-label="Strip style">
-                {BOOTH_STYLES.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} — {s.note}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1 text-sm font-semibold">
-              Layout
-              <select
-                className="input"
-                value={layoutId}
-                onChange={(e) => {
-                  const v = e.target.value as BoothLayout;
-                  setLayoutId(v);
-                  if (v === 'grid') setShotCount(4);
-                  if (v === 'polaroid') setShotCount(1);
-                }}
-                aria-label="Strip layout"
-              >
-                {BOOTH_LAYOUTS.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.name} — {l.note}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <div className="mt-3 lg:mt-0">
+            <p className="text-sm font-semibold">Strip style</p>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {BOOTH_STYLES.map((s) => {
+                const active = s.id === styleId;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setStyleId(s.id)}
+                    aria-pressed={active}
+                    title={`${s.name} — ${s.note}`}
+                    className={`rounded-xl border-[3px] p-1.5 text-left transition hover:-translate-y-0.5 ${
+                      active ? 'booth-tile-active border-[#ffc83d]' : 'border-transparent'
+                    }`}
+                  >
+                    <span className="block rounded-lg p-1.5" style={{ background: s.frame }}>
+                      <span className="flex flex-col gap-1">
+                        <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#ff4da6,#ffd98a 50%,#46a758)' }} />
+                        <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#ffd98a,#46a758 50%,#ff4da6)' }} />
+                        <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#46a758,#ff4da6 50%,#ffd98a)' }} />
+                      </span>
+                      <span className="mt-1.5 block text-center text-[10px] font-bold leading-none" style={{ color: s.caption }}>
+                        {caption || 'Sachi'}
+                      </span>
+                    </span>
+                    <span className="mt-1 block truncate text-xs font-semibold">{s.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-4 text-sm font-semibold">Layout</p>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {BOOTH_LAYOUTS.map((l) => {
+                const active = l.id === layoutId;
+                const pickLayout = () => {
+                  setLayoutId(l.id);
+                  if (l.id === 'grid') setShotCount(4);
+                  if (l.id === 'polaroid') setShotCount(1);
+                };
+                return (
+                  <button
+                    key={l.id}
+                    type="button"
+                    onClick={pickLayout}
+                    aria-pressed={active}
+                    title={`${l.name} — ${l.note}`}
+                    className={`rounded-xl border-[3px] p-1.5 text-left transition hover:-translate-y-0.5 ${
+                      active ? 'booth-tile-active border-[#ffc83d]' : 'border-transparent'
+                    }`}
+                  >
+                    <span className="block rounded-lg bg-black/10 p-1.5">
+                      {l.id === 'strip' && (
+                        <span className="flex flex-col gap-1">
+                          <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#ff4da6,#ffd98a 50%,#46a758)' }} />
+                          <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#ffd98a,#46a758 50%,#ff4da6)' }} />
+                          <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#46a758,#ff4da6 50%,#ffd98a)' }} />
+                        </span>
+                      )}
+                      {l.id === 'grid' && (
+                        <span className="grid grid-cols-2 gap-1">
+                          <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#ff4da6,#ffd98a 50%,#46a758)' }} />
+                          <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#ffd98a,#46a758 50%,#ff4da6)' }} />
+                          <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#46a758,#ff4da6 50%,#ffd98a)' }} />
+                          <span className="block h-4 rounded-sm" style={{ background: 'linear-gradient(135deg,#ff4da6,#46a758 50%,#ffd98a)' }} />
+                        </span>
+                      )}
+                      {l.id === 'polaroid' && (
+                        <span className="flex flex-col">
+                          <span className="block h-8 rounded-t-sm" style={{ background: 'linear-gradient(135deg,#ff4da6,#ffd98a 50%,#46a758)' }} />
+                          <span className="block h-3 rounded-b-sm bg-[#fdf8ec]" />
+                        </span>
+                      )}
+                    </span>
+                    <span className="mt-1 block truncate text-xs font-semibold">{l.name}</span>
+                  </button>
+                );
+              })}
+            </div>
             {layoutId === 'strip' && (
-              <label className="flex flex-col gap-1 text-sm font-semibold">
-                Shots
-                <select
-                  className="input"
-                  value={shotCount}
-                  onChange={(e) => setShotCount(Number(e.target.value))}
-                  aria-label="Number of shots"
-                >
+              <>
+                <p className="mt-4 text-sm font-semibold">Shots</p>
+                <div className="mt-2 flex gap-2">
                   {SHOT_COUNT_OPTIONS.map((n) => (
-                    <option key={n} value={n}>{n} shots</option>
+                    <Chip key={n} active={shotCount === n} onClick={() => setShotCount(n)} label={`${n} shots`}>
+                      {n} shots
+                    </Chip>
                   ))}
-                </select>
-              </label>
+                </div>
+              </>
             )}
-            <label className="flex flex-col gap-1 text-sm font-semibold">
-              Pose pack
-              <select
-                className="input"
-                value={posePackId}
-                onChange={(e) => setPosePackId(e.target.value)}
-                aria-label="Pose pack"
-              >
-                <option value="classic">Pose ideas</option>
-                <option value="meme">Meme poses — copy this!</option>
-              </select>
-            </label>
+            <p className="mt-4 text-sm font-semibold">Pose pack</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Chip active={posePackId === 'classic'} onClick={() => setPosePackId('classic')} label="Pose ideas">
+                Pose ideas
+              </Chip>
+              <Chip active={posePackId === 'meme'} onClick={() => setPosePackId('meme')} label="Meme poses">
+                Meme poses
+              </Chip>
+            </div>
             <label className="flex flex-col gap-1 text-sm font-semibold">
               Caption on the strip
               <input
@@ -1456,37 +1578,33 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
               />
             </label>
           </div>
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={showPoses} onChange={(e) => setShowPoses(e.target.checked)} />
+          <p className="mt-4 text-sm font-semibold">Options</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Chip active={showPoses} onClick={() => setShowPoses(!showPoses)} label="Pose ideas">
               Pose ideas
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={dateStamp} onChange={(e) => setDateStamp(e.target.checked)} />
+            </Chip>
+            <Chip active={dateStamp} onClick={() => setDateStamp(!dateStamp)} label="Date on the strip">
               Date on the strip
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={mirror} onChange={(e) => toggleMirror(e.target.checked)} />
+            </Chip>
+            <Chip active={mirror} onClick={() => toggleMirror(!mirror)} label="Mirror preview">
               Mirror preview
-            </label>
+            </Chip>
             {!roomCode && (
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={manual} onChange={(e) => setManual(e.target.checked)} />
-                Manual shutter (press when ready)
-              </label>
+              <Chip active={manual} onClick={() => setManual(!manual)} label="Manual shutter">
+                Manual shutter
+              </Chip>
             )}
             {!roomCode && (
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={duoTurns} onChange={(e) => setDuoTurns(e.target.checked)} />
-                Duo turns (take turns)
-              </label>
+              <Chip active={duoTurns} onClick={() => setDuoTurns(!duoTurns)} label="Duo turns">
+                Duo turns
+              </Chip>
             )}
-            <button type="button" className="btn !px-2 !py-1 text-xs" onClick={() => setSoundOn(!soundOn)} aria-label="Toggle booth sounds">
+            <Chip active={soundOn} onClick={() => setSoundOn(!soundOn)} label="Booth sounds">
               {soundOn ? <Volume2 size={16} aria-hidden /> : <VolumeX size={16} aria-hidden />}
               {soundOn ? 'Sound on' : 'Muted'}
-            </button>
+            </Chip>
             {devices.length >= 2 && (
-              <button type="button" className="btn !px-2 !py-1 text-xs" onClick={flipCamera}>
+              <button type="button" className="btn !rounded-full !px-3 !py-1.5 text-xs" onClick={flipCamera}>
                 <FlipHorizontal2 size={16} aria-hidden /> Flip camera
               </button>
             )}
@@ -1503,21 +1621,10 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
               </label>
             </div>
           )}
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={!cameraOn}
-              onClick={roomCode ? startTogether : startSolo}
-            >
-              <Camera size={18} aria-hidden />
-              {roomCode ? 'Start together' : manual ? 'Start (manual)' : `Take ${shotCount} shots`}
-            </button>
-          </div>
           <p className="mt-2 text-xs text-[var(--ink-dim)]">
-            How it runs: a pose card, then 3-2-1, then the shot — for every shot.
-            Tap any filter on the left (or above, on phones) to change the look
-            live, before you start. Mirror off shows the real image, as others
+            How it runs: pick a filter from the live tiles, tap the big gold
+            button, and pose — a pose card, then a full-screen 3-2-1, then the
+            shot, for every shot. Mirror off shows the real image, as others
             see you; turn Mirror on for the selfie view.
             {manual && !roomCode ? ' In manual mode you press Ready for each shot.' : ''}
             {roomCode ? ' In a room, both phones count down together.' : ''}
