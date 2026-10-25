@@ -33,9 +33,19 @@ header) — and the backend:
   (image ≤ 15MB, JPEG/PNG/WebP). Returns the photo id + status. If
   inline classification fails or runs long, the row stays `pending`.
 - `POST /api/albums/process` — classify pending photos (upload retries
-  + cron catch-up). Body `{ "limit": 10 }`. Gate: the shared album key
+  + catch-up). Body `{ "limit": 10 }`. Gate: the shared album key
   (`x-album-key`) or, if set, `ALBUMS_WORKER_TOKEN` (`x-albums-token`).
-  Photos failing 3 times are marked `failed`.
+  Attempts are CLAIMED before inference (a function killed mid-photo
+  never runs its catch block, so counting only on errors left photos
+  `pending` forever); a photo that burned 3 claims without success is
+  marked `failed`. Each call stops at an 8s budget and reports
+  `pendingRemaining`, so the page polls until nothing is left.
+  No `maxDuration` is set on purpose: raising it needs a paid plan,
+  and this design works on any plan.
+- `POST /api/albums/retry` — reset `failed` rows (and `pending` rows
+  that burned all their claims) back to pending with a fresh attempt
+  budget, so the next `/process` call classifies them. Same gate as
+  `/process`. Response `{ reset }`.
 - `GET /api/albums/photos?album=all&month=YYYY-MM&limit=&offset=`
   — ready photos with 1-hour signed thumbnail + full URLs. Requires
   the `x-album-key` header.
@@ -61,7 +71,11 @@ header) — and the backend:
 ## Limits (honest)
 
 - Free-tier server functions cut off around 10s: a cold first upload
-  can exceed that, so the row stays `pending` and `/process` recovers it.
+  can exceed that, so the row used to stay `pending` forever. Now each
+  `/process` call claims attempts before inference, stops at an 8s
+  budget, and the page polls until `pendingRemaining` is 0 — and a
+  photo that burned its claims is marked `failed` (visible, with a
+  Retry button) instead of stuck.
 - Free Supabase storage is ~1GB: originals are compressed on upload.
 - Place clusters have no names yet (needs geocoding — v2, opt-in).
 - Face *identity* (who is who) is v2: it needs reference faces and

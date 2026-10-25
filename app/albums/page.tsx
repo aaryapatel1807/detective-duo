@@ -10,7 +10,8 @@ import {
   faceLabel,
   fetchAlbumPhotos,
   fetchAlbumSummary,
-  runAlbumProcess,
+  processAlbumsOnce,
+  retryAlbums,
   uploadAlbumPhoto,
   type AlbumSummary,
 } from '@/lib/albums/client';
@@ -18,6 +19,7 @@ import type { AlbumId, AlbumPhotoOut } from '@/lib/albums/types';
 import { getDisplayName } from '@/lib/together/session';
 
 interface UploadState {
+  id?: string;
   name: string;
   state: 'uploading' | 'ready' | 'pending' | 'failed';
   detail: string;
@@ -42,6 +44,8 @@ export default function AlbumsPage() {
   const [month, setMonth] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<AlbumPhotoOut | null>(null);
   const [uploads, setUploads] = useState<UploadState[]>([]);
+  const [classifyProgress, setClassifyProgress] = useState<{ done: number; total: number } | null>(null);
+  const [classifyStuck, setClassifyStuck] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -100,6 +104,88 @@ export default function AlbumsPage() {
     [],
   );
 
+  // Same refresh as load(), but silent: the poll loop calls it every
+  // round, and load() would flash "Loading photos…" over the grid.
+  const refreshQuietly = useCallback(async (key: string, albumId: AlbumId, monthValue: string | null) => {
+    try {
+      const [sum, page] = await Promise.all([
+        fetchAlbumSummary(key),
+        fetchAlbumPhotos(key, albumId, monthValue),
+      ]);
+      setSummary(sum);
+      setPhotos(page.photos);
+      setTotal(page.total);
+    } catch {
+      /* the main load effect owns error display */
+    }
+  }, []);
+
+  /**
+   * Drive classification to completion instead of firing one process
+   * call and hoping: each call is time-budgeted server-side, so a
+   * big batch needs several rounds. After every round the upload
+   * list is updated from the ready photos, so entries flip from
+   * 'Classifying…' to their labels one by one. batchIds are the
+   * photo ids of this upload batch (empty on open = silent catch-up).
+   * Never throws; a failed round just ends the loop, and the retry
+   * button covers whatever is left.
+   */
+  const pollClassify = useCallback(
+    async (key: string, batchIds: string[], albumId: AlbumId, monthValue: string | null) => {
+      const batchSet = new Set(batchIds);
+      let lastReadyIds = new Set<string>();
+      let lastFailedTotal = 0;
+      let rounds = 0;
+      let pendingRemaining = 1;
+      while (rounds < 30 && pendingRemaining > 0) {
+        rounds++;
+        try {
+          const result = await processAlbumsOnce(key, 10);
+          pendingRemaining = result.pendingRemaining;
+          lastFailedTotal = result.failedTotal;
+        } catch {
+          break;
+        }
+        // Match against ALL ready photos (not the current filter view)
+        // so batch entries flip even when another album is selected.
+        try {
+          const all = await fetchAlbumPhotos(key, 'all', null, 100, 0);
+          lastReadyIds = new Set(all.photos.map((p) => p.id));
+          const byId = new Map(all.photos.map((p) => [p.id, p]));
+          setUploads((prev) =>
+            prev.map((u) => {
+              const p = u.id ? byId.get(u.id) : undefined;
+              if (!p) return u;
+              return {
+                ...u,
+                state: 'ready' as const,
+                detail: `${faceLabel(p.faceCount)} · ${p.sceneTags.join(', ') || 'things'}`,
+              };
+            }),
+          );
+          if (batchSet.size > 0) {
+            const done = batchIds.filter((id) => lastReadyIds.has(id)).length;
+            setClassifyProgress({ done, total: batchSet.size });
+          }
+        } catch {
+          /* next round retries */
+        }
+        await refreshQuietly(key, albumId, monthValue);
+        if (pendingRemaining > 0) await new Promise((r) => setTimeout(r, 1000));
+      }
+      if (batchSet.size > 0) {
+        const done = batchIds.filter((id) => lastReadyIds.has(id)).length;
+        setClassifyProgress(done >= batchSet.size ? null : { done, total: batchSet.size });
+        setClassifyStuck(done < batchSet.size || pendingRemaining > 0 || lastFailedTotal > 0);
+      } else {
+        // Silent catch-up still surfaces a retry when older photos
+        // ended up failed, so they are not invisible.
+        setClassifyStuck(pendingRemaining > 0 || lastFailedTotal > 0);
+      }
+    },
+    [refreshQuietly],
+  );
+
   useEffect(() => {
     if (!albumKey) return;
     void load(albumKey, album, month);
@@ -110,7 +196,7 @@ export default function AlbumsPage() {
     if (!albumKey) return;
     let cancelled = false;
     void (async () => {
-      await runAlbumProcess(albumKey);
+      await pollClassify(albumKey, [], album, month);
       if (!cancelled) void load(albumKey, album, month);
     })();
     return () => {
@@ -153,16 +239,19 @@ export default function AlbumsPage() {
     const list = [...files].filter((f) => f.type.startsWith('image/'));
     if (list.length === 0) return;
     setUploads(list.map((f) => ({ name: f.name, state: 'uploading' as const, detail: 'Uploading…' })));
-    let anyPending = false;
+    setClassifyProgress(null);
+    setClassifyStuck(false);
+    const batchIds: string[] = [];
     for (const file of list) {
       try {
         const result = await uploadAlbumPhoto(albumKey, name || 'Someone', file);
-        if (result.status === 'pending') anyPending = true;
+        if (result.status === 'pending') batchIds.push(result.id);
         setUploads((prev) =>
           prev.map((u) =>
             u.name === file.name
               ? {
-                  name: file.name,
+                  ...u,
+                  id: result.id,
                   state: result.status,
                   detail:
                     result.status === 'ready'
@@ -182,8 +271,34 @@ export default function AlbumsPage() {
         );
       }
     }
-    if (anyPending) await runAlbumProcess(albumKey);
-    void load(albumKey, album, month);
+    if (batchIds.length > 0) {
+      setClassifyProgress({ done: 0, total: batchIds.length });
+      await pollClassify(albumKey, batchIds, album, month);
+    } else {
+      void load(albumKey, album, month);
+    }
+  };
+
+  // Reset failed/stuck photos and classify them again. Covers both
+  // 'failed' rows and 'pending' rows that burned all their claims.
+  const retryClassify = async () => {
+    if (!albumKey) return;
+    setClassifyStuck(false);
+    try {
+      await retryAlbums(albumKey);
+    } catch {
+      /* the poll below still retries whatever is pending */
+    }
+    const ids = uploads.filter((u) => u.id && u.state !== 'ready').map((u) => u.id as string);
+    setUploads((prev) =>
+      prev.map((u) =>
+        u.state === 'failed' || u.state === 'pending'
+          ? { ...u, state: 'pending' as const, detail: 'Classifying…' }
+          : u,
+      ),
+    );
+    if (ids.length > 0) setClassifyProgress({ done: 0, total: ids.length });
+    await pollClassify(albumKey, ids, album, month);
   };
 
   return (
@@ -276,6 +391,19 @@ export default function AlbumsPage() {
                   </li>
                 ))}
               </ul>
+            )}
+            {classifyProgress && (
+              <p className="mt-2 text-sm text-[var(--ink-dim)]" role="status">
+                Classifying… {classifyProgress.done} of {classifyProgress.total} sorted.
+              </p>
+            )}
+            {classifyStuck && (
+              <p className="mt-2 text-sm">
+                Some photos are still classifying or failed to classify.{' '}
+                <button type="button" className="btn !px-3 !py-1 text-sm" onClick={() => void retryClassify()}>
+                  Retry classification
+                </button>
+              </p>
             )}
           </section>
 

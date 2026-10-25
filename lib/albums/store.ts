@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { MAX_ATTEMPTS } from './processQueue';
 import type { AlbumPhotoRow } from './types';
 
 /**
@@ -78,6 +79,53 @@ export async function listPending(sb: SupabaseClient, limit: number): Promise<Al
     .limit(limit);
   if (error) throw new Error(`pending query failed: ${error.message}`);
   return (data ?? []) as AlbumPhotoRow[];
+}
+
+/** How many photos are still waiting for classification. */
+export async function countPending(sb: SupabaseClient): Promise<number> {
+  const { count, error } = await sb
+    .from(ALBUM_TABLE)
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'pending');
+  if (error) throw new Error(`pending count failed: ${error.message}`);
+  return count ?? 0;
+}
+
+/** How many photos in a room are marked failed (for the retry affordance). */
+export async function countFailed(sb: SupabaseClient, roomCode: string): Promise<number> {
+  const { count, error } = await sb
+    .from(ALBUM_TABLE)
+    .select('*', { count: 'exact', head: true })
+    .eq('room_code', roomCode)
+    .eq('status', 'failed');
+  if (error) throw new Error(`failed count failed: ${error.message}`);
+  return count ?? 0;
+}
+
+/**
+ * Reset photos that can never finish on their own: 'failed' rows, and
+ * 'pending' rows that already burned all their claims (e.g. the
+ * function was killed mid-photo). They go back to pending with a
+ * fresh attempt budget so a retry can classify them. Returns how
+ * many rows were reset. Room-scoped: only the shared album's rows.
+ */
+export async function resetStuckPhotos(sb: SupabaseClient, roomCode: string): Promise<number> {
+  const failed = await sb
+    .from(ALBUM_TABLE)
+    .update({ status: 'pending', attempts: 0 })
+    .eq('room_code', roomCode)
+    .eq('status', 'failed')
+    .select('id');
+  if (failed.error) throw new Error(`retry reset failed: ${failed.error.message}`);
+  const stuck = await sb
+    .from(ALBUM_TABLE)
+    .update({ status: 'pending', attempts: 0 })
+    .eq('room_code', roomCode)
+    .eq('status', 'pending')
+    .gte('attempts', MAX_ATTEMPTS)
+    .select('id');
+  if (stuck.error) throw new Error(`retry reset failed: ${stuck.error.message}`);
+  return (failed.data ?? []).length + (stuck.data ?? []).length;
 }
 
 export async function listRoomPhotos(sb: SupabaseClient, roomCode: string, cap = 2000): Promise<AlbumPhotoRow[]> {

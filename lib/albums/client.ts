@@ -109,16 +109,44 @@ export async function uploadAlbumPhoto(key: string, uploader: string, file: File
   return (await res.json()) as UploadResult;
 }
 
+export interface ProcessResult {
+  processed: number;
+  ready: number;
+  failed: number;
+  stillPending: number;
+  pendingRemaining: number;
+  failedTotal: number;
+  budgetStopped: boolean;
+}
+
+/** One classification pass. Throws on 503/401 like the other calls. */
+export async function processAlbumsOnce(key: string, limit = 10): Promise<ProcessResult> {
+  const res = await fetch('/api/albums/process', {
+    method: 'POST',
+    headers: { 'x-album-key': key, 'content-type': 'application/json' },
+    body: JSON.stringify({ limit }),
+  });
+  await throwIfBad(res);
+  return (await res.json()) as ProcessResult;
+}
+
 /** Classify anything left pending (upload retries + catch-up). Never throws. */
 export async function runAlbumProcess(key?: string): Promise<void> {
   try {
-    await fetch('/api/albums/process', {
-      method: 'POST',
-      headers: key ? { 'x-album-key': key } : undefined,
-    });
+    await processAlbumsOnce(key ?? '');
   } catch {
     /* the next refresh still shows whatever is ready */
   }
+}
+
+/** Reset failed/stuck photos to pending so they can be classified again. */
+export async function retryAlbums(key: string): Promise<{ reset: number }> {
+  const res = await fetch('/api/albums/retry', {
+    method: 'POST',
+    headers: { 'x-album-key': key },
+  });
+  await throwIfBad(res);
+  return (await res.json()) as { reset: number };
 }
 
 export function faceLabel(faceCount: number | null): string {
