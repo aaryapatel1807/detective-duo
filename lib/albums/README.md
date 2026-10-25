@@ -1,7 +1,11 @@
-# Album backend (Sachi)
+# Album backend + gallery UI (Sachi)
 
-Backend-only photo collection with ML classification. No UI reads these
-endpoints yet — the gallery UI comes later, after this backend is proven.
+Photo collection with ML classification, plus its gallery UI at `/albums`
+(also linked from the dashboard sidebar, bottom nav, and Featured).
+The page degrades gracefully: before activation (migration + service
+key) it shows a "still being set up" notice instead of failing, and
+it fires the process route on open and after uploads so nothing stays
+pending just because an upload ran cold.
 
 ## What it does
 

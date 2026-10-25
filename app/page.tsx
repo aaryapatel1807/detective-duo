@@ -9,6 +9,7 @@ import {
   Camera,
   Dices,
   Home,
+  Images,
   MailOpen,
   Play,
   Settings,
@@ -118,6 +119,12 @@ const FEATURED = [
     icon: Camera,
     title: 'Photo booth',
     note: 'Three shots, one strip, made on this device.',
+  },
+  {
+    href: '/albums',
+    icon: Images,
+    title: 'Albums',
+    note: 'Your photos, sorted by the app itself — solo, together, places.',
   },
 ];
 
@@ -263,6 +270,7 @@ export default function HomePage() {
     { href: '/daily', icon: CalendarDays, label: 'Daily desk', short: 'Daily' },
     { href: '/date-night', icon: Dices, label: 'Date night', short: 'Date night' },
     { href: '/photo-booth', icon: Camera, label: 'Photo booth', short: 'Booth' },
+    { href: '/albums', icon: Images, label: 'Albums', short: 'Albums' },
     { href: '/settings', icon: Settings, label: 'Settings', short: 'Settings' },
   ];
 
