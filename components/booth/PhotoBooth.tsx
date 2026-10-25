@@ -32,8 +32,9 @@
  * checker, stars, glitter, lace, string lights, stamp edges, bows,
  * doodles), seeded so re-composites look identical, and decorations
  * never cover faces. Layout: the camera column holds the filter rail,
- * a bigger preview (up to 78vh on desktop) with floating cute emojis
- * on it, and the Template picker below it; the right column keeps
+ * a bigger preview (up to 78vh on desktop) kept blank — no stickers
+ * or emojis on the camera screen, on his word — and the Template
+ * picker below it; the right column keeps
  * Layout, Shots, Pose pack, Caption and Options. "Try this template"
  * renders the current look onto sample photos through the same strip
  * painter, so a template can be previewed before shooting or with no
@@ -1701,12 +1702,6 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
                 style={{ transform: mirror ? 'scaleX(-1)' : undefined, filter: filterCss || undefined }}
                 aria-label="Booth camera preview"
               />
-              <span aria-hidden className="booth-float-emoji pointer-events-none absolute left-2 top-2 z-10 text-2xl drop-shadow">💖</span>
-              <span aria-hidden className="booth-float-emoji pointer-events-none absolute right-2 top-10 z-10 text-2xl drop-shadow" style={{ animationDelay: '0.7s' }}>✨</span>
-              <span aria-hidden className="booth-float-emoji pointer-events-none absolute bottom-12 left-2 z-10 text-2xl drop-shadow" style={{ animationDelay: '1.4s' }}>🌸</span>
-              <span aria-hidden className="booth-float-emoji pointer-events-none absolute bottom-3 right-3 z-10 text-2xl drop-shadow" style={{ animationDelay: '0.4s' }}>🎀</span>
-              <span aria-hidden className="booth-float-emoji pointer-events-none absolute left-2 top-[48%] z-10 text-xl drop-shadow" style={{ animationDelay: '1.1s' }}>⭐</span>
-              <span aria-hidden className="booth-float-emoji pointer-events-none absolute right-2 top-[48%] z-10 text-xl drop-shadow" style={{ animationDelay: '1.8s' }}>🦋</span>
             </div>
             {phase === 'idle' && (
               <>
