@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { albumKeyFromRequest, getAlbumSecret, isAlbumKeyValid } from '@/lib/albums/auth';
 import { classifyPhoto } from '@/lib/albums/classify';
 import { downloadFile, getServiceClient, listPending, updatePhoto } from '@/lib/albums/store';
 
@@ -7,13 +8,17 @@ export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/albums/process — classify pending photos (upload retries +
- * cron catch-up). Optional gate: if ALBUMS_WORKER_TOKEN is set, the
- * caller must send it as the x-albums-token header.
- * Body: { "limit": 10 }. Photos failing 3 times are marked failed.
+ * cron catch-up). Gate: the shared album key (x-album-key) or, if set,
+ * the ALBUMS_WORKER_TOKEN (x-albums-token). When neither is configured
+ * the route stays open, as before. Body: { "limit": 10 }. Photos
+ * failing 3 times are marked failed.
  */
 export async function POST(request: Request) {
-  const token = process.env.ALBUMS_WORKER_TOKEN;
-  if (token && request.headers.get('x-albums-token') !== token) {
+  const workerToken = process.env.ALBUMS_WORKER_TOKEN;
+  const workerOk = !!workerToken && request.headers.get('x-albums-token') === workerToken;
+  const keyOk = isAlbumKeyValid(albumKeyFromRequest(request));
+  const gated = !!workerToken || !!getAlbumSecret();
+  if (gated && !workerOk && !keyOk) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   const sb = getServiceClient();

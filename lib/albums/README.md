@@ -9,8 +9,9 @@ pending just because an upload ran cold.
 
 ## What it does
 
-Upload a photo into a together-room (4-letter code, the same shared-secret
-model rooms use today) and the backend:
+Upload a photo into the one shared album — opened by a single secret
+key (the `ALBUM_SECRET_KEY` server env var, sent as the `x-album-key`
+header) — and the backend:
 
 1. Compresses it (max 2048px JPEG) + makes a 480px thumbnail (sharp).
 2. Reads its date and GPS from EXIF (exifr).
@@ -28,17 +29,18 @@ model rooms use today) and the backend:
 
 ## Endpoints (all server-only, Node runtime)
 
-- `POST /api/albums/upload` — multipart `room_code`, `uploader`, `file`
+- `POST /api/albums/upload` — multipart `key`, `uploader`, `file`
   (image ≤ 15MB, JPEG/PNG/WebP). Returns the photo id + status. If
   inline classification fails or runs long, the row stays `pending`.
 - `POST /api/albums/process` — classify pending photos (upload retries
-  + cron catch-up). Body `{ "limit": 10 }`. Optional gate: if
-  `ALBUMS_WORKER_TOKEN` is set, send it as `x-albums-token`. Photos
-  failing 3 times are marked `failed`.
-- `GET /api/albums/photos?room=CODE&album=all&month=YYYY-MM&limit=&offset=`
-  — ready photos with 1-hour signed thumbnail + full URLs.
-- `GET /api/albums/albums?room=CODE` — album counts, timeline months,
-  place-cluster count.
+  + cron catch-up). Body `{ "limit": 10 }`. Gate: the shared album key
+  (`x-album-key`) or, if set, `ALBUMS_WORKER_TOKEN` (`x-albums-token`).
+  Photos failing 3 times are marked `failed`.
+- `GET /api/albums/photos?album=all&month=YYYY-MM&limit=&offset=`
+  — ready photos with 1-hour signed thumbnail + full URLs. Requires
+  the `x-album-key` header.
+- `GET /api/albums/albums` — album counts, timeline months,
+  place-cluster count. Requires the `x-album-key` header.
 
 ## Activation (do once, then deploy)
 
@@ -47,7 +49,10 @@ model rooms use today) and the backend:
    no anonymous access — routes are the only path, via the service key).
 2. Set `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project env
    (server-only; never a `NEXT_PUBLIC_` var).
-3. Optional: `ALBUMS_WORKER_TOKEN` to gate `/process`.
+3. Set `ALBUM_SECRET_KEY` in the Vercel project env to the one shared
+   secret key — the server checks every album request against it, and
+   the key itself never appears in code or in the client bundle.
+4. Optional: `ALBUMS_WORKER_TOKEN` to gate `/process`.
 4. Deploy the branch. Model weights are NOT in git (they would make
    pushes too big for this VM's tunnel): `postinstall` fetches them
    into `public/models/` at install time (`node scripts/fetch-models.mjs`
@@ -61,8 +66,13 @@ model rooms use today) and the backend:
 - Place clusters have no names yet (needs geocoding — v2, opt-in).
 - Face *identity* (who is who) is v2: it needs reference faces and
   stores biometric embeddings, which deserves its own privacy pass.
-- Room codes gate discovery, not true auth (same as rooms today):
-  anyone with a room's code can read and add its photos.
+- Access is one shared secret key (`ALBUM_SECRET_KEY` server env):
+  without it, every album route answers 401. The key is never stored
+  in code or shown on screen; each device keeps the key it was given
+  in its own local storage.
+- Photos stay in the private bucket permanently: there is no expiry
+  and no delete path. Only the signed view links expire (1 hour) and
+  are re-signed on every list.
 
 ## Verified locally (24 Oct, real pipeline, not mocks)
 

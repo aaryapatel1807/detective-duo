@@ -1,27 +1,28 @@
 import { NextResponse } from 'next/server';
 import { ALBUMS, photoInAlbum, photoMonth } from '@/lib/albums/albums';
+import { SHARED_ALBUM_ROOM, albumKeyFromRequest, checkAlbumKey } from '@/lib/albums/auth';
 import { getServiceClient, listRoomPhotos, signUrl } from '@/lib/albums/store';
 import type { AlbumId } from '@/lib/albums/types';
-import { isValidRoomCode, normalizeRoomCode } from '@/lib/together/roomCode';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/albums/photos?room=CODE&album=all&month=YYYY-MM&limit=50&offset=0
- * Lists a room's photos with signed thumbnail + full URLs (1 hour).
- * Only 'ready' photos are listed; pending ones appear once classified.
+ * GET /api/albums/photos?album=all&month=YYYY-MM&limit=50&offset=0
+ * Lists the shared album's photos with signed thumbnail + full URLs
+ * (1 hour). Only 'ready' photos are listed; pending ones appear once
+ * classified. Requires the x-album-key header (the one shared key).
  */
 export async function GET(request: Request) {
   const sb = getServiceClient();
   if (!sb) {
     return NextResponse.json({ error: 'albums are not configured yet' }, { status: 503 });
   }
-  const params = new URL(request.url).searchParams;
-  const roomCode = normalizeRoomCode(params.get('room') ?? '');
-  if (!isValidRoomCode(roomCode)) {
-    return NextResponse.json({ error: 'room must be a valid 4-letter room code' }, { status: 400 });
+  const auth = checkAlbumKey(albumKeyFromRequest(request));
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
+  const params = new URL(request.url).searchParams;
   const album = (params.get('album') ?? 'all') as AlbumId;
   if (!ALBUMS.some((a) => a.id === album)) {
     return NextResponse.json({ error: `unknown album: ${album}` }, { status: 400 });
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
   }
   const limit = Math.min(100, Math.max(1, parseInt(params.get('limit') ?? '50', 10) || 50));
   const offset = Math.max(0, parseInt(params.get('offset') ?? '0', 10) || 0);
-  const rows = await listRoomPhotos(sb, roomCode);
+  const rows = await listRoomPhotos(sb, SHARED_ALBUM_ROOM);
   const filtered = rows
     .filter((p) => p.status === 'ready')
     .filter((p) => photoInAlbum(p, album))

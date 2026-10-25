@@ -4,10 +4,12 @@
 -- ACTIVATION (run once in the Supabase dashboard SQL editor):
 --   1. Run this file.
 --   2. Set SUPABASE_SERVICE_ROLE_KEY in the Vercel project env.
+--   3. Set ALBUM_SECRET_KEY in the Vercel project env to the one
+--      shared secret key for the album.
 -- The bucket is private and the table denies anonymous access, so the
 -- Next.js API routes (service-role key) are the only path to photos.
--- The room code is a shared secret, the same model rooms use today:
--- knowing a room's code lets you read and add its photos.
+-- The album itself is gated by that one secret key: every album route
+-- checks it server-side, and all photos live under one shared namespace.
 
 create table if not exists public.album_photos (
   id uuid primary key default gen_random_uuid(),

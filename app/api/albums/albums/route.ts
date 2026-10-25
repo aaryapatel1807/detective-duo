@@ -1,26 +1,26 @@
 import { NextResponse } from 'next/server';
 import { ALBUMS, photoInAlbum, photoMonth, placeCluster } from '@/lib/albums/albums';
+import { SHARED_ALBUM_ROOM, albumKeyFromRequest, checkAlbumKey } from '@/lib/albums/auth';
 import { getServiceClient, listRoomPhotos } from '@/lib/albums/store';
-import { isValidRoomCode, normalizeRoomCode } from '@/lib/together/roomCode';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/albums/albums?room=CODE — auto-album counts, timeline months,
- * and place-cluster count for a room. Only 'ready' photos are counted.
+ * GET /api/albums/albums — auto-album counts, timeline months, and
+ * place-cluster count for the one shared album. Only 'ready' photos
+ * are counted. Requires the x-album-key header (the one shared key).
  */
 export async function GET(request: Request) {
   const sb = getServiceClient();
   if (!sb) {
     return NextResponse.json({ error: 'albums are not configured yet' }, { status: 503 });
   }
-  const params = new URL(request.url).searchParams;
-  const roomCode = normalizeRoomCode(params.get('room') ?? '');
-  if (!isValidRoomCode(roomCode)) {
-    return NextResponse.json({ error: 'room must be a valid 4-letter room code' }, { status: 400 });
+  const auth = checkAlbumKey(albumKeyFromRequest(request));
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
-  const rows = (await listRoomPhotos(sb, roomCode)).filter((p) => p.status === 'ready');
+  const rows = (await listRoomPhotos(sb, SHARED_ALBUM_ROOM)).filter((p) => p.status === 'ready');
   const albums = ALBUMS.map((a) => ({
     id: a.id,
     title: a.title,

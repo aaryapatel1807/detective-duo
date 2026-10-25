@@ -1,20 +1,24 @@
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
+import { SHARED_ALBUM_ROOM, checkAlbumKey } from '@/lib/albums/auth';
 import { classifyPhoto } from '@/lib/albums/classify';
 import { parseExif } from '@/lib/albums/exif';
 import { MAX_UPLOAD_BYTES, processImage } from '@/lib/albums/images';
 import { getServiceClient, insertPhoto, updatePhoto, uploadFiles } from '@/lib/albums/store';
-import { isValidRoomCode, normalizeRoomCode } from '@/lib/together/roomCode';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * POST /api/albums/upload — multipart: room_code, uploader, file.
+ * POST /api/albums/upload — multipart: key, uploader, file.
+ * The key is the one shared secret (x-album-key header also works).
  * Stores a compressed photo + thumbnail in the private bucket, records
  * its EXIF date/place, then classifies it (faces + scene). If the
  * classification step fails or runs long, the row stays 'pending' and
  * /api/albums/process picks it up later — the upload still succeeds.
+ * Photos stay in the private bucket permanently: there is no expiry
+ * and no delete path; only the signed view links expire (1 hour) and
+ * are re-signed on every list.
  */
 export async function POST(request: Request) {
   const sb = getServiceClient();
@@ -30,9 +34,10 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: 'expected multipart form data' }, { status: 400 });
   }
-  const roomCode = normalizeRoomCode(String(form.get('room_code') ?? ''));
-  if (!isValidRoomCode(roomCode)) {
-    return NextResponse.json({ error: 'room_code must be a valid 4-letter room code' }, { status: 400 });
+  const key = request.headers.get('x-album-key') ?? String(form.get('key') ?? '');
+  const auth = checkAlbumKey(key || null);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
   const uploader = String(form.get('uploader') ?? 'Someone').trim().slice(0, 40) || 'Someone';
   const file = form.get('file');
@@ -56,12 +61,12 @@ export async function POST(request: Request) {
   const id = randomUUID();
   let paths;
   try {
-    paths = await uploadFiles(sb, roomCode, id, processed.full, processed.thumb);
+    paths = await uploadFiles(sb, SHARED_ALBUM_ROOM, id, processed.full, processed.thumb);
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'storage failed' }, { status: 500 });
   }
   const row = await insertPhoto(sb, {
-    room_code: roomCode,
+    room_code: SHARED_ALBUM_ROOM,
     uploader,
     storage_path: paths.storagePath,
     thumb_path: paths.thumbPath,

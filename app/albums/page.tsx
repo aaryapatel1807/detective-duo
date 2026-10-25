@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Images, RefreshCw, Upload } from 'lucide-react';
 import {
+  ALBUMS_KEY_KEY,
   ALBUMS_NAME_KEY,
-  ALBUMS_ROOM_KEY,
+  AlbumsKeyError,
   AlbumsNotConfiguredError,
   faceLabel,
   fetchAlbumPhotos,
@@ -14,7 +15,6 @@ import {
   type AlbumSummary,
 } from '@/lib/albums/client';
 import type { AlbumId, AlbumPhotoOut } from '@/lib/albums/types';
-import { isValidRoomCode, normalizeRoomCode } from '@/lib/together/roomCode';
 import { getDisplayName } from '@/lib/together/session';
 
 interface UploadState {
@@ -31,9 +31,9 @@ function formatDate(iso: string | null): string {
 }
 
 export default function AlbumsPage() {
-  const [room, setRoom] = useState<string | null>(null);
+  const [albumKey, setAlbumKey] = useState<string | null>(null);
   const [name, setName] = useState('');
-  const [codeInput, setCodeInput] = useState('');
+  const [keyInput, setKeyInput] = useState('');
   const [nameInput, setNameInput] = useState('');
   const [summary, setSummary] = useState<AlbumSummary | null>(null);
   const [photos, setPhotos] = useState<AlbumPhotoOut[]>([]);
@@ -49,24 +49,24 @@ export default function AlbumsPage() {
 
   useEffect(() => {
     try {
-      const savedRoom = localStorage.getItem(ALBUMS_ROOM_KEY);
+      const savedKey = localStorage.getItem(ALBUMS_KEY_KEY);
       const savedName = localStorage.getItem(ALBUMS_NAME_KEY) ?? getDisplayName() ?? '';
-      if (savedRoom && isValidRoomCode(savedRoom)) setRoom(savedRoom);
+      if (savedKey) setAlbumKey(savedKey);
       setName(savedName);
       setNameInput(savedName);
     } catch {
-      /* private mode: rooms just don't persist */
+      /* private mode: the key just doesn't persist */
     }
   }, []);
 
   const load = useCallback(
-    async (roomCode: string, albumId: AlbumId, monthValue: string | null) => {
+    async (key: string, albumId: AlbumId, monthValue: string | null) => {
       setLoading(true);
       setNotice(null);
       try {
         const [sum, page] = await Promise.all([
-          fetchAlbumSummary(roomCode),
-          fetchAlbumPhotos(roomCode, albumId, monthValue),
+          fetchAlbumSummary(key),
+          fetchAlbumPhotos(key, albumId, monthValue),
         ]);
         setSummary(sum);
         setPhotos(page.photos);
@@ -79,6 +79,17 @@ export default function AlbumsPage() {
           setSummary(null);
           setPhotos([]);
           setTotal(0);
+        } else if (e instanceof AlbumsKeyError) {
+          try {
+            localStorage.removeItem(ALBUMS_KEY_KEY);
+          } catch {
+            /* ignore */
+          }
+          setAlbumKey(null);
+          setKeyInput('');
+          setSummary(null);
+          setPhotos([]);
+          setNotice('That secret key is not right — try again.');
         } else {
           setNotice(e instanceof Error ? e.message : 'Could not load albums.');
         }
@@ -90,62 +101,62 @@ export default function AlbumsPage() {
   );
 
   useEffect(() => {
-    if (!room) return;
-    void load(room, album, month);
-  }, [room, album, month, load]);
+    if (!albumKey) return;
+    void load(albumKey, album, month);
+  }, [albumKey, album, month, load]);
 
   // Catch up anything left pending (cold uploads), then refresh once.
   useEffect(() => {
-    if (!room) return;
+    if (!albumKey) return;
     let cancelled = false;
     void (async () => {
-      await runAlbumProcess();
-      if (!cancelled) void load(room, album, month);
+      await runAlbumProcess(albumKey);
+      if (!cancelled) void load(albumKey, album, month);
     })();
     return () => {
       cancelled = true;
     };
-  }, [room]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [albumKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const openRoom = () => {
-    const code = normalizeRoomCode(codeInput);
-    if (!isValidRoomCode(code)) {
-      setFormError('Room codes are 4 letters — check the code and try again.');
+  const openAlbum = () => {
+    const key = keyInput.trim();
+    if (!key) {
+      setFormError('Enter the secret key.');
       return;
     }
     setFormError(null);
     const trimmedName = nameInput.trim().slice(0, 40) || 'Someone';
     try {
-      localStorage.setItem(ALBUMS_ROOM_KEY, code);
+      localStorage.setItem(ALBUMS_KEY_KEY, key);
       localStorage.setItem(ALBUMS_NAME_KEY, trimmedName);
     } catch {
       /* ignore */
     }
     setName(trimmedName);
-    setRoom(code);
+    setAlbumKey(key);
   };
 
-  const changeRoom = () => {
+  const lockAlbum = () => {
     try {
-      localStorage.removeItem(ALBUMS_ROOM_KEY);
+      localStorage.removeItem(ALBUMS_KEY_KEY);
     } catch {
       /* ignore */
     }
-    setRoom(null);
-    setCodeInput('');
+    setAlbumKey(null);
+    setKeyInput('');
     setSummary(null);
     setPhotos([]);
   };
 
   const onUploadFiles = async (files: FileList | null) => {
-    if (!files || !room) return;
+    if (!files || !albumKey) return;
     const list = [...files].filter((f) => f.type.startsWith('image/'));
     if (list.length === 0) return;
     setUploads(list.map((f) => ({ name: f.name, state: 'uploading' as const, detail: 'Uploading…' })));
     let anyPending = false;
     for (const file of list) {
       try {
-        const result = await uploadAlbumPhoto(room, name || 'Someone', file);
+        const result = await uploadAlbumPhoto(albumKey, name || 'Someone', file);
         if (result.status === 'pending') anyPending = true;
         setUploads((prev) =>
           prev.map((u) =>
@@ -171,8 +182,8 @@ export default function AlbumsPage() {
         );
       }
     }
-    if (anyPending) await runAlbumProcess();
-    void load(room, album, month);
+    if (anyPending) await runAlbumProcess(albumKey);
+    void load(albumKey, album, month);
   };
 
   return (
@@ -182,12 +193,12 @@ export default function AlbumsPage() {
         Your photos, sorted by the app itself — solo, together, places, and things.
       </p>
 
-      {room === null ? (
+      {albumKey === null ? (
         <section className="panel mt-5 p-5">
-          <h2 className="text-lg font-bold">Your albums live in a room</h2>
+          <h2 className="text-lg font-bold">One secret key</h2>
           <p className="mt-1 text-sm text-[var(--ink-dim)]">
-            Open the room you share with your partner. Anyone with its 4-letter code can see
-            and add to these albums — the same rule as rooms.
+            This album belongs to two people only. Enter the secret key you share —
+            nothing else opens it. Photos uploaded here stay here permanently.
           </p>
           <label className="mt-4 flex flex-col gap-1 text-sm font-semibold">
             Your name
@@ -201,17 +212,18 @@ export default function AlbumsPage() {
             />
           </label>
           <label className="mt-3 flex flex-col gap-1 text-sm font-semibold">
-            Room code
+            Secret key
             <input
-              className="input max-w-32 uppercase"
-              value={codeInput}
-              onChange={(e) => setCodeInput(e.target.value)}
-              placeholder="CODE"
-              maxLength={4}
-              aria-label="Room code"
+              className="input"
+              type="password"
+              autoComplete="off"
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)}
+              placeholder="The key you share"
+              aria-label="Secret key"
             />
           </label>
-          <button type="button" className="btn btn-primary mt-4" onClick={openRoom}>
+          <button type="button" className="btn btn-primary mt-4" onClick={openAlbum}>
             Open albums
           </button>
           {formError && (
@@ -223,13 +235,13 @@ export default function AlbumsPage() {
       ) : (
         <>
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="chip">Room {room}</span>
+            <span className="chip">Shared album</span>
             <span className="chip">{name || 'Someone'}</span>
-            <button type="button" className="btn !px-3 !py-2 text-sm" onClick={() => void load(room, album, month)}>
+            <button type="button" className="btn !px-3 !py-2 text-sm" onClick={() => void load(albumKey, album, month)}>
               <RefreshCw size={16} aria-hidden /> Refresh
             </button>
-            <button type="button" className="btn !px-3 !py-2 text-sm" onClick={changeRoom}>
-              Change room
+            <button type="button" className="btn !px-3 !py-2 text-sm" onClick={lockAlbum}>
+              Lock album
             </button>
           </div>
 
