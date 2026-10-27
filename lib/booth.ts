@@ -27,11 +27,25 @@ export type StripPattern =
   | { kind: 'floral'; colors: string[] }
   | { kind: 'stamp' }
   | { kind: 'bows'; color: string }
-  | { kind: 'doodles' };
+  | { kind: 'doodles' }
+  | { kind: 'gingham'; color: string; base: string }
+  | { kind: 'header'; color: string; height: number }
+  | { kind: 'airmail'; colors: [string, string] }
+  | { kind: 'ticket'; stub: string; ink: string }
+  | { kind: 'wanted' }
+  | { kind: 'halloween'; moon: string; pumpkin: string }
+  | { kind: 'thanksgiving'; pumpkin: string; leaf: string; border: string }
+  | { kind: 'stitch'; color: string }
+  | { kind: 'starframe'; color: string; texture: string }
+  | { kind: 'scrapstars'; frame: string; star: string; heart: string }
+  | { kind: 'birthdayscrap'; color: string }
+  | { kind: 'blend'; colors: [string, string, string]; border: string }
+  | { kind: 'colourroom'; colors: [string, string]; motif: string; ink: string }
+  | { kind: 'squiggle'; color: string };
 
 export type StripCaptionFont = 'serif' | 'typewriter' | 'script' | 'bubble';
 
-export type StripGroup = 'classic' | 'reel' | 'template';
+export type StripGroup = 'classic' | 'reel' | 'template' | 'rollbooth';
 
 export interface BoothStyle {
   id: string;
@@ -49,6 +63,9 @@ export interface BoothStyle {
   pattern?: StripPattern;
   /** Caption typeface; default is the classic serif. */
   captionFont?: StripCaptionFont;
+  /** Wider margins all round for this design (velvet, kraft, colour
+   * room); default 48, string lights use 110. */
+  marginOverride?: number;
 }
 
 /** Deterministic scatter points for a strip canvas (seeded by template
@@ -336,6 +353,166 @@ export const BOOTH_STYLES: BoothStyle[] = [
     captionFont: 'script',
     group: 'template',
   },
+  // Rollbooth-inspired strip templates — original code art, drawn
+  // from the classic strip formats (velvet, gingham, kraft, airmail,
+  // ticket, wanted, seasonal, scrapbook, gradient) rather than any
+  // copied artwork. Captions stay the player's own everywhere; only
+  // generic frame words (WANTED, ADMIT TWO) are drawn as frame art.
+  {
+    id: 'rb-velvet-burgundy',
+    name: 'Velvet Burgundy',
+    frame: '#57101f',
+    caption: '#f2e3b3',
+    note: 'Deep burgundy velvet with fine ribs and wide margins.',
+    pattern: { kind: 'stripes', colors: ['#57101f', '#641826'], width: 6 },
+    marginOverride: 96,
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-red-gingham',
+    name: 'Red Gingham',
+    frame: '#fdf8ec',
+    caption: '#3a1512',
+    note: 'Red-and-cream gingham, full-bleed, with thin dark photo borders.',
+    pattern: { kind: 'gingham', color: '#c93a3a', base: '#fdf8ec' },
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-pink-gingham-picnic',
+    name: 'Pink Gingham Picnic',
+    frame: '#fdf8ec',
+    caption: '#7a2e4a',
+    note: 'Pink picnic gingham with a script caption.',
+    pattern: { kind: 'gingham', color: '#f5a8bc', base: '#fdf8ec' },
+    captionFont: 'script',
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-kraft-booth',
+    name: 'Kraft Booth',
+    frame: '#c8a06a',
+    caption: '#2b2118',
+    note: 'Kraft paper with a black header bar and a bold caption.',
+    pattern: { kind: 'header', color: '#1c1c1e', height: 132 },
+    marginOverride: 150,
+    captionFont: 'bubble',
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-air-mail',
+    name: 'Air Mail',
+    frame: '#fdf8ec',
+    caption: '#2b4a7a',
+    note: 'Cream paper, red-and-blue diagonal edge stripes, stamp and postmark at the bottom.',
+    pattern: { kind: 'airmail', colors: ['#c93a3a', '#2b4a7a'] },
+    captionFont: 'script',
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-admit-two',
+    name: 'Admit Two',
+    frame: '#6b1f2a',
+    caption: '#fdf0d5',
+    note: 'Maroon card with a cream ticket stub below the caption.',
+    pattern: { kind: 'ticket', stub: '#fdf0d5', ink: '#6b1f2a' },
+    captionFont: 'typewriter',
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-wanted-poster',
+    name: 'Wanted Poster',
+    frame: '#d9c49a',
+    caption: '#4a3626',
+    note: 'Aged sepia parchment, distressed edges, WANTED header, small stars.',
+    pattern: { kind: 'wanted' },
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-halloween-night',
+    name: 'Halloween Night',
+    frame: '#1a1426',
+    caption: '#ff8c1a',
+    note: 'Tall dark strip with a full moon and a row of little pumpkins in the footer.',
+    pattern: { kind: 'halloween', moon: '#f5ead6', pumpkin: '#f76b15' },
+    captionFont: 'bubble',
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-thanksgiving',
+    name: 'Thanksgiving',
+    frame: '#f5ead6',
+    caption: '#a33327',
+    note: 'Warm cream border and footer with little pumpkins and leaves at the lower edge.',
+    pattern: { kind: 'thanksgiving', pumpkin: '#e07b39', leaf: '#8fae8b', border: '#d9c49a' },
+    captionFont: 'script',
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-paper-strip',
+    name: 'Paper Strip',
+    frame: '#e8dcc0',
+    caption: '#4a3626',
+    note: 'Aged beige paper with stitch lines down both edges and a star-heart-star divider.',
+    pattern: { kind: 'stitch', color: '#8a6a4d' },
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-star-border',
+    name: 'Star Border',
+    frame: '#6b7a3f',
+    caption: '#fdf8ec',
+    note: 'Olive card; every photo is ringed by small black stars, never over the photos.',
+    pattern: { kind: 'starframe', color: '#1c1c1e', texture: '#556233' },
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-scrapbook-stars',
+    name: 'Scrapbook Stars',
+    frame: '#fdf8ec',
+    caption: '#7a2e4a',
+    note: 'Cream card, sage photo frames, pink stars, hearts and sparkles in the margins only.',
+    pattern: { kind: 'scrapstars', frame: '#8fae8b', star: '#ff8fb3', heart: '#ff8fb3' },
+    captionFont: 'script',
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-birthday-scrapbook',
+    name: 'Birthday Scrapbook',
+    frame: '#fbf6ee',
+    caption: '#c93a3a',
+    note: 'Off-white scrapbook card with bow doodles and a butterfly. Pairs best with the 2×2 grid layout.',
+    pattern: { kind: 'birthdayscrap', color: '#c93a3a' },
+    captionFont: 'bubble',
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-gen-z-blend',
+    name: 'Gen Z Blend',
+    frame: '#f5f0e6',
+    caption: '#2b2118',
+    note: 'Narrow tall strip; photos joined by soft gradient-melt seams, pale thin border, tiny footer mark.',
+    pattern: { kind: 'blend', colors: ['#ffc9d6', '#d9c8ff', '#bfe8d0'], border: '#d9d2c4' },
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-colour-room',
+    name: 'Colour Room',
+    frame: '#c9184a',
+    caption: '#ffffff',
+    note: 'Full-bleed red-to-magenta gradient with one soft pink smiley near the top and a matching semicircle at the bottom.',
+    pattern: { kind: 'colourroom', colors: ['#c9184a', '#ff4da6'], motif: '#ffb3c8', ink: '#a4133c' },
+    marginOverride: 140,
+    group: 'rollbooth',
+  },
+  {
+    id: 'rb-polaroid-doodle',
+    name: 'Polaroid Doodle',
+    frame: '#fbf6ee',
+    caption: '#c93a3a',
+    note: 'Off-white matte paper with red hand-drawn squiggle loops and a small heart in the margins.',
+    pattern: { kind: 'squiggle', color: '#e5484d' },
+    group: 'rollbooth',
+  },
 ];
 
 export function boothStyleById(id: string): BoothStyle {
@@ -354,6 +531,12 @@ export interface StripSlot {
   y: number;
   w: number;
   h: number;
+}
+
+/** Top margin for a strip canvas: string-light templates get a header
+ * band, and a style may widen all its margins with marginOverride. */
+export function stripMarginFor(style: BoothStyle): number {
+  return style.marginOverride ?? (style.pattern?.kind === 'lights' ? 110 : 48);
 }
 
 /**

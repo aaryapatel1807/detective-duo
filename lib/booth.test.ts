@@ -21,10 +21,11 @@ import {
   shotTimeline,
   stripDateLine,
   stripLayout,
+  stripMarginFor,
 } from './booth';
 
 describe('photo booth', () => {
-  it('ships the original nine classic styles first, then reel and template designs', () => {
+  it('ships the original nine classic styles first, then reel, template and rollbooth designs', () => {
     expect(BOOTH_STYLES.slice(0, 9).map((s) => s.id)).toEqual([
       'classic',
       '35mm',
@@ -36,11 +37,15 @@ describe('photo booth', () => {
       'birthday',
       'doodle',
     ]);
-    expect(BOOTH_STYLES.length).toBe(29);
-    expect(new Set(BOOTH_STYLES.map((s) => s.id)).size).toBe(29);
+    expect(BOOTH_STYLES.length).toBe(45);
+    expect(new Set(BOOTH_STYLES.map((s) => s.id)).size).toBe(45);
     expect(BOOTH_STYLES.filter((s) => s.group === 'classic')).toHaveLength(9);
     expect(BOOTH_STYLES.filter((s) => s.group === 'reel')).toHaveLength(10);
     expect(BOOTH_STYLES.filter((s) => s.group === 'template')).toHaveLength(10);
+    expect(BOOTH_STYLES.filter((s) => s.group === 'rollbooth')).toHaveLength(16);
+    for (const s of BOOTH_STYLES.filter((s) => s.group === 'rollbooth')) {
+      expect(s.id.startsWith('rb-')).toBe(true);
+    }
     for (const s of BOOTH_STYLES) {
       expect(s.name.length).toBeGreaterThan(0);
       expect(s.frame).toMatch(/^#[0-9a-f]{6}$/);
@@ -64,6 +69,14 @@ describe('photo booth', () => {
 
   it('falls back to the classic strip for an unknown style', () => {
     expect(boothStyleById('nope').id).toBe('classic');
+  });
+
+  it('picks strip margins per style: default, string lights, override', () => {
+    expect(stripMarginFor(boothStyleById('classic'))).toBe(48);
+    expect(stripMarginFor(boothStyleById('chalk-lights'))).toBe(110);
+    expect(stripMarginFor(boothStyleById('rb-velvet-burgundy'))).toBe(96);
+    expect(stripMarginFor(boothStyleById('rb-kraft-booth'))).toBe(150);
+    expect(stripMarginFor(boothStyleById('rb-colour-room'))).toBe(140);
   });
 
   it('sizes strips for Instagram stories with three shots', () => {

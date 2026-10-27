@@ -25,9 +25,11 @@
  * it on phones); without a camera they fall back to a filtered
  * gradient. Strip design is a Template picker — Classic (the original
  * 9), From the reel (papers and finishes: satin, blue/pink paper, ink
- * dots, stripes, corduroy, denim, star mix, bedazzle, lace), and
+ * dots, stripes, corduroy, denim, star mix, bedazzle, lace),
  * Templates (chalk lights, glitz, rustic lace, polka stars, stamp
- * memories, limited edition, checker, cherry doodle, floral corners)
+ * memories, limited edition, checker, cherry doodle, floral corners),
+ * and Rollbooth-inspired (16 strip formats: velvet, gingham, kraft,
+ * airmail, ticket, wanted, seasonal, scrapbook, gradient-melt, doodle)
  * — every template is code-drawn on the export canvas (dots, stripes,
  * checker, stars, glitter, lace, string lights, stamp edges, bows,
  * doodles), seeded so re-composites look identical, and decorations
@@ -76,6 +78,7 @@ import {
   seededPoints,
   shotTimeline,
   stripDateLine,
+  stripMarginFor,
   textStyleById,
   type BoothFilter,
   type BoothLayout,
@@ -83,6 +86,12 @@ import {
   type PoseIdea,
   type StripOverlay,
 } from '@/lib/booth';
+import {
+  drawHeart,
+  drawPatternBackground,
+  drawPatternForeground,
+  drawStar,
+} from './patternPainters';
 
 function drawCover(
   ctx: CanvasRenderingContext2D,
@@ -99,278 +108,6 @@ function drawCover(
   const dw = iw * scale;
   const dh = ih * scale;
   ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
-}
-
-function drawHeart(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
-  ctx.beginPath();
-  ctx.moveTo(x, y + s * 0.3);
-  ctx.bezierCurveTo(x, y, x - s * 0.5, y - s * 0.1, x - s * 0.5, y + s * 0.3);
-  ctx.bezierCurveTo(x - s * 0.5, y + s * 0.7, x, y + s * 0.9, x, y + s * 1.1);
-  ctx.bezierCurveTo(x, y + s * 0.9, x + s * 0.5, y + s * 0.7, x + s * 0.5, y + s * 0.3);
-  ctx.bezierCurveTo(x + s * 0.5, y - s * 0.1, x, y, x, y + s * 0.3);
-  ctx.fill();
-}
-
-function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
-  ctx.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const rad = i % 2 === 0 ? r : r * 0.45;
-    const a = (Math.PI / 5) * i - Math.PI / 2;
-    const px = x + Math.cos(a) * rad;
-    const py = y + Math.sin(a) * rad;
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  }
-  ctx.closePath();
-  ctx.fill();
-}
-
-/** True when a point sits inside (or near) any photo slot. Foreground
- * decorations skip these points so stars, glitter and doodles never
- * cover faces — they live on the paper around the photos. */
-function insideSlot(
-  x: number,
-  y: number,
-  slots: { x: number; y: number; w: number; h: number }[],
-  pad: number,
-): boolean {
-  return slots.some(
-    (s) => x >= s.x - pad && x <= s.x + s.w + pad && y >= s.y - pad && y <= s.y + s.h + pad,
-  );
-}
-
-/** Background patterns: painted full-canvas behind the photos, so
- * only the margins show them. */
-function drawPatternBackground(
-  ctx: CanvasRenderingContext2D,
-  style: BoothStyle,
-  w: number,
-  h: number,
-) {
-  const p = style.pattern;
-  if (!p) return;
-  ctx.save();
-  if (p.kind === 'dots') {
-    ctx.fillStyle = p.color;
-    for (let y = p.gap / 2; y < h; y += p.gap) {
-      for (let x = p.gap / 2; x < w; x += p.gap) {
-        ctx.beginPath();
-        ctx.arc(x, y, p.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-  } else if (p.kind === 'stripes') {
-    for (let x = 0, i = 0; x < w; x += p.width, i++) {
-      ctx.fillStyle = p.colors[i % p.colors.length]!;
-      ctx.fillRect(x, 0, p.width, h);
-    }
-  } else if (p.kind === 'checker') {
-    ctx.fillStyle = p.color;
-    const s = p.size;
-    for (let y = 0, row = 0; y < h; y += s, row++) {
-      for (let x = row % 2 === 0 ? 0 : s; x < w; x += s * 2) ctx.fillRect(x, y, s, s);
-    }
-  }
-  ctx.restore();
-}
-
-function drawCherry(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
-  ctx.strokeStyle = '#3d5a3a';
-  ctx.lineWidth = Math.max(2, s * 0.08);
-  ctx.beginPath();
-  ctx.moveTo(x - s * 0.3, y);
-  ctx.quadraticCurveTo(x, y - s * 0.9, x + s * 0.4, y - s * 0.7);
-  ctx.stroke();
-  ctx.fillStyle = '#e5484d';
-  ctx.beginPath();
-  ctx.arc(x - s * 0.35, y + s * 0.15, s * 0.32, 0, Math.PI * 2);
-  ctx.arc(x + s * 0.3, y + s * 0.25, s * 0.28, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawMiniFlower(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  s: number,
-  petal: string,
-) {
-  ctx.fillStyle = petal;
-  for (let i = 0; i < 5; i++) {
-    const a = (Math.PI * 2 * i) / 5 - Math.PI / 2;
-    ctx.beginPath();
-    ctx.arc(x + Math.cos(a) * s * 0.5, y + Math.sin(a) * s * 0.5, s * 0.32, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.fillStyle = '#ffd98a';
-  ctx.beginPath();
-  ctx.arc(x, y, s * 0.25, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawSmiley(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
-  ctx.fillStyle = '#ffd98a';
-  ctx.beginPath();
-  ctx.arc(x, y, s * 0.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#2b2118';
-  ctx.beginPath();
-  ctx.arc(x - s * 0.18, y - s * 0.1, s * 0.06, 0, Math.PI * 2);
-  ctx.arc(x + s * 0.18, y - s * 0.1, s * 0.06, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#2b2118';
-  ctx.lineWidth = Math.max(2, s * 0.05);
-  ctx.beginPath();
-  ctx.arc(x, y + s * 0.05, s * 0.25, 0.15 * Math.PI, 0.85 * Math.PI);
-  ctx.stroke();
-}
-
-function zigzagRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  step: number,
-  tooth: number,
-) {
-  ctx.beginPath();
-  for (let px = x, i = 0; px <= x + w; px += step, i++) {
-    const py = y + (i % 2 === 0 ? -tooth : 0);
-    if (px === x) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  }
-  for (let py = y, i = 0; py <= y + h; py += step, i++) {
-    ctx.lineTo(x + w + (i % 2 === 0 ? tooth : 0), py);
-  }
-  for (let px = x + w, i = 0; px >= x; px -= step, i++) {
-    ctx.lineTo(px, y + h + (i % 2 === 0 ? tooth : 0));
-  }
-  for (let py = y + h, i = 0; py >= y; py -= step, i++) {
-    ctx.lineTo(x + (i % 2 === 0 ? -tooth : 0), py);
-  }
-  ctx.closePath();
-  ctx.stroke();
-}
-
-/** Foreground decorations: margins only, never over the photos. */
-function drawPatternForeground(
-  ctx: CanvasRenderingContext2D,
-  style: BoothStyle,
-  slots: { x: number; y: number; w: number; h: number }[],
-  w: number,
-  h: number,
-) {
-  const p = style.pattern;
-  if (!p) return;
-  ctx.save();
-  if (p.kind === 'stars') {
-    const pts = seededPoints(style.id, p.count, w, h, 48).filter(
-      (pt) => !insideSlot(pt.x, pt.y, slots, 16),
-    );
-    pts.forEach((pt, i) => {
-      ctx.fillStyle = p.colors[i % p.colors.length]!;
-      drawStar(ctx, pt.x, pt.y, 14 + (i % 3) * 6);
-    });
-  } else if (p.kind === 'glitter') {
-    const pts = seededPoints(style.id, p.count, w, h, 48).filter(
-      (pt) => !insideSlot(pt.x, pt.y, slots, 16),
-    );
-    pts.forEach((pt, i) => {
-      ctx.fillStyle = p.colors[i % p.colors.length]!;
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 3 + (i % 4), 0, Math.PI * 2);
-      ctx.fill();
-    });
-  } else if (p.kind === 'lace') {
-    ctx.strokeStyle = p.color;
-    ctx.lineWidth = 3;
-    ctx.strokeRect(18, 18, w - 36, h - 36);
-    ctx.fillStyle = p.color;
-    const r = 15;
-    const step = r * 2;
-    for (let x = 18; x <= w - 18; x += step) {
-      ctx.beginPath();
-      ctx.arc(x, 18, r, 0, Math.PI * 2);
-      ctx.arc(x, h - 18, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    for (let y = 18; y <= h - 18; y += step) {
-      ctx.beginPath();
-      ctx.arc(18, y, r, 0, Math.PI * 2);
-      ctx.arc(w - 18, y, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  } else if (p.kind === 'lights') {
-    // The strip reserves a taller top margin for this template (see
-    // composite), so the wire hangs in the header band, never over a
-    // photo. Wire sags gently; bulbs hang just below it.
-    const topY = slots.length > 0 ? Math.min(...slots.map((s) => s.y)) : 200;
-    const wireY = topY * 0.45;
-    const sag = topY * 0.3;
-    ctx.strokeStyle = '#3a2c1c';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(0, wireY);
-    ctx.quadraticCurveTo(w / 2, wireY + sag, w, wireY);
-    ctx.stroke();
-    const bulbs = ['#ffd98a', '#ff8fb3', '#8fd0ff', '#b6ff8f'];
-    for (let i = 0; i < 12; i++) {
-      const t = (i + 1) / 13;
-      const x = t * w;
-      const y = (1 - t) * (1 - t) * wireY + 2 * (1 - t) * t * (wireY + sag) + t * t * wireY;
-      ctx.fillStyle = bulbs[i % bulbs.length]!;
-      ctx.beginPath();
-      ctx.arc(x, y + 12, 12, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  } else if (p.kind === 'floral') {
-    const corners: [number, number][] = [
-      [70, 70],
-      [w - 70, 70],
-      [70, h - 70],
-      [w - 70, h - 70],
-    ];
-    corners.forEach(([cx, cy], ci) => {
-      drawMiniFlower(ctx, cx, cy, 56, p.colors[ci % p.colors.length]!);
-      drawMiniFlower(ctx, cx + (cx < w / 2 ? 44 : -44), cy + 30, 34, p.colors[(ci + 1) % p.colors.length]!);
-    });
-  } else if (p.kind === 'stamp') {
-    ctx.strokeStyle = style.caption;
-    ctx.globalAlpha = 0.9;
-    ctx.lineWidth = 3;
-    for (const slot of slots) zigzagRect(ctx, slot.x, slot.y, slot.w, slot.h, 26, 9);
-    ctx.globalAlpha = 1;
-    // Bows where the gaps between photos are.
-    for (let i = 0; i < slots.length - 1; i++) {
-      const gapY = (slots[i]!.y + slots[i]!.h + slots[i + 1]!.y) / 2;
-      const cx = w / 2;
-      ctx.fillStyle = style.caption;
-      ctx.beginPath();
-      ctx.moveTo(cx, gapY);
-      ctx.lineTo(cx - 34, gapY - 20);
-      ctx.lineTo(cx - 34, gapY + 20);
-      ctx.closePath();
-      ctx.moveTo(cx, gapY);
-      ctx.lineTo(cx + 34, gapY - 20);
-      ctx.lineTo(cx + 34, gapY + 20);
-      ctx.closePath();
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(cx, gapY, 10, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  } else if (p.kind === 'doodles') {
-    const pts = seededPoints(style.id, 24, w, h, 48).filter(
-      (pt) => !insideSlot(pt.x, pt.y, slots, 20),
-    );
-    pts.forEach((pt, i) => {
-      if (i % 3 === 0) drawCherry(ctx, pt.x, pt.y, 44);
-      else if (i % 3 === 1) drawMiniFlower(ctx, pt.x, pt.y, 48, i % 2 === 0 ? '#ff8fb3' : '#7fb6e8');
-      else drawSmiley(ctx, pt.x, pt.y, 48);
-    });
-  }
-  ctx.restore();
 }
 
 /** Export-only texture/wash pass for a filter: painted over the photos
@@ -480,9 +217,9 @@ function paintStripBase(
   ctx.fillStyle = style.frame;
   ctx.fillRect(0, 0, STORY_WIDTH, STORY_HEIGHT);
   drawPatternBackground(ctx, style, STORY_WIDTH, STORY_HEIGHT);
-  // String lights need a header band: this template alone gets a
-  // taller top margin, so the wire hangs above the first photo.
-  const margin = style.pattern?.kind === 'lights' ? 110 : 48;
+  // String lights need a header band, and some templates widen all
+  // their margins — one shared helper decides (see lib/booth.ts).
+  const margin = stripMarginFor(style);
   const { slots, caption: cap } = layoutSlots(layoutId, STORY_WIDTH, STORY_HEIGHT, shotCount, margin);
   shots.slice(0, slots.length).forEach((shotCanvas, i) => {
     const slot = slots[i];
@@ -618,6 +355,41 @@ function patternCardStyle(s: BoothStyle): React.CSSProperties {
   }
   if (p.kind === 'lace') return { ...base, outline: '2px dashed #ffffff', outlineOffset: '-4px' };
   if (p.kind === 'lights') return { ...base, borderTop: '4px dotted #ffd98a' };
+  if (p.kind === 'gingham') {
+    return {
+      ...base,
+      backgroundImage: [
+        `repeating-linear-gradient(90deg, ${p.color}55 0 8px, transparent 8px 16px)`,
+        `repeating-linear-gradient(0deg, ${p.color}55 0 8px, transparent 8px 16px)`,
+      ].join(', '),
+    };
+  }
+  if (p.kind === 'header') return { ...base, backgroundImage: `linear-gradient(${p.color} 0 10px, transparent 10px)` };
+  if (p.kind === 'airmail') {
+    const band = `repeating-linear-gradient(45deg, ${p.colors[0]} 0 3px, #ffffff 3px 6px, ${p.colors[1]} 6px 9px, #ffffff 9px 12px)`;
+    return {
+      ...base,
+      backgroundImage: `${band}, ${band}`,
+      backgroundSize: '12px 100%',
+      backgroundPosition: 'left top, right top',
+      backgroundRepeat: 'no-repeat',
+    };
+  }
+  if (p.kind === 'ticket') return { ...base, borderBottom: `2px dashed ${p.stub}` };
+  if (p.kind === 'starframe') {
+    return {
+      ...base,
+      backgroundImage: `radial-gradient(${p.texture} 2px, transparent 3px)`,
+      backgroundSize: '14px 14px',
+    };
+  }
+  if (p.kind === 'stitch') return { ...base, borderLeft: `2px dashed ${p.color}`, borderRight: `2px dashed ${p.color}` };
+  if (p.kind === 'blend') {
+    return { ...base, backgroundImage: `linear-gradient(180deg, ${p.colors[0]}, ${p.colors[1]} 50%, ${p.colors[2]})` };
+  }
+  if (p.kind === 'colourroom') {
+    return { ...base, backgroundImage: `linear-gradient(180deg, ${p.colors[0]}, ${p.colors[1]})` };
+  }
   return base;
 }
 
@@ -636,7 +408,19 @@ function TemplateCard({
   small?: boolean;
 }) {
   const glyph =
-    s.pattern?.kind === 'stars' ? '★' : s.pattern?.kind === 'floral' ? '✿' : s.pattern?.kind === 'doodles' ? '🍒' : null;
+    s.pattern?.kind === 'stars' || s.pattern?.kind === 'wanted' || s.pattern?.kind === 'starframe' || s.pattern?.kind === 'scrapstars'
+      ? '★'
+      : s.pattern?.kind === 'floral'
+        ? '✿'
+        : s.pattern?.kind === 'doodles'
+          ? '🍒'
+          : s.pattern?.kind === 'halloween'
+            ? '🎃'
+            : s.pattern?.kind === 'thanksgiving'
+              ? '🍂'
+              : s.pattern?.kind === 'birthdayscrap'
+                ? '🎀'
+                : null;
   return (
     <button
       type="button"
@@ -1342,7 +1126,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
   const buildSampleStrip = useCallback(() => {
     const style = boothStyleById(styleId);
     const filter = boothFilterById(filterId);
-    const margin = style.pattern?.kind === 'lights' ? 110 : 48;
+    const margin = stripMarginFor(style);
     const { slots } = layoutSlots(layoutId, STORY_WIDTH, STORY_HEIGHT, shotCount, margin);
     const canvas = document.createElement('canvas');
     canvas.width = STORY_WIDTH;
@@ -1764,10 +1548,10 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
       {phase === 'idle' && (
         <div className="mt-4 lg:col-start-1">
           <p className="text-sm font-semibold">Template 🎀</p>
-          {(['classic', 'reel', 'template'] as const).map((g) => (
+          {(['classic', 'reel', 'template', 'rollbooth'] as const).map((g) => (
             <div key={g}>
               <p className="mt-3 text-xs font-semibold text-[var(--ink-dim)]">
-                {g === 'classic' ? 'Classic' : g === 'reel' ? 'From the reel' : 'Templates'}
+                {g === 'classic' ? 'Classic' : g === 'reel' ? 'From the reel' : g === 'template' ? 'Templates' : 'Rollbooth-inspired'}
               </p>
               <div className="mt-2 grid grid-cols-3 gap-2 lg:grid-cols-4">
                 {BOOTH_STYLES.filter((s) => s.group === g).map((s) => (
