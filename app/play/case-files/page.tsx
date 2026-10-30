@@ -241,7 +241,7 @@ export default function CaseFilesPage() {
     }
     const name = c.suspects.find((s) => s.id === suspectId)?.name ?? 'That person';
     if (state.wrongAccused.includes(suspectId)) {
-      setAccuseMsg(`${name} doesn't fit the clues. Have another look at the evidence board.`);
+      setAccuseMsg(`${name} doesn't fit the clues. Have another look at the exhibits.`);
       return;
     }
     setState((s) => ({

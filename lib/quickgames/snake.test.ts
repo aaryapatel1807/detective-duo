@@ -7,6 +7,7 @@ import {
   snakeTargetForLevel,
   snakeTickMsForLevel,
   stepSnake,
+  type SnakeState,
 } from './snake';
 
 describe('snake arena', () => {
@@ -25,17 +26,17 @@ describe('snake arena', () => {
     const moved = stepSnake({ ...s, dir: 'right' }, 't1');
     expect(moved.snake[0]).toEqual({ x: 4, y: 8 });
     // Drive into the right wall.
-    let cur = { ...s, snake: [{ x: 15, y: 8 }], dir: 'right' as const, pickups: [] };
+    let cur: SnakeState = { ...s, snake: [{ x: 15, y: 8 }], dir: 'right', pickups: [] };
     cur = stepSnake(cur, 't2');
     expect(cur.alive).toBe(false);
     expect(cur.over).toBe(true);
   });
 
   it('spends a shield on a crash instead of dying', () => {
-    let cur = {
+    let cur: SnakeState = {
       ...initialSnake('seed', false),
       snake: [{ x: 15, y: 8 }],
-      dir: 'right' as const,
+      dir: 'right',
       pickups: [],
       shields: 1,
     };
