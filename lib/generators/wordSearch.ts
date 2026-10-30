@@ -191,10 +191,44 @@ function canPlace(
 }
 
 export function generatePuzzle(seed: string, level: number): WordSearchPuzzle {
-  const rng = mulberry32(hashSeed(seed));
+  // Attempt 0 is the original random placement, byte-identical to
+  // before: every puzzle that used to generate still generates
+  // exactly as it did. It can fail, though — on a small crowded grid
+  // a long word's random starts can all conflict (this crashed the
+  // page for ordinary levels, e.g. guest level 2). So on failure we
+  // retry with systematic placement: every valid spot is enumerated
+  // and one is picked at random, with a fresh deterministic stream
+  // per attempt, growing the grid by one if a size stays stubborn.
+  // Generation is therefore total: the page can never crash on a
+  // missing puzzle again.
+  try {
+    return buildPuzzle(seed, level, 0, 0);
+  } catch {
+    /* fall through to the systematic retries below */
+  }
+  for (let growth = 0; growth <= 4; growth++) {
+    for (let attempt = 1; attempt <= 10; attempt++) {
+      try {
+        return buildPuzzle(seed, level, growth, attempt);
+      } catch {
+        /* try the next deterministic stream */
+      }
+    }
+  }
+  throw new Error(`word search could not place a puzzle for seed ${seed}`);
+}
+
+function buildPuzzle(
+  seed: string,
+  level: number,
+  growth: number,
+  attempt: number,
+): WordSearchPuzzle {
+  const streamSeed = attempt === 0 ? seed : `${seed}|retry${attempt}`;
+  const rng = mulberry32(hashSeed(streamSeed));
   for (let i = 0; i < 8; i++) rng();
   const params = tierForLevel(level);
-  const { size } = params;
+  const size = params.size + growth;
   const theme = WORD_THEMES[Math.floor(rng() * WORD_THEMES.length)];
   const candidates = shuffle(
     theme.words.filter((w) => w.length <= size),
@@ -208,26 +242,13 @@ export function generatePuzzle(seed: string, level: number): WordSearchPuzzle {
   const placed: PlacedWord[] = [];
 
   for (const word of chosen) {
-    let done = false;
-    const dirs = shuffle(params.directions, rng);
-    for (let attempt = 0; attempt < 400 && !done; attempt++) {
-      const [dr, dc] = dirs[attempt % dirs.length];
-      const r = Math.floor(rng() * size);
-      const c = Math.floor(rng() * size);
-      if (!canPlace(grid, word, r, c, dr, dc, size)) continue;
-      const cells: [number, number][] = [];
-      for (let i = 0; i < word.length; i++) {
-        const rr = r + dr * i;
-        const cc = c + dc * i;
-        grid[rr][cc] = word[i];
-        cells.push([rr, cc]);
-      }
-      placed.push({ word, startRow: r, startCol: c, dr, dc, cells });
-      done = true;
-    }
-    if (!done) {
+    const ok = attempt === 0
+      ? placeRandomly(grid, word, params, rng, size)
+      : placeSystematically(grid, word, params, rng, size);
+    if (!ok) {
       throw new Error(`word search failed to place ${word} for seed ${seed}`);
     }
+    placed.push(ok);
   }
 
   const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -243,6 +264,65 @@ export function generatePuzzle(seed: string, level: number): WordSearchPuzzle {
     grid: full,
     words: placed,
   };
+}
+
+/** Original random-start placement (400 tries). Kept for attempt 0. */
+function placeRandomly(
+  grid: (string | null)[][],
+  word: string,
+  params: WordSearchParams,
+  rng: () => number,
+  size: number,
+): PlacedWord | null {
+  const dirs = shuffle(params.directions, rng);
+  for (let attempt = 0; attempt < 400; attempt++) {
+    const [dr, dc] = dirs[attempt % dirs.length];
+    const r = Math.floor(rng() * size);
+    const c = Math.floor(rng() * size);
+    if (!canPlace(grid, word, r, c, dr, dc, size)) continue;
+    return writeWord(grid, word, r, c, dr, dc);
+  }
+  return null;
+}
+
+/** Enumerate every valid spot and pick one at random. Succeeds
+ * whenever any valid spot exists, which random starts cannot promise. */
+function placeSystematically(
+  grid: (string | null)[][],
+  word: string,
+  params: WordSearchParams,
+  rng: () => number,
+  size: number,
+): PlacedWord | null {
+  const spots: [number, number, number, number][] = [];
+  for (const [dr, dc] of params.directions) {
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (canPlace(grid, word, r, c, dr, dc, size)) spots.push([r, c, dr, dc]);
+      }
+    }
+  }
+  if (!spots.length) return null;
+  const [r, c, dr, dc] = spots[Math.floor(rng() * spots.length)];
+  return writeWord(grid, word, r, c, dr, dc);
+}
+
+function writeWord(
+  grid: (string | null)[][],
+  word: string,
+  r: number,
+  c: number,
+  dr: number,
+  dc: number,
+): PlacedWord {
+  const cells: [number, number][] = [];
+  for (let i = 0; i < word.length; i++) {
+    const rr = r + dr * i;
+    const cc = c + dc * i;
+    grid[rr][cc] = word[i];
+    cells.push([rr, cc]);
+  }
+  return { word, startRow: r, startCol: c, dr, dc, cells };
 }
 
 export function generateLevelPuzzle(level: number, salt: string): WordSearchPuzzle {

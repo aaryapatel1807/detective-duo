@@ -69,6 +69,39 @@ describe('word search generator', () => {
     }
   });
 
+  it('never throws: levels 1-150 generate for every salt, all words present', () => {
+    // Regression: random-only placement used to throw mid-render for
+    // ordinary levels (guest level 2, guest level 5, guest level 8),
+    // which crashed the whole page. Generation must now be total.
+    for (const salt of ['guest', 'presence', 'sachi', 'aarya', 'user-123']) {
+      for (let level = 1; level <= 150; level++) {
+        const p = generateLevelPuzzle(level, salt);
+        expect(p.grid.length).toBe(p.size);
+        for (const w of p.words) {
+          const spelled = w.cells.map(([r, c]) => p.grid[r][c]).join('');
+          expect(spelled, `salt ${salt} level ${level} word ${w.word}`).toBe(w.word);
+        }
+      }
+    }
+  });
+
+  it('previously crashing seeds now generate, deterministically, in-tier', () => {
+    const cases: [number, string][] = [
+      [2, 'guest'],
+      [5, 'guest'],
+      [8, 'guest'],
+      [10, 'aarya'],
+      [3, 'user-123'],
+    ];
+    for (const [level, salt] of cases) {
+      const a = generateLevelPuzzle(level, salt);
+      const b = generateLevelPuzzle(level, salt);
+      expect(b).toEqual(a);
+      expect(a.tier).toBe(tierForLevel(level).tier);
+      expect(a.words.length).toBeGreaterThan(0);
+    }
+  });
+
   it('findWord searches all 8 directions', () => {
     const grid = [
       ['C', 'A', 'T'],

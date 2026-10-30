@@ -43,9 +43,23 @@ describe('case bank', () => {
     const easyIds = Array.from({ length: 15 }, (_, i) => caseForLevel(i + 1).id);
     expect(new Set(easyIds).size).toBe(15);
     // Past the end of a tier it cycles back to the start (Expert is
-    // open-ended, so its 10 cases rotate: level 66 replays case 1).
+    // open-ended, so its cases rotate: level 56 + count replays case 1).
     expect(caseForLevel(56 + CASES_BY_TIER.Expert.length).id).toBe(
       CASES_BY_TIER.Expert[0].id,
     );
+  });
+
+  it('new murder cases are reachable in the ladder', () => {
+    // Hard has 20 levels (36-55) over 18 cases, so the three appended
+    // Hard cases land on levels 51-53; Expert is open-ended, so its
+    // three appended cases land on levels 66-68. (Appending to Easy or
+    // Medium would strand cases past those tiers' fixed level ranges.)
+    expect(caseForLevel(51).id).toBe('cf-hard-16');
+    expect(caseForLevel(52).id).toBe('cf-hard-17');
+    expect(caseForLevel(53).id).toBe('cf-hard-18');
+    expect(caseForLevel(66).id).toBe('cf-exp-11');
+    expect(caseForLevel(67).id).toBe('cf-exp-12');
+    expect(caseForLevel(68).id).toBe('cf-exp-13');
+    expect(ALL_CASES.length).toBe(66);
   });
 });
