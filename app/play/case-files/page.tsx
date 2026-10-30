@@ -14,6 +14,14 @@
  * localStorage, win panel with stars + Next Level. Evidence mixes real
  * clues and red herrings in one board (shuffled per case); which were
  * red herrings is only revealed after solving.
+ *
+ * Thrill upgrades (v2, 30 Oct): the Evidence tab is a cork board —
+ * pinning a clue visibly rules out the suspects it clears (live
+ * elimination from lib/cases/elimination.ts), the Suspects tab shows
+ * AI-generated imaginary portraits as polaroids, and a correct
+ * accusation plays out as a staged reveal (accusation → suspense →
+ * verdict → deduction steps → confession) before the stars panel.
+ * Wrong accusations still cost one mistake and never lock her out.
  */
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -24,13 +32,14 @@ import {
   ChevronRight,
   Footprints,
   Lightbulb,
-  Pin,
   RotateCcw,
   Search,
   Star,
   Users,
 } from 'lucide-react';
 import { caseForLevel, CASES_BY_TIER, GAME_ID, tierForLevel, tierStartForLevel, ALL_CASES } from '@/lib/cases/bank';
+import { eliminationFor } from '@/lib/cases/elimination';
+import { portraitForSuspect } from '@/lib/cases/portraits';
 import { hashSeed, mulberry32 } from '@/lib/generators/logicGrid';
 import {
   computeStars,
@@ -44,6 +53,7 @@ import EmptyState from '@/components/EmptyState';
 import { tierCycleNote, unknownCase } from '@/lib/emptyStates';
 
 type Tab = 'story' | 'evidence' | 'suspects' | 'accuse';
+type RevealPhase = 'accuse' | 'suspense' | 'verdict' | 'steps' | 'confession' | 'done';
 
 interface PlayState {
   pinned: string[];
@@ -82,6 +92,9 @@ export default function CaseFilesPage() {
   const [tab, setTab] = useState<Tab>('story');
   const [won, setWon] = useState<number | null>(null);
   const [accuseMsg, setAccuseMsg] = useState<string | null>(null);
+  const [revealPhase, setRevealPhase] = useState<RevealPhase>('accuse');
+  const [revealCount, setRevealCount] = useState(0);
+  const [accusedName, setAccusedName] = useState<string | null>(null);
   const [loadedFor, setLoadedFor] = useState(0);
   const [leftCaseId, setLeftCaseId] = useState<string | null>(null);
   const [badCaseId, setBadCaseId] = useState<string | null>(null);
@@ -112,6 +125,16 @@ export default function CaseFilesPage() {
   const leftCase = leftCaseId ? ALL_CASES.find((c) => c.id === leftCaseId) : undefined;
   const c = useMemo(() => leftCase ?? caseForLevel(level), [leftCase, level]);
 
+  // Live elimination: pinned clues rule suspects out as you pin.
+  const elim = useMemo(
+    () => eliminationFor(c, state.pinned, state.wrongAccused),
+    [c, state.pinned, state.wrongAccused],
+  );
+  const ruledBy = useMemo(
+    () => new Map(elim.ruledOut.map((r) => [r.suspectId, r])),
+    [elim],
+  );
+
   // Evidence board: clues + red herrings, shuffled per case so the
   // herrings don't sit in a giveaway group at the bottom.
   const evidence = useMemo(
@@ -140,6 +163,9 @@ export default function CaseFilesPage() {
     setLoadedFor(level);
     setWon(null);
     setAccuseMsg(null);
+    setRevealPhase('accuse');
+    setRevealCount(0);
+    setAccusedName(null);
     setTab('story');
     try {
       const raw = localStorage.getItem(storageKey(level));
@@ -184,6 +210,13 @@ export default function CaseFilesPage() {
   const accuse = (suspectId: string) => {
     if (won !== null) return;
     if (suspectId === c.solution.culpritId) {
+      const name = c.suspects.find((s) => s.id === suspectId)?.name ?? 'The culprit';
+      setAccusedName(name);
+      setRevealCount(0);
+      const reduced =
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      setRevealPhase(reduced ? 'done' : 'accuse');
       if (leftCaseId) {
         // Gifted cases don't advance the ladder — just the keepsake stars.
         setWon(computeStars(state.hints, state.mistakes));
@@ -218,12 +251,36 @@ export default function CaseFilesPage() {
     setState(freshState());
     setWon(null);
     setAccuseMsg(null);
+    setRevealPhase('accuse');
+    setRevealCount(0);
+    setAccusedName(null);
     try {
       localStorage.removeItem(storageKey(level));
     } catch {
       /* ignore */
     }
   };
+
+  // Staged reveal: accusation → suspense → verdict, then the player
+  // steps through the deduction at her own pace.
+  useEffect(() => {
+    if (won === null) return;
+    const delays: Partial<Record<RevealPhase, number>> = {
+      accuse: 900,
+      suspense: 1100,
+      verdict: 1000,
+    };
+    const next: Partial<Record<RevealPhase, RevealPhase>> = {
+      accuse: 'suspense',
+      suspense: 'verdict',
+      verdict: 'steps',
+    };
+    const delay = delays[revealPhase];
+    const target = next[revealPhase];
+    if (delay === undefined || target === undefined) return;
+    const t = setTimeout(() => setRevealPhase(target), delay);
+    return () => clearTimeout(t);
+  }, [won, revealPhase]);
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'story', label: 'Story', icon: <BookOpen size={16} aria-hidden /> },
@@ -311,8 +368,9 @@ export default function CaseFilesPage() {
       </nav>
 
       {tab === 'story' && (
-        <section className="paper mt-4 p-4 sm:p-5">
-          <h2 className="font-display text-lg font-bold">{c.title}</h2>
+        <section className="paper relative mt-4 p-4 sm:p-5">
+          <span className="cf-stamp-static" aria-hidden>CONFIDENTIAL</span>
+          <h2 className="font-display pr-32 text-lg font-bold">{c.title}</h2>
           <p className="mt-1 text-sm opacity-70">{c.setting}</p>
           <p className="mt-3 leading-relaxed">{c.narrative}</p>
           <p className="mt-3 text-sm text-[var(--ink-dim)]">
@@ -323,36 +381,54 @@ export default function CaseFilesPage() {
       )}
 
       {tab === 'evidence' && (
-        <section className="mt-4 space-y-2">
-          <p className="text-sm text-[var(--ink-dim)]">
-            Tap a finding to pin it to your board. Pinned findings stay put while you think.
-          </p>
+        <section className="cf-board mt-4">
+          <div className="cf-standing">
+            <p className="text-base font-bold">
+              Still standing: {elim.standingIds.length} of {c.suspects.length}
+              {elim.standingIds.length === 1 && ' — only one name left standing.'}
+            </p>
+            <svg width="100%" height="22" viewBox="0 0 400 22" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M0,11 Q 50,4 100,11 T 200,11 T 300,11 T 400,11" stroke="#d00" strokeWidth="2.5" fill="none" />
+              <circle cx="100" cy="11" r="4" fill="#d00" />
+              <circle cx="200" cy="11" r="4" fill="#d00" />
+              <circle cx="300" cy="11" r="4" fill="#d00" />
+            </svg>
+            <p>
+              {c.suspects.map((s) => {
+                const ruled = ruledBy.get(s.id);
+                return (
+                  <span key={s.id} className={`cf-chip ${ruled ? 'out' : 'live'}`}>
+                    {s.name}
+                  </span>
+                );
+              })}
+            </p>
+            <p className="mt-2 text-sm opacity-80">
+              Tap a finding to pin it to the board. Every pinned clue crosses off the
+              people it clears.
+            </p>
+          </div>
           {evidence.map((item) => {
             const pinned = state.pinned.includes(item.id);
             return (
               <button
                 key={item.id}
                 type="button"
-                className={`card block w-full p-4 text-left ${pinned ? 'ring-2' : ''}`}
-                style={pinned ? { outline: '2px solid var(--accent)' } : undefined}
+                className={`cf-note ${pinned ? 'is-pinned' : ''}`}
                 onClick={() => togglePin(item.id)}
                 aria-pressed={pinned}
               >
-                <span className="flex items-start gap-2">
-                  <Pin size={18} aria-hidden className="mt-0.5 shrink-0" />
-                  <span>
-                    <span className="text-sm font-semibold capitalize">
-                      {item.kind}
-                      {won !== null && (
-                        <span className="ml-2 font-normal opacity-70">
-                          {item.real ? '· a real clue' : '· a red herring'}
-                        </span>
-                      )}
+                {pinned && <span className="cf-pin" aria-hidden />}
+                <span className="cf-note-tag">
+                  {item.kind}
+                  {won !== null && (
+                    <span className="ml-2 font-normal normal-case opacity-70">
+                      {item.real ? '· a real clue' : '· a red herring'}
                     </span>
-                    <span className="block mt-1">{item.text}</span>
-                    {pinned && <span className="text-sm font-semibold">Pinned</span>}
-                  </span>
+                  )}
                 </span>
+                <span className="mt-1 block">{item.text}</span>
+                {pinned && <span className="mt-1 block text-sm font-bold">Pinned</span>}
               </button>
             );
           })}
@@ -360,34 +436,53 @@ export default function CaseFilesPage() {
       )}
 
       {tab === 'suspects' && (
-        <section className="mt-4 space-y-2">
+        <section className="mt-4">
           <p className="text-sm text-[var(--ink-dim)]">
-            Everyone's alibi is on show. Tap &ldquo;Ask&rdquo; to hear what they would rather
-            keep quiet.
+            Everyone&apos;s alibi is on show. Tap &ldquo;Ask&rdquo; to hear what they would rather
+            keep quiet. Faces are imaginary — every suspect gets a portrait.
           </p>
-          {c.suspects.map((s) => {
-            const asked = state.questioned.includes(s.id);
-            return (
-              <article key={s.id} className="card p-4">
-                <h3 className="font-display text-lg font-bold">{s.name}</h3>
-                <p className="text-sm text-[var(--ink-dim)]">{s.role}</p>
-                <p className="mt-2">
-                  <span className="font-semibold">Alibi: </span>
-                  {s.alibi}
-                </p>
-                {asked ? (
-                  <p className="mt-2">
-                    <span className="font-semibold">Something they keep quiet: </span>
-                    {s.secret}
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            {c.suspects.map((s, i) => {
+              const asked = state.questioned.includes(s.id);
+              const ruled = ruledBy.get(s.id);
+              return (
+                <article key={s.id} className={`cf-pol ${ruled ? 'out' : ''}`}>
+                  <img
+                    src={portraitForSuspect(c.id, i)}
+                    alt={`Portrait of ${s.name}`}
+                    loading="lazy"
+                  />
+                  {ruled && (
+                    <span className="cf-stamp">RULED OUT</span>
+                  )}
+                  <h3 className="font-hand mt-2 text-2xl leading-none">{s.name}</h3>
+                  <p className="text-sm text-[var(--ink-dim)]">{s.role}</p>
+                  <p className="mt-2 text-sm">
+                    <span className="font-semibold">Alibi: </span>
+                    {s.alibi}
                   </p>
-                ) : (
-                  <button type="button" className="btn mt-3" onClick={() => question(s.id)}>
-                    Ask {s.name.split(' ')[0]}
-                  </button>
-                )}
-              </article>
-            );
-          })}
+                  {ruled && (
+                    <p className="mt-2 text-sm font-semibold">
+                      ✕{' '}
+                      {ruled.by === 'clue'
+                        ? `Ruled out — ${ruled.clueText}`
+                        : 'Ruled out by your accusation'}
+                    </p>
+                  )}
+                  {asked ? (
+                    <p className="mt-2 text-sm">
+                      <span className="font-semibold">Something they keep quiet: </span>
+                      {s.secret}
+                    </p>
+                  ) : (
+                    <button type="button" className="btn mt-3" onClick={() => question(s.id)}>
+                      Ask {s.name.split(' ')[0]}
+                    </button>
+                  )}
+                </article>
+              );
+            })}
+          </div>
         </section>
       )}
 
@@ -397,19 +492,28 @@ export default function CaseFilesPage() {
             Ready? Name the culprit. A wrong name costs one mistake and nothing else —
             you can keep accusing until the clues point to one person.
           </p>
-          {c.suspects.map((s) => (
+          {c.suspects.map((s, i) => (
             <button
               key={s.id}
               type="button"
-              className="card block w-full p-4 text-left"
+              className="card flex w-full items-center gap-3 p-4 text-left"
               disabled={won !== null}
               onClick={() => accuse(s.id)}
             >
-              <span className="font-display text-lg font-bold">{s.name}</span>
-              <span className="block text-sm text-[var(--ink-dim)]">{s.role}</span>
-              {state.wrongAccused.includes(s.id) && (
-                <span className="block text-sm font-semibold">Ruled out by your accusation</span>
-              )}
+              <img
+                src={portraitForSuspect(c.id, i)}
+                alt=""
+                aria-hidden
+                loading="lazy"
+                className="h-12 w-12 shrink-0 rounded-full object-cover object-top"
+              />
+              <span>
+                <span className="font-display block text-lg font-bold">{s.name}</span>
+                <span className="block text-sm text-[var(--ink-dim)]">{s.role}</span>
+                {state.wrongAccused.includes(s.id) && (
+                  <span className="block text-sm font-semibold">Ruled out by your accusation</span>
+                )}
+              </span>
             </button>
           ))}
           {accuseMsg && <p className="pt-1 text-sm font-semibold">{accuseMsg}</p>}
@@ -444,7 +548,72 @@ export default function CaseFilesPage() {
         </section>
       )}
 
-      {won !== null && (
+      {won !== null && revealPhase !== 'done' && (
+        <section className="card mt-4 p-5 text-center">
+          {revealPhase === 'accuse' && (
+            <>
+              <p className="font-display text-2xl font-bold">You accuse {accusedName ?? 'the culprit'}.</p>
+              <p className="mt-2 text-[var(--ink-dim)]">The card locks in.</p>
+            </>
+          )}
+          {revealPhase === 'suspense' && (
+            <p className="font-display text-2xl font-bold">
+              The room goes quiet
+              <span className="cf-dots" aria-hidden>
+                <span>.</span>
+                <span>.</span>
+                <span>.</span>
+              </span>
+            </p>
+          )}
+          {revealPhase === 'verdict' && (
+            <>
+              <p className="font-display text-3xl font-bold">Correct.</p>
+              <p className="mt-2 text-[var(--ink-dim)]">The case breaks open.</p>
+            </>
+          )}
+          {revealPhase === 'steps' && (
+            <>
+              <h3 className="font-display text-left text-lg font-bold">How the clues prove it</h3>
+              <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-left">
+                {c.deductionPath.slice(0, revealCount).map((step, i) => (
+                  <li key={`${step.clueId}-${i}`}>{step.text}</li>
+                ))}
+              </ol>
+              {revealCount < c.deductionPath.length ? (
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  <button type="button" className="btn btn-primary" onClick={() => setRevealCount(revealCount + 1)}>
+                    Reveal the next step
+                  </button>
+                  <button type="button" className="btn" onClick={() => setRevealCount(c.deductionPath.length)}>
+                    Show all
+                  </button>
+                </div>
+              ) : (
+                <button type="button" className="btn btn-primary mt-4" onClick={() => setRevealPhase('confession')}>
+                  Hear the confession
+                </button>
+              )}
+            </>
+          )}
+          {revealPhase === 'confession' && (
+            <>
+              <p className="font-display text-xl font-bold">The confession</p>
+              <p className="mt-3 text-left italic leading-relaxed">“{c.solution.explanation}”</p>
+              <button type="button" className="btn btn-primary mt-4" onClick={() => setRevealPhase('done')}>
+                Case closed
+              </button>
+            </>
+          )}
+          <div className="mt-4">
+            <button type="button" className="btn" onClick={() => setRevealPhase('done')}>
+              Skip
+            </button>
+          </div>
+        </section>
+      )}
+
+      {won !== null && revealPhase === 'done' && (
         <section className="card mt-4 p-5 text-center">
           <p className="font-display text-2xl font-bold">Case closed.</p>
           <p className="mt-1">
