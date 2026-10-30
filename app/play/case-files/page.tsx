@@ -15,13 +15,20 @@
  * clues and red herrings in one board (shuffled per case); which were
  * red herrings is only revealed after solving.
  *
- * Thrill upgrades (v2, 30 Oct): the Evidence tab is a cork board —
- * pinning a clue visibly rules out the suspects it clears (live
- * elimination from lib/cases/elimination.ts), the Suspects tab shows
+ * Thrill upgrades (v2, 30 Oct): the Evidence tab was a cork board —
+ * pinning a clue visibly ruled out the suspects it cleared (live
+ * elimination from lib/cases/elimination.ts), the Suspects tab showed
  * AI-generated imaginary portraits as polaroids, and a correct
- * accusation plays out as a staged reveal (accusation → suspense →
+ * accusation played out as a staged reveal (accusation → suspense →
  * verdict → deduction steps → confession) before the stars panel.
  * Wrong accusations still cost one mistake and never lock her out.
+ *
+ * File redesign (v3, 30 Oct): the whole case is now one physical
+ * dossier — manila folder with folder tabs, a file header (file
+ * number, location, officer, classification, live OPEN/CLOSED stamp),
+ * the story as a typed report on ruled paper, evidence as tagged
+ * exhibits, elimination as a clearance roster, suspects as mugshot
+ * sheets, and accuse as a final report to sign. Mechanics unchanged.
  */
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -293,6 +300,9 @@ export default function CaseFilesPage() {
     ? tierCycleNote(level, tierStartForLevel(level), CASES_BY_TIER[tierForLevel(level)].length)
     : null;
 
+  // The file's number: the level on the ladder, the case id for a gifted case.
+  const fileNo = leftCase ? c.id.toUpperCase() : `CF-${String(level).padStart(3, '0')}`;
+
   if (badCaseId) {
     return (
       <main className="mx-auto w-full max-w-3xl px-4 pb-16">
@@ -343,9 +353,8 @@ export default function CaseFilesPage() {
         <p className="mt-2 text-sm text-[var(--ink-dim)]">{cycleNote}</p>
       )}
       <p className="mt-1 text-[var(--ink-dim)]">
-        {c.title} · {c.setting}. Read the story, pin the clues that matter, question
-        everyone — then name the culprit. Hints are free, and a wrong accusation never
-        locks you out.
+        Open the file, tag the exhibits that matter, question everyone — then sign the
+        final report. Hints are free, and a wrong accusation never locks you out.
       </p>
       {levelStars > 0 && !leftCase && (
         <p className="mt-2 flex items-center gap-1 text-sm font-semibold">
@@ -354,12 +363,12 @@ export default function CaseFilesPage() {
         </p>
       )}
 
-      <nav className="mt-4 flex flex-wrap gap-2" aria-label="Case sections">
+      <nav className="cf-ftabs" aria-label="Case sections">
         {tabs.map((t) => (
           <button
             key={t.id}
             type="button"
-            className={`btn ${tab === t.id ? 'btn-primary' : ''}`}
+            className={`cf-ftab ${tab === t.id ? 'on' : ''}`}
             onClick={() => setTab(t.id)}
           >
             {t.icon} {t.label}
@@ -367,13 +376,30 @@ export default function CaseFilesPage() {
         ))}
       </nav>
 
+      <div className="cf-folder">
+        <div className="cf-filehead">
+          <span className="cf-stamp-head" aria-hidden>
+            STATUS: {won !== null ? 'CLOSED' : 'OPEN'}
+          </span>
+          <div className="cf-title">CASE FILE</div>
+          <div className="mt-1 text-sm">File Nº {fileNo} · {c.title}</div>
+          <div className="cf-meta">
+            <div><b>Location:</b> <span className="val">{c.setting}</span></div>
+            <div><b>Investigating officer:</b> <span className="val">Detective (you)</span></div>
+            <div><b>Classification:</b> <span className="val">Confidential</span></div>
+            <div><b>Contents:</b> <span className="val">{c.clues.length} clues · {c.suspects.length} suspects</span></div>
+          </div>
+        </div>
+
       {tab === 'story' && (
-        <section className="paper relative mt-4 p-4 sm:p-5">
-          <span className="cf-stamp-static" aria-hidden>CONFIDENTIAL</span>
-          <h2 className="font-display pr-32 text-lg font-bold">{c.title}</h2>
-          <p className="mt-1 text-sm opacity-70">{c.setting}</p>
-          <p className="mt-3 leading-relaxed">{c.narrative}</p>
-          <p className="mt-3 text-sm text-[var(--ink-dim)]">
+        <section>
+          <h2 className="cf-sec">CASE SUMMARY (TYPED REPORT)</h2>
+          <div className="cf-report">
+            {c.narrative}
+            <span className="cf-hand">Note: work the evidence, not the gossip.</span>
+            <div className="cf-stain" aria-hidden />
+          </div>
+          <p className="mt-3 text-sm opacity-70">
             {c.suspects.length} suspects · {c.clues.length} clues · {c.redHerrings.length}{' '}
             suspicious-looking details that may mean nothing.
           </p>
@@ -381,54 +407,45 @@ export default function CaseFilesPage() {
       )}
 
       {tab === 'evidence' && (
-        <section className="cf-board mt-4">
-          <div className="cf-standing">
-            <p className="text-base font-bold">
-              Still standing: {elim.standingIds.length} of {c.suspects.length}
-              {elim.standingIds.length === 1 && ' — only one name left standing.'}
-            </p>
-            <svg width="100%" height="22" viewBox="0 0 400 22" preserveAspectRatio="none" aria-hidden="true">
-              <path d="M0,11 Q 50,4 100,11 T 200,11 T 300,11 T 400,11" stroke="#d00" strokeWidth="2.5" fill="none" />
-              <circle cx="100" cy="11" r="4" fill="#d00" />
-              <circle cx="200" cy="11" r="4" fill="#d00" />
-              <circle cx="300" cy="11" r="4" fill="#d00" />
-            </svg>
-            <p>
-              {c.suspects.map((s) => {
-                const ruled = ruledBy.get(s.id);
-                return (
-                  <span key={s.id} className={`cf-chip ${ruled ? 'out' : 'live'}`}>
-                    {s.name}
-                  </span>
-                );
-              })}
-            </p>
-            <p className="mt-2 text-sm opacity-80">
-              Tap a finding to pin it to the board. Every pinned clue crosses off the
-              people it clears.
-            </p>
+        <section>
+          <h2 className="cf-sec">PERSONS OF INTEREST — CLEARANCE ROSTER</h2>
+          <div className="cf-roster">
+            {c.suspects.map((s) => {
+              const ruled = ruledBy.get(s.id);
+              return (
+                <span key={s.id}>
+                  <span className={ruled ? 'out' : 'live'}>{s.name}</span>{' '}
+                  {ruled && <span className="cf-stamp-inline">CLEARED</span>}{' '}
+                </span>
+              );
+            })}
+            <br />
+            <b>
+              Still of interest: {elim.standingIds.length} of {c.suspects.length}.
+              {elim.standingIds.length === 1 && ' Only one name left standing.'}
+            </b>{' '}
+            Tag an exhibit and the roster updates.
           </div>
-          {evidence.map((item) => {
+          <h2 className="cf-sec">EXHIBITS (EVIDENCE)</h2>
+          {evidence.map((item, i) => {
             const pinned = state.pinned.includes(item.id);
             return (
               <button
                 key={item.id}
                 type="button"
-                className={`cf-note ${pinned ? 'is-pinned' : ''}`}
+                className="cf-exhibit"
                 onClick={() => togglePin(item.id)}
                 aria-pressed={pinned}
               >
-                {pinned && <span className="cf-pin" aria-hidden />}
-                <span className="cf-note-tag">
+                <span className="cf-extag">
+                  EXHIBIT {String.fromCharCode(65 + i)}
+                </span>{' '}
+                {pinned && <span className="cf-stamp-inline">TAGGED</span>}
+                <span className="ml-1 text-xs font-bold uppercase opacity-60">
                   {item.kind}
-                  {won !== null && (
-                    <span className="ml-2 font-normal normal-case opacity-70">
-                      {item.real ? '· a real clue' : '· a red herring'}
-                    </span>
-                  )}
+                  {won !== null && (item.real ? ' · a real clue' : ' · a red herring')}
                 </span>
                 <span className="mt-1 block">{item.text}</span>
-                {pinned && <span className="mt-1 block text-sm font-bold">Pinned</span>}
               </button>
             );
           })}
@@ -436,89 +453,97 @@ export default function CaseFilesPage() {
       )}
 
       {tab === 'suspects' && (
-        <section className="mt-4">
-          <p className="text-sm text-[var(--ink-dim)]">
-            Everyone&apos;s alibi is on show. Tap &ldquo;Ask&rdquo; to hear what they would rather
+        <section>
+          <h2 className="cf-sec">SUSPECT SHEETS (MUGSHOTS)</h2>
+          <p className="mb-3 text-sm opacity-70">
+            Everyone&apos;s statement is on file. Tap &ldquo;Ask&rdquo; to hear what they would rather
             keep quiet. Faces are imaginary — every suspect gets a portrait.
           </p>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2">
-            {c.suspects.map((s, i) => {
-              const asked = state.questioned.includes(s.id);
-              const ruled = ruledBy.get(s.id);
-              return (
-                <article key={s.id} className={`cf-pol ${ruled ? 'out' : ''}`}>
-                  <img
-                    src={portraitForSuspect(c.id, i)}
-                    alt={`Portrait of ${s.name}`}
-                    loading="lazy"
-                  />
+          {c.suspects.map((s, i) => {
+            const asked = state.questioned.includes(s.id);
+            const ruled = ruledBy.get(s.id);
+            return (
+              <article key={s.id} className={`cf-mug ${ruled ? 'out' : ''}`}>
+                <img
+                  src={portraitForSuspect(c.id, i)}
+                  alt={`Portrait of ${s.name}`}
+                  loading="lazy"
+                />
+                <div>
+                  <h3 className="font-hand text-3xl leading-none">{s.name}</h3>
+                  <div className="field">
+                    <b>ID:</b> S-{String(i + 1).padStart(3, '0')} · <b>STATUS:</b>{' '}
+                    {ruled ? (
+                      <span className="cf-stamp-inline">CLEARED</span>
+                    ) : (
+                      'OF INTEREST'
+                    )}
+                  </div>
+                  <div className="field"><b>OCCUPATION:</b> {s.role}</div>
+                  <div className="field"><b>STATEMENT:</b> {s.alibi}</div>
                   {ruled && (
-                    <span className="cf-stamp">RULED OUT</span>
-                  )}
-                  <h3 className="font-hand mt-2 text-2xl leading-none">{s.name}</h3>
-                  <p className="text-sm text-[var(--ink-dim)]">{s.role}</p>
-                  <p className="mt-2 text-sm">
-                    <span className="font-semibold">Alibi: </span>
-                    {s.alibi}
-                  </p>
-                  {ruled && (
-                    <p className="mt-2 text-sm font-semibold">
-                      ✕{' '}
-                      {ruled.by === 'clue'
-                        ? `Ruled out — ${ruled.clueText}`
-                        : 'Ruled out by your accusation'}
-                    </p>
+                    <div className="field">
+                      <b>CLEARED BY:</b>{' '}
+                      {ruled.by === 'clue' ? ruled.clueText : 'your accusation'}
+                    </div>
                   )}
                   {asked ? (
-                    <p className="mt-2 text-sm">
-                      <span className="font-semibold">Something they keep quiet: </span>
-                      {s.secret}
-                    </p>
+                    <div className="field"><b>NOTES:</b> {s.secret}</div>
                   ) : (
                     <button type="button" className="btn mt-3" onClick={() => question(s.id)}>
                       Ask {s.name.split(' ')[0]}
                     </button>
                   )}
-                </article>
-              );
-            })}
-          </div>
+                </div>
+              </article>
+            );
+          })}
         </section>
       )}
 
       {tab === 'accuse' && (
-        <section className="mt-4 space-y-2">
-          <p className="text-sm text-[var(--ink-dim)]">
-            Ready? Name the culprit. A wrong name costs one mistake and nothing else —
-            you can keep accusing until the clues point to one person.
-          </p>
-          {c.suspects.map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              className="card flex w-full items-center gap-3 p-4 text-left"
-              disabled={won !== null}
-              onClick={() => accuse(s.id)}
-            >
-              <img
-                src={portraitForSuspect(c.id, i)}
-                alt=""
-                aria-hidden
-                loading="lazy"
-                className="h-12 w-12 shrink-0 rounded-full object-cover object-top"
-              />
-              <span>
-                <span className="font-display block text-lg font-bold">{s.name}</span>
-                <span className="block text-sm text-[var(--ink-dim)]">{s.role}</span>
-                {state.wrongAccused.includes(s.id) && (
-                  <span className="block text-sm font-semibold">Ruled out by your accusation</span>
-                )}
-              </span>
-            </button>
-          ))}
-          {accuseMsg && <p className="pt-1 text-sm font-semibold">{accuseMsg}</p>}
+        <section>
+          <h2 className="cf-sec">FINAL REPORT (ACCUSE)</h2>
+          <div className="cf-final">
+            <p>
+              I, the undersigned, accuse one person named below, on the evidence in
+              this file. A wrong name costs one mistake and nothing else — you can
+              keep accusing until the clues point to one person.
+            </p>
+            <div className="mt-3 space-y-2">
+              {c.suspects.map((s, i) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className="card flex w-full items-center gap-3 p-4 text-left"
+                  disabled={won !== null}
+                  onClick={() => accuse(s.id)}
+                >
+                  <img
+                    src={portraitForSuspect(c.id, i)}
+                    alt=""
+                    aria-hidden
+                    loading="lazy"
+                    className="h-12 w-12 shrink-0 rounded-full object-cover object-top"
+                  />
+                  <span>
+                    <span className="font-display block text-lg font-bold">{s.name}</span>
+                    <span className="block text-sm text-[var(--ink-dim)]">{s.role}</span>
+                    {state.wrongAccused.includes(s.id) && (
+                      <span className="block text-sm font-semibold">Ruled out by your accusation</span>
+                    )}
+                  </span>
+                </button>
+              ))}
+            </div>
+            {accuseMsg && <p className="pt-2 text-sm font-semibold">{accuseMsg}</p>}
+            <p className="mt-4">
+              Signed: <span className="cf-sigline" /> Date: <span className="cf-sigline" style={{ minWidth: 120 }} />
+            </p>
+          </div>
         </section>
       )}
+      </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
         <button
