@@ -220,7 +220,7 @@ export default function MonopolyPage() {
             : game.phase === 'buy' && pendingSquare
               ? `${pendingSquare.name} is for sale — buy it or pass.`
               : game.phase === 'jail'
-                ? 'At the Rest Stop: pay, use a pass, or roll for doubles.'
+                ? 'In Prison: pay, use a pass, or roll for doubles.'
                 : game.lastDice
                   ? `Last roll: ${game.lastDice[0]} + ${game.lastDice[1]}`
                   : 'Roll the dice to begin.'}
@@ -248,7 +248,7 @@ export default function MonopolyPage() {
             <p className="text-lg font-bold">${p.money}</p>
             <p className="text-sm text-[var(--ink-dim)]">
               On {BOARD[p.position].name}
-              {p.inJail ? ' · at the Rest Stop' : ''}
+              {p.inJail ? ' · in Prison' : ''}
               {p.getOutCards > 0 ? ` · ${p.getOutCards} pass${p.getOutCards > 1 ? 'es' : ''}` : ''}
             </p>
             <p className="text-sm text-[var(--ink-dim)]">
@@ -342,7 +342,7 @@ export default function MonopolyPage() {
                 : 'Roll to start your stroll.'}
             </p>
             <p className="text-sm text-[var(--ink-dim)]">
-              Pass Home Corner: +$200 · Rest Stop fine: $50
+              Pass Start: +$200 · Prison fine: $50
             </p>
           </div>
         </div>

@@ -48,6 +48,7 @@ import {
   purpleScorePrompt,
 } from '@/lib/quickgames/purple';
 import {
+  UNO_SLAP_COLOUR_STYLE,
   applySlap,
   generateUnoSlap,
   isSlapMatch,
@@ -58,6 +59,7 @@ import {
   unoSlapBotErrorRate,
   unoSlapDeckExhausted,
   unoSlapProgress,
+  type UnoSlapCard,
 } from '@/lib/quickgames/unoSlap';
 import { rngFromSeed } from '@/lib/generators/rng';
 
@@ -661,6 +663,60 @@ export function PurpleView(props: RaceViewProps) {
 
 // ------------------------------------------------------------------- Uno Slap ----
 
+/**
+ * An original code-drawn UNO-style card face: coloured background, white
+ * tilted oval, centre number in the card colour, corner numbers.
+ * No copied UNO artwork or logo. A null card renders the face-down back.
+ */
+function UnoCard({ card }: { card: UnoSlapCard | null }) {
+  if (card === null) {
+    return (
+      <div
+        className="relative mx-auto h-40 w-28 overflow-hidden rounded-2xl shadow-lg"
+        style={{ background: '#111' }}
+        aria-label="No card yet"
+      >
+        <div
+          className="absolute left-1/2 top-1/2 flex h-28 w-20 items-center justify-center rounded-[50%]"
+          style={{ background: '#fff', transform: 'translate(-50%, -50%) rotate(-24deg)' }}
+        >
+          <span className="text-3xl font-bold" style={{ transform: 'rotate(24deg)', color: '#111' }}>
+            ?
+          </span>
+        </div>
+        <span className="absolute left-2 top-1.5 text-base font-bold text-white">?</span>
+        <span className="absolute bottom-1.5 right-2 rotate-180 text-base font-bold text-white">?</span>
+      </div>
+    );
+  }
+  const style = UNO_SLAP_COLOUR_STYLE[card.colour];
+  return (
+    <div
+      className="relative mx-auto h-40 w-28 overflow-hidden rounded-2xl shadow-lg"
+      style={{ background: style.bg }}
+      aria-label={`${card.colour} ${card.value} card`}
+    >
+      <div
+        className="absolute left-1/2 top-1/2 flex h-28 w-20 items-center justify-center rounded-[50%]"
+        style={{ background: '#fff', transform: 'translate(-50%, -50%) rotate(-24deg)' }}
+      >
+        <span
+          className="text-5xl font-black italic"
+          style={{ transform: 'rotate(24deg)', color: style.centre }}
+        >
+          {card.value}
+        </span>
+      </div>
+      <span className="absolute left-2 top-1.5 text-base font-bold text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>
+        {card.value}
+      </span>
+      <span className="absolute bottom-1.5 right-2 rotate-180 text-base font-bold text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>
+        {card.value}
+      </span>
+    </div>
+  );
+}
+
 export function UnoSlapView(props: RaceViewProps) {
   const game = useMemo(
     () => generateUnoSlap(props.seed, props.level),
@@ -682,7 +738,8 @@ export function UnoSlapView(props: RaceViewProps) {
   const top = laid > 0 ? deck[laid - 1]! : null;
   // The nth card laid (1-indexed) is spoken as ((n - 1) % 10) + 1.
   const spoken = spokenNumber(Math.max(0, laid - 1));
-  const match = top !== null && isSlapMatch(top, spoken);
+  // A match is on the card's VALUE only — its colour never matters.
+  const match = top !== null && isSlapMatch(top.value, spoken);
 
   // Bot: slaps matches after a delay, sometimes slaps wrongly.
   useEffect(() => {
@@ -690,7 +747,7 @@ export function UnoSlapView(props: RaceViewProps) {
     if (laid === 0) return;
     const t = setTimeout(
       () => {
-        const isMatch = isSlapMatch(deck[laid - 1]!, spokenNumber(laid - 1));
+        const isMatch = isSlapMatch(deck[laid - 1]!.value, spokenNumber(laid - 1));
         if (isMatch) {
           setBotScore((s) => s + 1);
         } else if (Math.random() < unoSlapBotErrorRate(props.level)) {
@@ -729,13 +786,14 @@ export function UnoSlapView(props: RaceViewProps) {
         <p className="mt-3 text-sm">
           Spoken: <strong className="text-xl">{spoken}</strong> · Cards laid: {laid} of{' '}
           {deck.length}
+          {top !== null && (
+            <>
+              {' · '}Top card: {top.colour} {top.value}
+            </>
+          )}
         </p>
-        <div
-          className="mx-auto mt-3 flex h-32 w-24 items-center justify-center rounded-xl border-2 text-4xl font-bold"
-          style={{ borderColor: 'var(--line)', background: 'var(--surface)' }}
-          aria-label={top === null ? 'No card yet' : `Card ${top}`}
-        >
-          {top ?? '—'}
+        <div className="mt-3">
+          <UnoCard card={top} />
         </div>
         {msg && <p className="mt-2 text-sm">{msg}</p>}
         {(finished || botFinished) && props.mode === 'solo' && (

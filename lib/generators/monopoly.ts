@@ -8,7 +8,7 @@
  * Classic mechanics implemented: 40 squares, dice movement, passing Go
  * (+$200), buying, rent, houses/hotels, Chance / Community Chest style
  * cards (own short wording, shuffled decks), jail (3 doubles, pay, card,
- * or roll doubles), Free Parking (no effect, as in the official rules),
+ * or roll doubles), Vacation (no effect, as in the official rules),
  * taxes, stations, utilities, and bankruptcy / winner detection.
  *
  * Deliberate simplifications (see the page for the player-facing list):
@@ -142,59 +142,59 @@ function utility(index: number, name: string): Square {
   return { index, kind: 'utility', name, price: 150, group: 'utility' };
 }
 
-/** The 40-square board. Names are generic, cozy place names — not official streets. */
+/** The 40-square board, RichUp-style: property names are real cities, one country per colour group, stations are real airports, corners are Start / Prison / Vacation / Go to Prison — not official streets. */
 export const BOARD: Square[] = [
-  { index: 0, kind: 'go', name: 'Home Corner' },
-  prop(1, 'Willow Lane', 60, 'brown', [2, 10, 30, 90, 160, 250], 50),
+  { index: 0, kind: 'go', name: 'Start' },
+  prop(1, 'Lisbon, Portugal', 60, 'brown', [2, 10, 30, 90, 160, 250], 50),
   { index: 2, kind: 'chest', name: 'Neighbour Chest' },
-  prop(3, 'Fern Path', 60, 'brown', [4, 20, 60, 180, 320, 450], 50),
+  prop(3, 'Porto, Portugal', 60, 'brown', [4, 20, 60, 180, 320, 450], 50),
   { index: 4, kind: 'tax', name: 'Meadow Tax', tax: 200 },
-  station(5, 'Corner Station'),
-  prop(6, 'Brook Street', 100, 'lightblue', [6, 30, 90, 270, 400, 550], 50),
+  station(5, 'Heathrow Airport'),
+  prop(6, 'Madrid, Spain', 100, 'lightblue', [6, 30, 90, 270, 400, 550], 50),
   { index: 7, kind: 'chance', name: 'Chance' },
-  prop(8, 'Pond View', 100, 'lightblue', [6, 30, 90, 270, 400, 550], 50),
-  prop(9, 'Creek Road', 120, 'lightblue', [8, 40, 100, 300, 450, 600], 50),
-  { index: 10, kind: 'jail', name: 'Rest Stop' },
-  prop(11, 'Rose Court', 140, 'pink', [10, 50, 150, 450, 625, 750], 100),
+  prop(8, 'Barcelona, Spain', 100, 'lightblue', [6, 30, 90, 270, 400, 550], 50),
+  prop(9, 'Seville, Spain', 120, 'lightblue', [8, 40, 100, 300, 450, 600], 50),
+  { index: 10, kind: 'jail', name: 'Prison' },
+  prop(11, 'Paris, France', 140, 'pink', [10, 50, 150, 450, 625, 750], 100),
   utility(12, 'Lantern Works'),
-  prop(13, 'Tulip Row', 140, 'pink', [10, 50, 150, 450, 625, 750], 100),
-  prop(14, 'Daisy Lane', 160, 'pink', [12, 60, 180, 500, 700, 900], 100),
-  station(15, 'Garden Station'),
-  prop(16, 'Maple Avenue', 180, 'orange', [14, 70, 200, 550, 750, 950], 100),
+  prop(13, 'Lyon, France', 140, 'pink', [10, 50, 150, 450, 625, 750], 100),
+  prop(14, 'Marseille, France', 160, 'pink', [12, 60, 180, 500, 700, 900], 100),
+  station(15, 'Charles de Gaulle Airport'),
+  prop(16, 'Berlin, Germany', 180, 'orange', [14, 70, 200, 550, 750, 950], 100),
   { index: 17, kind: 'chest', name: 'Neighbour Chest' },
-  prop(18, 'Birch Street', 180, 'orange', [14, 70, 200, 550, 750, 950], 100),
-  prop(19, 'Cedar Way', 200, 'orange', [16, 80, 220, 600, 800, 1000], 100),
-  { index: 20, kind: 'parking', name: 'Free Parking' },
-  prop(21, 'Cherry Lane', 220, 'red', [18, 90, 250, 700, 875, 1050], 150),
+  prop(18, 'Munich, Germany', 180, 'orange', [14, 70, 200, 550, 750, 950], 100),
+  prop(19, 'Hamburg, Germany', 200, 'orange', [16, 80, 220, 600, 800, 1000], 100),
+  { index: 20, kind: 'parking', name: 'Vacation' },
+  prop(21, 'Rome, Italy', 220, 'red', [18, 90, 250, 700, 875, 1050], 150),
   { index: 22, kind: 'chance', name: 'Chance' },
-  prop(23, 'Plum Street', 220, 'red', [18, 90, 250, 700, 875, 1050], 150),
-  prop(24, 'Berry Court', 240, 'red', [20, 100, 300, 750, 925, 1100], 150),
-  station(25, 'Market Station'),
-  prop(26, 'Sunflower Road', 260, 'yellow', [22, 110, 330, 800, 975, 1150], 150),
-  prop(27, 'Honey Lane', 260, 'yellow', [22, 110, 330, 800, 975, 1150], 150),
+  prop(23, 'Florence, Italy', 220, 'red', [18, 90, 250, 700, 875, 1050], 150),
+  prop(24, 'Venice, Italy', 240, 'red', [20, 100, 300, 750, 925, 1100], 150),
+  station(25, 'JFK Airport'),
+  prop(26, 'Tokyo, Japan', 260, 'yellow', [22, 110, 330, 800, 975, 1150], 150),
+  prop(27, 'Kyoto, Japan', 260, 'yellow', [22, 110, 330, 800, 975, 1150], 150),
   utility(28, 'Well House'),
-  prop(29, 'Amber Street', 280, 'yellow', [24, 120, 360, 850, 1025, 1200], 150),
-  { index: 30, kind: 'goto-jail', name: 'Go to Rest Stop' },
-  prop(31, 'Pine Road', 300, 'green', [26, 130, 390, 900, 1100, 1275], 200),
-  prop(32, 'Oak Avenue', 300, 'green', [26, 130, 390, 900, 1100, 1275], 200),
+  prop(29, 'Osaka, Japan', 280, 'yellow', [24, 120, 360, 850, 1025, 1200], 150),
+  { index: 30, kind: 'goto-jail', name: 'Go to Prison' },
+  prop(31, 'London, United Kingdom', 300, 'green', [26, 130, 390, 900, 1100, 1275], 200),
+  prop(32, 'Edinburgh, United Kingdom', 300, 'green', [26, 130, 390, 900, 1100, 1275], 200),
   { index: 33, kind: 'chest', name: 'Neighbour Chest' },
-  prop(34, 'Elm Court', 320, 'green', [28, 150, 450, 1000, 1200, 1400], 200),
-  station(35, 'Harbour Station'),
+  prop(34, 'Manchester, United Kingdom', 320, 'green', [28, 150, 450, 1000, 1200, 1400], 200),
+  station(35, 'Haneda Airport'),
   { index: 36, kind: 'chance', name: 'Chance' },
-  prop(37, 'Harbour View', 350, 'darkblue', [35, 175, 500, 1100, 1300, 1500], 200),
+  prop(37, 'New York, United States', 350, 'darkblue', [35, 175, 500, 1100, 1300, 1500], 200),
   { index: 38, kind: 'tax', name: 'Festival Tax', tax: 100 },
-  prop(39, 'Lighthouse Point', 400, 'darkblue', [50, 200, 600, 1400, 1700, 2000], 200),
+  prop(39, 'Los Angeles, United States', 400, 'darkblue', [50, 200, 600, 1400, 1700, 2000], 200),
 ];
 
 function chanceCards(): Card[] {
   return [
     { id: 'ch1', deck: 'chance', text: 'A neighbour drops off a basket of jam. Collect $50.', effect: { kind: 'money', amount: 50 } },
     { id: 'ch2', deck: 'chance', text: 'The market stall pays out. Collect $150.', effect: { kind: 'money', amount: 150 } },
-    { id: 'ch3', deck: 'chance', text: 'Walk home to Home Corner. Collect $200.', effect: { kind: 'move-to', square: 0 } },
-    { id: 'ch4', deck: 'chance', text: 'Take the path to Lighthouse Point.', effect: { kind: 'move-to', square: 39 } },
+    { id: 'ch3', deck: 'chance', text: 'Go back to Start. Collect $200.', effect: { kind: 'move-to', square: 0 } },
+    { id: 'ch4', deck: 'chance', text: 'Fly to Los Angeles, United States.', effect: { kind: 'move-to', square: 39 } },
     { id: 'ch5', deck: 'chance', text: 'Head to the nearest station. If someone owns it, pay double rent.', effect: { kind: 'nearest-station' } },
-    { id: 'ch6', deck: 'chance', text: 'A storm keeps you at the Rest Stop. Go there now.', effect: { kind: 'go-to-jail' } },
-    { id: 'ch7', deck: 'chance', text: 'A kind passer-by hands you a Rest Stop pass. Keep it for later.', effect: { kind: 'get-out' } },
+    { id: 'ch6', deck: 'chance', text: 'A storm keeps you in Prison. Go there now.', effect: { kind: 'go-to-jail' } },
+    { id: 'ch7', deck: 'chance', text: 'A kind passer-by hands you a Prison pass. Keep it for later.', effect: { kind: 'get-out' } },
     { id: 'ch8', deck: 'chance', text: 'Garden repairs: pay $25 for each house and $100 for each hotel you own.', effect: { kind: 'repairs', perHouse: 25, perHotel: 100 } },
     { id: 'ch9', deck: 'chance', text: 'You win the village raffle. Collect $100.', effect: { kind: 'money', amount: 100 } },
     { id: 'ch10', deck: 'chance', text: 'Pay $50 towards the village fete.', effect: { kind: 'money', amount: -50 } },
@@ -208,9 +208,9 @@ function chestCards(): Card[] {
     { id: 'ce1', deck: 'chest', text: 'It is your birthday! Each other player gives you $20.', effect: { kind: 'money-from-each', amount: 20 } },
     { id: 'ce2', deck: 'chest', text: 'A savings tin turns up $100. Collect $100.', effect: { kind: 'money', amount: 100 } },
     { id: 'ce3', deck: 'chest', text: 'Pay $50 for school supplies.', effect: { kind: 'money', amount: -50 } },
-    { id: 'ce4', deck: 'chest', text: 'A neighbour leaves you a Rest Stop pass. Keep it for later.', effect: { kind: 'get-out' } },
-    { id: 'ce5', deck: 'chest', text: 'You are sent to the Rest Stop for a quiet think.', effect: { kind: 'go-to-jail' } },
-    { id: 'ce6', deck: 'chest', text: 'Walk home to Home Corner. Collect $200.', effect: { kind: 'move-to', square: 0 } },
+    { id: 'ce4', deck: 'chest', text: 'A neighbour leaves you a Prison pass. Keep it for later.', effect: { kind: 'get-out' } },
+    { id: 'ce5', deck: 'chest', text: 'You are sent to Prison for a quiet think.', effect: { kind: 'go-to-jail' } },
+    { id: 'ce6', deck: 'chest', text: 'Go back to Start. Collect $200.', effect: { kind: 'move-to', square: 0 } },
     { id: 'ce7', deck: 'chest', text: 'The choir fund pays out $25.', effect: { kind: 'money', amount: 25 } },
     { id: 'ce8', deck: 'chest', text: 'A leaking tap costs $40 to fix.', effect: { kind: 'money', amount: -40 } },
     { id: 'ce9', deck: 'chest', text: 'Holiday savings mature. Collect $200.', effect: { kind: 'money', amount: 200 } },
@@ -341,7 +341,7 @@ function sendToJail(state: GameState, player: PlayerIndex): GameState {
   s.players[player].inJail = true;
   s.players[player].jailTurns = 0;
   s.doublesCount = 0;
-  s.log.push(`${s.players[player].name} goes to the Rest Stop.`);
+  s.log.push(`${s.players[player].name} goes to Prison.`);
   return s;
 }
 
@@ -541,7 +541,7 @@ export function rollTurn(state: GameState, dice: [number, number]): GameState {
   const newPos = (oldPos + total) % 40;
   if (oldPos + total >= 40) {
     s.players[player].money += GO_SALARY;
-    s.log.push(`${p.name} passes Home Corner and collects $${GO_SALARY}.`);
+    s.log.push(`${p.name} passes Start and collects $${GO_SALARY}.`);
   }
   s.players[player].position = newPos;
   s = resolveLanding(s, player, total, true);
@@ -553,17 +553,17 @@ export function payJailFine(state: GameState): GameState {
   if (state.phase !== 'jail' || state.winner !== null) return state;
   let s = clone(state);
   const player = s.turn;
-  s = pay(s, player, JAIL_FINE, 'Rest Stop fine', null);
+  s = pay(s, player, JAIL_FINE, 'Prison fine', null);
   if (s.winner !== null) return s;
   s.players[player].inJail = false;
   s.players[player].jailTurns = 0;
   s.doublesCount = 0;
   s.phase = 'roll';
-  s.log.push(`${s.players[player].name} pays $${JAIL_FINE} and leaves the Rest Stop.`);
+  s.log.push(`${s.players[player].name} pays $${JAIL_FINE} and leaves Prison.`);
   return s;
 }
 
-/** Spend a Rest Stop pass to leave jail; the player then rolls normally. */
+/** Spend a Prison pass to leave jail; the player then rolls normally. */
 export function useJailCard(state: GameState): GameState {
   if (state.phase !== 'jail' || state.winner !== null) return state;
   const player = state.turn;
@@ -574,7 +574,7 @@ export function useJailCard(state: GameState): GameState {
   s.players[player].jailTurns = 0;
   s.doublesCount = 0;
   s.phase = 'roll';
-  s.log.push(`${s.players[player].name} uses a Rest Stop pass.`);
+  s.log.push(`${s.players[player].name} uses a Prison pass.`);
   return s;
 }
 
@@ -587,7 +587,7 @@ export function rollJailDice(state: GameState, dice: [number, number]): GameStat
   const [d1, d2] = dice;
   const total = d1 + d2;
   s.lastDice = dice;
-  s.log.push(`${p.name} rolls ${d1} + ${d2} at the Rest Stop.`);
+  s.log.push(`${p.name} rolls ${d1} + ${d2} in Prison.`);
   if (d1 === d2) {
     s.players[player].inJail = false;
     s.players[player].jailTurns = 0;
@@ -602,7 +602,7 @@ export function rollJailDice(state: GameState, dice: [number, number]): GameStat
   }
   s.players[player].jailTurns += 1;
   if (s.players[player].jailTurns >= 3) {
-    s = pay(s, player, JAIL_FINE, 'Rest Stop fine after three tries', null);
+    s = pay(s, player, JAIL_FINE, 'Prison fine after three tries', null);
     if (s.winner !== null) return s;
     s.players[player].inJail = false;
     s.players[player].jailTurns = 0;
