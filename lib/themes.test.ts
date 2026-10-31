@@ -14,8 +14,8 @@ describe('theme tokens', () => {
     }
   });
 
-  it('all four themes define the full token set', () => {
-    expect(THEME_IDS).toEqual(['candy', 'noir', 'blue', 'violet']);
+  it('all five themes define the full token set', () => {
+    expect(THEME_IDS).toEqual(['candy', 'noir', 'blue', 'violet', 'cherry']);
     const keys = Object.keys(THEMES.noir.tokens).sort();
     for (const theme of Object.values(THEMES)) {
       expect(Object.keys(theme.tokens).sort()).toEqual(keys);
@@ -32,7 +32,7 @@ describe('theme tokens', () => {
 });
 
 describe('theme switching', () => {
-  it('accepts all three theme ids and nothing else', () => {
+  it('accepts all theme ids and nothing else', () => {
     for (const id of THEME_IDS) expect(isThemeId(id)).toBe(true);
     for (const bad of ['midnight', 'sunny', '', null, undefined, 42]) {
       expect(isThemeId(bad)).toBe(false);

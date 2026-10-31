@@ -11,7 +11,7 @@
  * (the contrast test reads the same values).
  */
 
-export type ThemeId = 'noir' | 'candy' | 'blue' | 'violet';
+export type ThemeId = 'noir' | 'candy' | 'blue' | 'violet' | 'cherry';
 
 export interface ThemeConfig {
   id: ThemeId;
@@ -20,7 +20,7 @@ export interface ThemeConfig {
   tokens: Record<string, string>;
 }
 
-export const THEME_IDS: ThemeId[] = ['candy', 'noir', 'blue', 'violet'];
+export const THEME_IDS: ThemeId[] = ['candy', 'noir', 'blue', 'violet', 'cherry'];
 
 export const THEMES: Record<ThemeId, ThemeConfig> = {
   noir: {
@@ -163,10 +163,45 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
         'radial-gradient(700px 420px at 12% -5%, rgba(217,70,239,0.30), transparent 60%), radial-gradient(800px 500px at 95% 0%, rgba(124,58,237,0.28), transparent 60%), radial-gradient(900px 600px at 50% 115%, rgba(88,28,135,0.35), transparent 60%)',
     },
   },
+  cherry: {
+    id: 'cherry',
+    label: 'Cherry-Sealed',
+    blurb: 'Cute, romantic and lively. Cherry red and hot pink, sealed with a cherry for two.',
+    tokens: {
+      '--bg': '#ffe6eb',
+      '--bg-2': '#ffd3dc',
+      '--surface': '#ffffff',
+      '--surface-2': '#fff5f7',
+      '--ink': '#3d0a1e',
+      '--ink-dim': '#8a4459',
+      '--accent': '#d7263d',
+      '--accent-ink': '#ffffff',
+      '--accent-2': '#ff4d6d',
+      '--accent-2-ink': '#3d0a1e',
+      '--line': '#3d0a1e',
+      '--paper': '#fff0f3',
+      '--paper-ink': '#3d0a1e',
+      '--good': '#1e7a4c',
+      '--bad': '#9f1239',
+      '--cell': '#ffffff',
+      '--cell-line': '#e8a0b0',
+      '--radius': '18px',
+      '--radius-lg': '28px',
+      '--shadow': '0 10px 24px rgba(215,38,61,0.16), 4px 4px 0 rgba(61,10,30,0.12)',
+      '--btn-shadow': '0 4px 0 rgba(61,10,30,0.9)',
+      '--motion': '0.35s cubic-bezier(0.34,1.56,0.64,1)',
+      '--glow': '0 0 20px rgba(255,77,109,0.45)',
+      '--card-border': '2px solid var(--line)',
+      '--font-display': 'var(--font-fraunces), Georgia, serif',
+      '--font-body': 'var(--font-nunito), system-ui, sans-serif',
+      '--texture':
+        'radial-gradient(circle at 12% 8%, rgba(255,77,109,0.25), transparent 40%), radial-gradient(circle at 88% 4%, rgba(255,143,163,0.35), transparent 42%), radial-gradient(circle at 50% 100%, rgba(255,211,220,0.5), transparent 55%)',
+    },
+  },
 };
 
 export function isThemeId(v: unknown): v is ThemeId {
-  return v === 'noir' || v === 'candy' || v === 'blue' || v === 'violet';
+  return v === 'noir' || v === 'candy' || v === 'blue' || v === 'violet' || v === 'cherry';
 }
 
 /**
