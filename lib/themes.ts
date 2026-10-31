@@ -166,7 +166,7 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
   cherry: {
     id: 'cherry',
     label: 'Cherry-Sealed',
-    blurb: 'Cute, romantic and lively. Cherry red and hot pink, sealed with a cherry for two.',
+    blurb: 'Cute, romantic and lively — real blossom photos, petals falling.',
     tokens: {
       '--bg': '#ffe6eb',
       '--bg-2': '#ffd3dc',

@@ -11,6 +11,7 @@ import {
 import { THEMES, isThemeId, type ThemeId } from '@/lib/themes';
 import BlueSky from './BlueSky';
 import CandyHearts from './CandyHearts';
+import CherryPetals from './CherryPetals';
 import Fireflies from './Fireflies';
 import NoirRain from './NoirRain';
 import SoundEngine from './SoundEngine';
@@ -79,6 +80,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       {theme === 'blue' && <BlueSky />}
       {theme === 'noir' && <NoirRain />}
       {theme === 'candy' && <CandyHearts />}
+      {theme === 'cherry' && <CherryPetals />}
       <SoundEngine />
     </Ctx.Provider>
   );

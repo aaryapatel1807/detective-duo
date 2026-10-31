@@ -21,6 +21,28 @@ body {
   min-height: 100vh;
 }
 
+/*
+ * Cherry-Sealed photographic scenery: the user's own cherry-blossom
+ * tunnel photo as the page backdrop (not a token colour), under a light
+ * rose veil so text stays readable. This sits on body itself, behind all
+ * content — unlike the z-40 drifting layers. The bridge photo lives at
+ * public/blossoms/cherry-bridge.jpg, ready to swap in as the backdrop.
+ */
+html[data-theme='cherry'] body {
+  background-color: #ffe6eb;
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(255, 230, 235, 0.55),
+      rgba(255, 230, 235, 0.3) 35%,
+      rgba(255, 230, 235, 0.45)
+    ),
+    url('/blossoms/cherry-tunnel.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
 h1, h2, h3, .font-display {
   font-family: var(--font-display);
 }
@@ -545,6 +567,64 @@ h1, h2, h3, .font-display {
   .theme-fly {
     animation: none;
     opacity: 0.5;
+  }
+}
+
+/* Cherry-Sealed falling petals: notched sakura shapes drifting down in
+   three depths, over the theme's photographic backdrop. Rendered only
+   while the cherry theme is active. Hidden under prefers-reduced-motion
+   (the photo backdrop itself stays, being a still image). */
+.theme-petals {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.theme-petal {
+  position: absolute;
+  top: -30px;
+  background: linear-gradient(135deg, #ffc2d1, #ff4d6d);
+  clip-path: polygon(30% 6%, 50% 24%, 70% 6%, 96% 44%, 82% 90%, 50% 100%, 18% 90%, 4% 44%);
+  filter: drop-shadow(0 1px 3px rgba(215, 38, 61, 0.4));
+  animation:
+    petal-fall var(--petal-d) linear var(--petal-dl) infinite,
+    petal-sway var(--petal-sway) ease-in-out var(--petal-dl) infinite alternate;
+}
+
+.theme-petal.far {
+  background: #ffc2d1;
+  filter: none;
+}
+
+@keyframes petal-fall {
+  0% {
+    transform: translate3d(0, -5vh, 0) rotate(var(--petal-r0, 0deg));
+    opacity: 0;
+  }
+  10%,
+  90% {
+    opacity: var(--petal-peak, 0.95);
+  }
+  100% {
+    transform: translate3d(var(--petal-drift), 108vh, 0) rotate(calc(var(--petal-r0, 0deg) + 320deg));
+    opacity: 0;
+  }
+}
+
+@keyframes petal-sway {
+  from {
+    margin-left: -24px;
+  }
+  to {
+    margin-left: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-petal {
+    display: none;
   }
 }
 
