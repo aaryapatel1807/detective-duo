@@ -35,15 +35,11 @@ const VERSUS_GAMES = [
   { id: 'nonograms', name: 'Nonograms', note: 'Same picture, friendly race.' },
   { id: 'dots-boxes', name: 'Dots and Boxes', note: 'One board, turns, most boxes wins.' },
   { id: 'safe-cracker', name: 'Safe Cracker', note: 'Same code, fewest guesses wins.' },
-  { id: 'quoridor', name: 'Quoridor', note: 'Race your pawn across, fences in the way.' },
   { id: 'checkbox-race', name: 'Checkbox Race', note: 'Hunt called numbers, fill every box first.' },
-  { id: 'the-bridge', name: 'The Bridge', note: 'Word-ladder bridge between two words.' },
   { id: 'jinx', name: 'Jinx', note: 'Same letters, word hunt — shared words score for nobody.' },
   { id: 'spot-emoji', name: 'Speed Spot-the-Emoji', note: 'Two cards, one shared emoji — find it first.' },
   { id: 'dont-press-purple', name: "Don't Press Purple", note: 'Hit teal prompts, hold still on violet.' },
-  { id: 'snake-arena', name: 'Snake Arena', note: 'Parallel arenas, most fruit wins.' },
   { id: 'uno-slap', name: 'Uno Slap', note: 'Cards count 1–10, slap on a match.' },
-  { id: 'vibe-check', name: 'Vibe Check', note: 'Guess who — personality questions, not faces.' },
 ];
 
 export default function LobbyPage({ params }: { params: { code: string } }) {

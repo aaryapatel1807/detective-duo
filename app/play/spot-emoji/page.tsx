@@ -8,7 +8,7 @@ export default function SpotEmojiPage() {
     <SoloQuickShell
       gameId="spot-emoji"
       title="Speed Spot-the-Emoji"
-      blurb="Two cards, six pictures each, exactly one shared. Find the twin and tap it before your rival does."
+      blurb="Two cards, exactly one shared picture. Find the twin and tap it before your rival does — no time limit, and cards grow denser as levels rise."
     >
       {({ level, seed, disabled, onFinish }) => (
         <SpotEmojiView seed={seed} level={level} mode="solo" disabled={disabled} onFinish={onFinish} />

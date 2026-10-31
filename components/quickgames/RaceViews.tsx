@@ -23,13 +23,6 @@ import {
   generateCheckbox,
 } from '@/lib/quickgames/checkbox';
 import {
-  bridgeBotDelayMs,
-  bridgeFinished,
-  bridgeProgress,
-  generateBridge,
-  isValidPlank,
-} from '@/lib/quickgames/bridge';
-import {
   generateJinx,
   isValidJinxEntry,
   jinxBotList,
@@ -210,108 +203,6 @@ export function CheckboxRaceView(props: RaceViewProps) {
   );
 }
 
-// ---------------------------------------------------------------- The Bridge ----
-
-export function BridgeView(props: RaceViewProps) {
-  const game = useMemo(
-    () => generateBridge(props.seed, props.level),
-    [props.seed, props.level],
-  );
-  const [planks, setPlanks] = useState<string[]>([game.start]);
-  const [draft, setDraft] = useState('');
-  const [msg, setMsg] = useState<string | null>(null);
-  const [mistakes, setMistakes] = useState(0);
-  const [botSteps, setBotSteps] = useState(0);
-  const finished = bridgeFinished(game, planks);
-  const botFinished = botSteps >= game.shortest;
-
-  useEffect(() => {
-    if (props.mode !== 'solo' || finished || botFinished || props.disabled) return;
-    const t = setTimeout(
-      () => setBotSteps((n) => n + 1),
-      bridgeBotDelayMs(props.level),
-    );
-    return () => clearTimeout(t);
-  }, [botSteps, finished, props.mode, props.level, props.disabled]);
-
-  useOnce(finished, () => {
-    props.onProgress?.(1);
-    if (props.mode === 'solo') props.onFinish?.(true);
-  });
-  useOnce(botFinished && props.mode === 'solo', () => props.onFinish?.(false));
-
-  const prev = planks[planks.length - 1]!;
-  const mine = bridgeProgress(game, planks.slice(1));
-  const botPct = Math.min(1, botSteps / game.shortest);
-
-  return (
-    <div>
-      <RaceBars
-        mode={props.mode}
-        mine={mine}
-        bot={props.mode === 'solo' ? botPct : undefined}
-        opponentPct={props.opponentPct}
-        opponentName={props.opponentName}
-      />
-      <section className="card mt-4 p-4">
-        <p className="text-sm text-[var(--ink-dim)]">
-          Bridge from <strong>{game.start}</strong> to <strong>{game.end}</strong> — every
-          plank a real word one letter off the last. Shortest route: {game.shortest} planks.
-        </p>
-        <p className="mt-3 flex flex-wrap items-center gap-1 font-mono text-lg font-bold">
-          {planks.map((p, i) => (
-            <span key={i} className="flex items-center gap-1">
-              {i > 0 && <span aria-hidden>→</span>}
-              <span className="rounded-lg border px-2 py-1" style={{ borderColor: 'var(--line)' }}>
-                {p}
-              </span>
-            </span>
-          ))}
-        </p>
-        {msg && <p className="mt-2 text-sm">{msg}</p>}
-        <form
-          className="mt-3 flex gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const next = draft.trim().toUpperCase();
-            if (!next) return;
-            if (isValidPlank(prev, next)) {
-              const nextPlanks = [...planks, next];
-              setPlanks(nextPlanks);
-              setDraft('');
-              setMsg(null);
-              props.onProgress?.(bridgeProgress(game, nextPlanks.slice(1)));
-            } else {
-              setMistakes((m) => m + 1);
-              setMsg('Not a plank — it must be a real word one letter off the last.');
-            }
-          }}
-        >
-          <input
-            className="input flex-1 uppercase"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value.toUpperCase())}
-            placeholder="Next word…"
-            maxLength={4}
-            disabled={props.disabled || finished}
-            aria-label="Next word"
-          />
-          <button type="submit" className="btn btn-primary" disabled={props.disabled || finished}>
-            Lay plank
-          </button>
-        </form>
-        {mistakes > 0 && (
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">
-            {mistakes} {mistakes === 1 ? 'wobble' : 'wobbles'} so far — the bridge still holds.
-          </p>
-        )}
-      </section>
-    </div>
-  );
-}
-
-// ------------------------------------------------------------------------- Jinx ----
-
 export function JinxView(props: RaceViewProps) {
   const game = useMemo(
     () => generateJinx(props.seed, props.level),
@@ -465,18 +356,52 @@ export function SpotEmojiView(props: RaceViewProps) {
   const [mistakes, setMistakes] = useState(0);
   const [botCorrect, setBotCorrect] = useState(0);
   const [msg, setMsg] = useState<string | null>(null);
+  // Twin confirmation: on a correct tap the twin stays highlighted on
+  // BOTH cards for a beat before the next round deals, so the win is
+  // shown by ring + background + the "Twin!" text, never colour alone.
+  const [justFound, setJustFound] = useState(false);
+  // Wrong-tap feedback: brief shake on the tapped cell only. The round
+  // and progress are untouched — a wrong tap never loses the round.
+  const [wrongIdx, setWrongIdx] = useState<number | null>(null);
+  const twinTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrongTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Display-only timer: elapsed time is shown, never used to fail a
+  // player. It freezes once the game is decided.
+  const startedAt = useRef(Date.now());
+  const [elapsedMs, setElapsedMs] = useState(0);
   const finished = correct >= game.target;
   const botFinished = botCorrect >= game.target;
   const card = game.cards[Math.min(round, game.cards.length - 1)];
 
   useEffect(() => {
+    startedAt.current = Date.now();
+    setElapsedMs(0);
+  }, [props.seed, props.level]);
+
+  useEffect(() => {
+    if (finished || botFinished) return;
+    const t = setInterval(() => setElapsedMs(Date.now() - startedAt.current), 500);
+    return () => clearInterval(t);
+  }, [finished, botFinished, props.seed, props.level]);
+
+  useEffect(
+    () => () => {
+      if (twinTimer.current) clearTimeout(twinTimer.current);
+      if (wrongTimer.current) clearTimeout(wrongTimer.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
     if (props.mode !== 'solo' || finished || botFinished || props.disabled) return;
+    // Seeded jitter per bot round: human pacing, never instant at low
+    // levels (see spotBotDelayMs — ±15% of the level base delay).
     const t = setTimeout(
       () => setBotCorrect((n) => n + 1),
-      spotBotDelayMs(props.level),
+      spotBotDelayMs(props.level, props.seed, botCorrect),
     );
     return () => clearTimeout(t);
-  }, [botCorrect, finished, props.mode, props.level, props.disabled]);
+  }, [botCorrect, finished, props.mode, props.level, props.disabled, props.seed, botFinished]);
 
   useOnce(finished, () => {
     props.onProgress?.(1);
@@ -486,9 +411,15 @@ export function SpotEmojiView(props: RaceViewProps) {
 
   const mine = spotProgress(game, correct);
   const botPct = Math.min(1, botCorrect / game.target);
+  // Larger, thumb-sized cells: fewer columns than the old 6-across row,
+  // so each cell is ~60px+ on mobile. Columns stay literal class names
+  // so Tailwind picks them up.
+  const cols = game.cardSize <= 6 ? 'grid-cols-3' : game.cardSize <= 8 ? 'grid-cols-4' : 'grid-cols-3';
+  const elapsed = `${Math.floor(elapsedMs / 60000)}:${String(Math.floor((elapsedMs % 60000) / 1000)).padStart(2, '0')}`;
 
   return (
     <div>
+      <style>{`@keyframes spot-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } } .spot-shake { animation: spot-shake 0.3s ease; }`}</style>
       <RaceBars
         mode={props.mode}
         mine={mine}
@@ -498,50 +429,100 @@ export function SpotEmojiView(props: RaceViewProps) {
       />
       <section className="card mt-4 p-4">
         <p className="text-sm text-[var(--ink-dim)]">
-          Two cards, six pictures each, exactly one shared. Tap the twin on your card —
+          Two cards, {game.cardSize} pictures each, exactly one shared. Tap the twin on your card —
           first to {game.target} wins.
         </p>
-        {msg && <p className="mt-2 text-sm">{msg}</p>}
+        <p className="mt-1 text-sm text-[var(--ink-dim)]" aria-live="off">
+          Round {Math.min(round + 1, game.target)} of {game.target} · Time {elapsed} · No time limit — take as long as you need.
+        </p>
+        <p className="mt-1 text-sm font-semibold">
+          {props.mode === 'solo'
+            ? `You: ${correct} found · Cosy Bot: ${botCorrect} found · First to ${game.target} wins`
+            : `You: ${correct} found · First to ${game.target} wins`}
+        </p>
+        {msg && (
+          <p className="mt-2 text-sm font-semibold" role="status" aria-live="polite">
+            {msg}
+          </p>
+        )}
         {card && !finished && (
           <>
             <p className="mt-3 text-sm font-semibold">Your card</p>
-            <div className="mt-1 grid grid-cols-6 gap-1">
-              {card.mine.map((e, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  className="flex aspect-square items-center justify-center rounded-lg border text-2xl"
-                  style={{ borderColor: 'var(--line)', background: 'var(--surface)' }}
-                  disabled={props.disabled}
-                  onClick={() => {
-                    if (e === card.shared) {
-                      const next = correct + 1;
-                      setCorrect(next);
-                      setMsg(null);
-                      setRound((r) => r + 1);
-                      props.onProgress?.(spotProgress(game, next));
-                    } else {
-                      setMistakes((m) => m + 1);
-                      setMsg('Not the twin — look again.');
-                    }
-                  }}
-                  aria-label={`Picture ${e}`}
-                >
-                  {e}
-                </button>
-              ))}
+            <div className={`mt-1 grid ${cols} gap-2`}>
+              {card.mine.map((e, i) => {
+                const isTwin = justFound && e === card.shared;
+                const isWrong = wrongIdx === i;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`relative flex aspect-square min-h-[60px] items-center justify-center rounded-xl border text-4xl sm:min-h-[68px] sm:text-5xl ${isWrong ? 'spot-shake' : ''} ${isTwin ? 'scale-105' : ''}`}
+                    style={{
+                      borderColor: 'var(--line)',
+                      background: 'var(--surface)',
+                      boxShadow: isTwin
+                        ? '0 0 0 3px var(--good), 0 0 0 6px var(--surface)'
+                        : isWrong
+                          ? '0 0 0 3px var(--bad)'
+                          : undefined,
+                    }}
+                    disabled={props.disabled || justFound}
+                    onClick={() => {
+                      if (justFound) return;
+                      if (e === card.shared) {
+                        setJustFound(true);
+                        setWrongIdx(null);
+                        setMsg('✓ Twin! That picture is on both cards.');
+                        twinTimer.current = setTimeout(() => {
+                          const next = correct + 1;
+                          setCorrect(next);
+                          setJustFound(false);
+                          setMsg(null);
+                          setRound((r) => r + 1);
+                          props.onProgress?.(spotProgress(game, next));
+                        }, 800);
+                      } else {
+                        setMistakes((m) => m + 1);
+                        setWrongIdx(i);
+                        setMsg('✗ Not the twin — look again. No harm, just keep looking.');
+                        if (wrongTimer.current) clearTimeout(wrongTimer.current);
+                        wrongTimer.current = setTimeout(() => setWrongIdx(null), 400);
+                      }
+                    }}
+                    aria-label={`Picture ${e}${isTwin ? ' — the twin' : ''}`}
+                  >
+                    {e}
+                    {isTwin && (
+                      <span className="absolute right-1 top-1 text-base font-bold" aria-hidden="true">
+                        ✓
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
             <p className="mt-3 text-sm font-semibold">The other card</p>
-            <div className="mt-1 grid grid-cols-6 gap-1 opacity-80">
-              {card.theirs.map((e, i) => (
-                <span
-                  key={i}
-                  className="flex aspect-square items-center justify-center rounded-lg border text-2xl"
-                  style={{ borderColor: 'var(--line)' }}
-                >
-                  {e}
-                </span>
-              ))}
+            <div className={`mt-1 grid ${cols} gap-2 opacity-80`}>
+              {card.theirs.map((e, i) => {
+                const isTwin = justFound && e === card.shared;
+                return (
+                  <span
+                    key={i}
+                    className={`relative flex aspect-square min-h-[52px] items-center justify-center rounded-xl border text-3xl sm:text-4xl ${isTwin ? 'scale-105' : ''}`}
+                    style={{
+                      borderColor: 'var(--line)',
+                      boxShadow: isTwin ? '0 0 0 3px var(--good)' : undefined,
+                    }}
+                  >
+                    {e}
+                    {isTwin && (
+                      <span className="absolute right-1 top-1 text-sm font-bold" aria-hidden="true">
+                        ✓
+                      </span>
+                    )}
+                  </span>
+                );
+              })}
             </div>
           </>
         )}

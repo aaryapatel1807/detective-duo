@@ -26,15 +26,12 @@ import {
 } from '@/components/together/DuoCornerViews';
 import CallPanel from '@/components/together/CallPanel';
 import {
-  BridgeView,
   CheckboxRaceView,
   JinxView,
   PurpleView,
   SpotEmojiView,
   UnoSlapView,
 } from '@/components/quickgames/RaceViews';
-import SnakeView from '@/components/quickgames/SnakeView';
-import { QuoridorView, VibeBoard } from '@/components/quickgames/BoardViews';
 import { generatePuzzle as genGrid } from '@/lib/generators/logicGrid';
 import { generatePuzzle as genCipher } from '@/lib/generators/cipherDesk';
 import { generatePuzzle as genNonogram } from '@/lib/generators/nonogram';
@@ -43,21 +40,6 @@ import { ALL_CASES } from '@/lib/cases/bank';
 import { splitCase, splittableCases } from '@/lib/together/split';
 import { cipherProgress, logicGridProgress, nonogramProgress } from '@/lib/together/versus';
 import { tallyAfter, type RoomTally } from '@/lib/together/duoCorner';
-import { hashSeed } from '@/lib/generators/rng';
-import {
-  applyQuoridorMove,
-  initialQuoridor,
-  quoridorWinner,
-  type QuoridorMove,
-  type QuoridorState,
-} from '@/lib/quickgames/quoridor';
-import { snakeTargetForLevel } from '@/lib/quickgames/snake';
-import {
-  generateVibe,
-  VIBE_QUESTIONS,
-  vibeEliminate,
-  vibeRemaining,
-} from '@/lib/quickgames/vibeCheck';
 import { jinxScore } from '@/lib/quickgames/jinx';
 import type { ChatMsg } from '@/lib/together/types';
 import { saveSession } from '@/lib/together/session';
@@ -74,14 +56,19 @@ const GAME_NAMES: Record<string, string> = {
   'spot-liar': 'Spot the Liar',
   'know-me': 'How Well Do You Know Me',
   'quoridor': 'Quoridor',
+  'guess-person': 'Guess the Person',
   'checkbox-race': 'Checkbox Race',
   'the-bridge': 'The Bridge',
+  'hangman': 'Hangman',
   'jinx': 'Jinx',
   'spot-emoji': 'Speed Spot-the-Emoji',
   'dont-press-purple': "Don't Press Purple",
   'snake-arena': 'Snake Arena',
+  'quiz-gk': 'GK Quiz',
   'uno-slap': 'Uno Slap',
   'vibe-check': 'Vibe Check',
+  'tic-tac-toe': 'Tic Tac Toe',
+  'sea-battle': 'Sea Battle',
 };
 
 export default function PlayPage({ params }: { params: { code: string } }) {
@@ -146,36 +133,12 @@ export default function PlayPage({ params }: { params: { code: string } }) {
     }
   }, [myPct, session?.mode, session?.winnerUid, me?.uid, updateSession, update, state.tally]);
 
-  // Phase 6 shared-board room setup + win declaration (host-only, so a
-  // win is declared exactly once even though both clients see the board).
-  const quickQuoridor = (
-    session?.game === 'quoridor' ? (state.quoridor as QuoridorState | undefined) : undefined
-  );
   const jinxLists = (
     session?.game === 'jinx' ? ((state.answers ?? {}) as Record<string, string[]>) : {}
   );
   const jinxSubmitted = (
     session?.game === 'jinx' ? ((state.jinxSubmitted ?? {}) as Record<string, boolean>) : {}
   );
-  useEffect(() => {
-    if (!session || session.game !== 'quoridor' || session.mode !== 'versus') return;
-    if (quickQuoridor || !isHost || session.status !== 'playing') return;
-    update({ quoridor: initialQuoridor(session.level) });
-  }, [session, quickQuoridor, isHost, update]);
-  useEffect(() => {
-    if (!quickQuoridor || !session || session.winnerUid || !isHost) return;
-    const w = quoridorWinner(quickQuoridor);
-    if (w === null) return;
-    const winner = session.players[w]?.uid;
-    if (!winner) return;
-    update({ tally: tallyAfter(state.tally as RoomTally | undefined, winner) }, true);
-    updateSession({ winnerUid: winner, status: 'finished' });
-  }, [quickQuoridor, session, isHost, update, updateSession, state.tally]);
-  useEffect(() => {
-    if (!session || session.game !== 'vibe-check' || session.mode !== 'versus') return;
-    if ((state.vibeTurn as string | undefined) || !isHost || session.status !== 'playing') return;
-    update({ vibeTurn: session.players[0]?.uid ?? '', vibeEliminated: {} });
-  }, [session, state.vibeTurn, isHost, update]);
   useEffect(() => {
     if (!session || session.game !== 'jinx' || session.mode !== 'versus' || !isHost) return;
     if (session.winnerUid || session.status === 'finished') return;
@@ -547,18 +510,6 @@ export default function PlayPage({ params }: { params: { code: string } }) {
         onProgress={(pct) => update({ progress: { ...progress, [me.uid]: pct } })}
       />
     );
-  } else if (session.mode === 'versus' && session.game === 'the-bridge') {
-    body = (
-      <BridgeView
-        seed={session.seed}
-        level={session.level}
-        mode="versus"
-        opponentPct={other ? (progress[other.uid] ?? 0) : 0}
-        opponentName={other?.name}
-        disabled={paused || !!session.winnerUid}
-        onProgress={(pct) => update({ progress: { ...progress, [me.uid]: pct } })}
-      />
-    );
   } else if (session.mode === 'versus' && session.game === 'spot-emoji') {
     body = (
       <SpotEmojiView
@@ -588,19 +539,6 @@ export default function PlayPage({ params }: { params: { code: string } }) {
       <UnoSlapView
         seed={session.seed}
         level={session.level}
-        mode="versus"
-        opponentPct={other ? (progress[other.uid] ?? 0) : 0}
-        opponentName={other?.name}
-        disabled={paused || !!session.winnerUid}
-        onProgress={(pct) => update({ progress: { ...progress, [me.uid]: pct } })}
-      />
-    );
-  } else if (session.mode === 'versus' && session.game === 'snake-arena') {
-    body = (
-      <SnakeView
-        seed={session.seed}
-        level={session.level}
-        target={snakeTargetForLevel(session.level)}
         mode="versus"
         opponentPct={other ? (progress[other.uid] ?? 0) : 0}
         opponentName={other?.name}
@@ -646,186 +584,6 @@ export default function PlayPage({ params }: { params: { code: string } }) {
           </section>
         )}
       </>
-    );
-  } else if (session.mode === 'versus' && session.game === 'quoridor') {
-    const q = state.quoridor as QuoridorState | undefined;
-    if (!q) {
-      body = <p className="panel p-4 text-sm">Setting up the board…</p>;
-    } else {
-      const myIdx = session.players.findIndex((p) => p.uid === me.uid);
-      body = (
-        <QuoridorView
-          state={q}
-          onMove={(m: QuoridorMove) => update({ quoridor: applyQuoridorMove(q, m) }, true)}
-          myTurn={q.turn === myIdx}
-          disabled={paused || !!session.winnerUid}
-          meLabel="You"
-          foeLabel={other?.name ?? 'Partner'}
-        />
-      );
-    }
-  } else if (session.mode === 'versus' && session.game === 'vibe-check') {
-    const vibeGame = generateVibe(session.seed, session.level);
-    const mySecretIdx = hashSeed(`${session.seed}|vibe|${me.uid}`) % 24;
-    const mySecret = vibeGame.board[mySecretIdx]!;
-    const eliminatedMap = (state.vibeEliminated ?? {}) as Record<string, number[]>;
-    const myEliminated = eliminatedMap[me.uid] ?? [];
-    const pending = state.vibePending as
-      | { askerUid: string; questionId: string; text: string; trait: string }
-      | null
-      | undefined;
-    const lastAnswer = state.vibeLastAnswer as
-      | { text: string; answer: boolean }
-      | null
-      | undefined;
-    const asked = (state.vibeAsked ?? []) as string[];
-    const turnUid = state.vibeTurn as string | undefined;
-    const myTurn = turnUid === me.uid;
-    const setEliminated = (next: number[]) =>
-      update({ vibeEliminated: { ...eliminatedMap, [me.uid]: next } });
-    body = (
-      <div>
-        <section className="panel p-4">
-          <p className="text-sm">
-            Your secret: <strong>{mySecret.name}</strong> — traits:{' '}
-            {mySecret.traits.join(', ')}. Answer honestly about them.
-          </p>
-          <p className="mt-1 text-sm text-[var(--ink-dim)]">
-            Board: {vibeGame.kind === 'desi' ? 'desi' : vibeGame.kind === 'global' ? 'global' : 'desi + global'} ·
-            Fictional personas, not real celebrities.
-          </p>
-        </section>
-        {pending && pending.askerUid !== me.uid && (
-          <section className="card mt-4 p-4">
-            <p className="font-semibold">
-              {other?.name ?? 'Your partner'} asks: “{pending.text}”
-            </p>
-            <p className="mt-1 text-sm text-[var(--ink-dim)]">
-              Answer about {mySecret.name}, honestly.
-            </p>
-            <div className="mt-3 flex gap-2">
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={paused}
-                onClick={() =>
-                  update(
-                    {
-                      vibePending: null,
-                      vibeLastAnswer: { text: pending.text, answer: true },
-                    },
-                    true,
-                  )
-                }
-              >
-                Yes
-              </button>
-              <button
-                type="button"
-                className="btn"
-                disabled={paused}
-                onClick={() =>
-                  update(
-                    {
-                      vibePending: null,
-                      vibeLastAnswer: { text: pending.text, answer: false },
-                    },
-                    true,
-                  )
-                }
-              >
-                No
-              </button>
-            </div>
-          </section>
-        )}
-        {pending && pending.askerUid === me.uid && (
-          <p className="panel mt-4 p-4 text-sm">
-            Waiting for {other?.name ?? 'your partner'} to answer…
-          </p>
-        )}
-        {!pending && myTurn && (
-          <section className="card mt-4 p-4">
-            {lastAnswer && (
-              <p className="text-sm">
-                They answered <strong>{lastAnswer.answer ? 'Yes' : 'No'}</strong> to “
-                {lastAnswer.text}” — flip down everyone it can't be.
-              </p>
-            )}
-            <p className="mt-2 font-semibold">Ask a question</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {VIBE_QUESTIONS.filter((q) => !asked.includes(q.id)).map((q) => (
-                <button
-                  key={q.id}
-                  type="button"
-                  className="btn"
-                  disabled={paused || !!session.winnerUid}
-                  onClick={() =>
-                    update(
-                      {
-                        vibePending: {
-                          askerUid: me.uid,
-                          questionId: q.id,
-                          text: q.text,
-                          trait: q.trait,
-                        },
-                        vibeAsked: [...asked, q.id],
-                      },
-                      true,
-                    )
-                  }
-                >
-                  {q.text}
-                </button>
-              ))}
-            </div>
-            {other && (
-              <button
-                type="button"
-                className="btn mt-3"
-                disabled={paused || !!session.winnerUid}
-                onClick={() => update({ vibeTurn: other.uid }, true)}
-              >
-                Pass the turn
-              </button>
-            )}
-          </section>
-        )}
-        {!pending && !myTurn && (
-          <p className="panel mt-4 p-4 text-sm">
-            {other?.name ?? 'Your partner'} is asking — wait for their question, then answer
-            honestly about {mySecret.name}.
-          </p>
-        )}
-        <div className="mt-4">
-          <VibeBoard
-            board={vibeGame.board}
-            eliminated={myEliminated}
-            onToggleEliminate={(i) =>
-              setEliminated(
-                myEliminated.includes(i)
-                  ? myEliminated.filter((x) => x !== i)
-                  : [...myEliminated, i],
-              )
-            }
-            onGuess={(i) => {
-              if (!myTurn || paused || !!session.winnerUid) return;
-              const opponentSecretIdx = hashSeed(`${session.seed}|vibe|${other?.uid ?? ''}`) % 24;
-              if (i === opponentSecretIdx) {
-                update(
-                  { tally: tallyAfter(state.tally as RoomTally | undefined, me.uid) },
-                  true,
-                );
-                updateSession({ winnerUid: me.uid, status: 'finished' });
-              } else {
-                setEliminated([...myEliminated, i]);
-                if (other) update({ vibeTurn: other.uid }, true);
-              }
-            }}
-            disabled={paused || !!session.winnerUid || !myTurn}
-          />
-        </div>
-      </div>
     );
   } else {
     body = (

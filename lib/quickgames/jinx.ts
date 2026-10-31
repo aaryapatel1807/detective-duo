@@ -9,7 +9,55 @@
  * timers stay opt-in across v2.
  */
 import { rngFromSeed, shuffle } from '../generators/rng';
-import { bridgeWordList } from './bridge';
+// Word list formerly shared from The Bridge (game removed); kept here
+// so Jinx's lexicon is unchanged.
+export const BRIDGE_WORDS: string[] = [
+  // 3 letters
+  'CAT', 'COT', 'DOT', 'DOG', 'LOG', 'FOG', 'FIG', 'FIN', 'FUN', 'SUN', 'RUN',
+  'RAN', 'MAN', 'MAP', 'CAP', 'CUP', 'CUT', 'BUT', 'BAT', 'RAT', 'MAT', 'HAT',
+  'HOT', 'HIT', 'SIT', 'SAT', 'SET', 'SEE', 'SEA', 'TEA', 'TEN', 'TAN', 'CAN',
+  'CAR', 'BAR', 'FAR', 'FAN', 'PEN', 'HEN', 'DEN', 'NET', 'PET', 'POT', 'TOP',
+  'MOP', 'HOP', 'POP', 'PIP', 'LIP', 'TIP', 'TAP', 'SAP', 'SIP', 'SOP', 'SOW',
+  'COW', 'HOW', 'NOW', 'BOW', 'ROW', 'LOW', 'TOW', 'TOE', 'DOE', 'FOE', 'FOB',
+  'RIB', 'ROB', 'ROD', 'SOD', 'SOB', 'JOB', 'JOG', 'JAM', 'JAR', 'JAW', 'PAW',
+  'SAW', 'LAW', 'RAW', 'BAG', 'RAG', 'TAG', 'LAG', 'LEG', 'PEG', 'BEG', 'BIG',
+  'PIG', 'DIG', 'WIG', 'WIN', 'WIT', 'KIT', 'KID', 'BID', 'BIT', 'FIT', 'FAD',
+  'MAD', 'SAD', 'PAD', 'BAD', 'BED', 'RED', 'LED', 'LID', 'RID', 'RIM', 'DIM',
+  'DIP', 'HIP', 'HIS', 'HIT', 'ITS', 'NIT', 'NUT', 'CUT', 'GUT', 'GUN', 'GUM',
+  'SUM', 'SUP', 'CUB', 'TUB', 'RUB', 'RUG', 'BUG', 'BUN', 'BUS', 'FUS', 'FUR',
+  'CUR', 'CUE', 'DUE', 'SUE', 'SUB', 'HUB', 'HUM', 'MUM', 'MUG', 'JUG', 'JUT',
+  // 4 letters
+  'COLD', 'CORD', 'WORD', 'WORM', 'WARM', 'BOLD', 'HOLD', 'GOLD', 'SOLD', 'SOLE',
+  'SALE', 'TALE', 'TALK', 'WALK', 'WALL', 'BALL', 'CALL', 'FALL', 'FILL', 'FISH',
+  'DISH', 'WISH', 'WISE', 'RISE', 'RICE', 'MICE', 'MINE', 'MIND', 'KIND', 'KING',
+  'SING', 'SONG', 'LONG', 'LOOK', 'BOOK', 'COOK', 'COOL', 'POOL', 'POOR', 'DOOR',
+  'MOOR', 'MOON', 'SOON', 'SOOT', 'FOOT', 'FOOD', 'GOOD', 'WOOD', 'WORK', 'FARM',
+  'HARM', 'HARP', 'CARP', 'CARD', 'CARE', 'DARE', 'DARK', 'PARK', 'PART', 'PORT',
+  'SORT', 'SOUL', 'SOUP', 'SOUR', 'HOUR', 'FOUR', 'TOUR', 'TOUT', 'BARN', 'DARN',
+  'YARN', 'YARD', 'HARD', 'HARE', 'BARE', 'BARK', 'MARK', 'MARS', 'MART', 'MART',
+  'CART', 'CARE', 'CORE', 'CORK', 'COCK', 'COOK', 'HOOK', 'TOOK', 'TOOT', 'BOOT',
+  'BOON', 'MOON', 'NOON', 'NOOK', 'ROOK', 'ROOM', 'ROOT', 'FOOT', 'FORT', 'FORM',
+  'FORK', 'FORE', 'MORE', 'MORN', 'BORN', 'BORE', 'BONE', 'BONE', 'DONE', 'DOME',
+  'HOME', 'HOLE', 'HALE', 'HATE', 'MATE', 'MATH', 'PATH', 'PATE', 'RATE', 'RATS',
+  'CATS', 'BATS', 'HATS', 'MATS', 'MATE', 'LATE', 'LAKE', 'LIKE', 'LIME', 'TIME',
+  'TIDE', 'TILE', 'FILE', 'FINE', 'FIRE', 'FIRM', 'FARM', 'FARM', 'WARM', 'WARN',
+  'WORN', 'WORT', 'WORT', 'WART', 'WART', 'PART', 'PAST', 'FAST', 'LAST', 'LASS',
+  'MASS', 'MESS', 'MISS', 'KISS', 'KIND', 'KING', 'RING', 'RUNG', 'RANG', 'BANG',
+  'HANG', 'SANG', 'SING', 'SINK', 'SINK', 'PINK', 'PINT', 'MINT', 'MINE', 'MINE',
+  'WINE', 'WIND', 'WAND', 'WANT', 'WENT', 'WEEP', 'WEEK', 'WEAK', 'BEAK', 'BEAM',
+  'BEAN', 'MEAN', 'MEAT', 'MEET', 'MELT', 'FELT', 'FELL', 'FULL', 'PULL', 'PULL',
+  'BULL', 'BALL', 'BELL', 'BELL', 'TELL', 'TALL', 'TOLL', 'ROLL', 'ROLE', 'RODE',
+  'RODE', 'CODE', 'CADE', 'CAGE', 'RAGE', 'RAGE', 'PAGE', 'PACE', 'FACE', 'FACT',
+  'PACT', 'PACK', 'PICK', 'KICK', 'KICK', 'SICK', 'SOCK', 'ROCK', 'RACK', 'RACK',
+  'LACK', 'LUCK', 'DUCK', 'DOCK', 'LOCK', 'LOOK', 'LOON', 'LOOM', 'BOOM', 'BOON',
+  'MOON', 'COON', 'COOP', 'COOL', 'POOL', 'WOOL', 'WOLF', 'GOLF', 'GULF', 'GULL',
+  'BULL', 'BULB', 'BURB', 'CURB', 'CURD', 'CARD', 'CORD', 'CORD', 'WORD', 'WORK',
+];
+
+/** The word list (deduped) for Jinx's lexicon. */
+function bridgeWordList(): string[] {
+  return [...new Set(BRIDGE_WORDS)];
+}
 
 const EXTRA_WORDS: string[] = [
   'APPLE', 'GRAPE', 'LEMON', 'BERRY', 'PEACH', 'MELON', 'PLUMS', 'PEAR',

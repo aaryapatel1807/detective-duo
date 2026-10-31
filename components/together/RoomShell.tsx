@@ -9,7 +9,7 @@
  * an optional photo booth panel (with an auto-snap-on-win toggle), and
  * a win-snap banner when a round is won with auto-snap on.
  */
-import { useState, type ReactNode, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type MouseEvent } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Camera, LogOut, MessageCircle, NotebookPen, Pause } from 'lucide-react';
 import type { ChatMsg } from '@/lib/together/types';
@@ -43,6 +43,21 @@ export default function RoomShell(props: Props) {
   const [noteDraft, setNoteDraft] = useState(props.notes);
   const [extrasOpen, setExtrasOpen] = useState(true);
   const [boothOpen, setBoothOpen] = useState(false);
+
+  // Camera handover with the call panel (CallPanel itself is untouched
+  // here): on one phone the call and the booth cannot hold the camera
+  // at once, so opening the booth tells the call side to pause its
+  // video track, and closing tells it to resume. Fired from this
+  // effect so both open paths — the win-snap banner and the toggle
+  // button — are covered, and so closing (not just toggling) emits
+  // the close event. The first render dispatches nothing: no booth
+  // was open, so there is nothing to resume.
+  const boothWasOpenRef = useRef(false);
+  useEffect(() => {
+    if (boothWasOpenRef.current === boothOpen) return;
+    boothWasOpenRef.current = boothOpen;
+    window.dispatchEvent(new Event(boothOpen ? 'sachi:booth-open' : 'sachi:booth-close'));
+  }, [boothOpen]);
 
   const trackCursor = (e: MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();

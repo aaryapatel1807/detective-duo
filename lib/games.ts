@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   BookOpenText,
+  Brain,
   Dices,
   Eye,
   Fence,
@@ -19,6 +20,8 @@ import {
   Pencil,
   Route,
   Search,
+  Ship,
+  UserSearch,
   Smile,
   Type,
   Zap,
@@ -94,15 +97,17 @@ export function gameById(id: string): GameMeta | undefined {
 }
 
 /**
- * Quick games (Phase 6): nine more two-player games from the crisskross
- * extract. Each is quick, self-contained, and plays solo against a bot.
+ * Quick games: quick, self-contained games that play solo against a bot.
+ * Replaced over time: Guess the Person, Hangman, GK Quiz and Tic Tac Toe
+ * took Quoridor, The Bridge, Snake Arena and Vibe Check's board spots;
+ * Sea Battle was appended. Ten quick games in total.
  */
 export const QUICK_GAMES: GameMeta[] = [
   {
-    id: 'quoridor',
-    name: 'Quoridor',
-    tagline: 'Race across the board, fences in the way.',
-    icon: Fence,
+    id: 'guess-person',
+    name: 'Guess the Person',
+    tagline: 'Ask yes-no questions, unmask the person.',
+    icon: UserSearch,
     live: true,
   },
   {
@@ -113,10 +118,10 @@ export const QUICK_GAMES: GameMeta[] = [
     live: true,
   },
   {
-    id: 'the-bridge',
-    name: 'The Bridge',
-    tagline: 'A word-ladder bridge between two words.',
-    icon: Route,
+    id: 'hangman',
+    name: 'Hangman',
+    tagline: 'Guess the word, letter by letter.',
+    icon: Type,
     live: true,
   },
   {
@@ -141,10 +146,10 @@ export const QUICK_GAMES: GameMeta[] = [
     live: true,
   },
   {
-    id: 'snake-arena',
-    name: 'Snake Arena',
-    tagline: 'Real-time snakes, fruit, stars, shields.',
-    icon: Zap,
+    id: 'quiz-gk',
+    name: 'GK Quiz',
+    tagline: 'General knowledge, head to head.',
+    icon: Brain,
     live: true,
   },
   {
@@ -155,10 +160,17 @@ export const QUICK_GAMES: GameMeta[] = [
     live: true,
   },
   {
-    id: 'vibe-check',
-    name: 'Vibe Check',
-    tagline: 'Guess Who with personality questions.',
-    icon: Smile,
+    id: 'tic-tac-toe',
+    name: 'Tic Tac Toe',
+    tagline: 'Three in a row beats the bot — or a friend.',
+    icon: Grid3x3,
+    live: true,
+  },
+  {
+    id: 'sea-battle',
+    name: 'Sea Battle',
+    tagline: 'Sink the fleet before yours goes down.',
+    icon: Ship,
     live: true,
   },
 ];

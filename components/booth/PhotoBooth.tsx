@@ -634,6 +634,11 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  // Generation guard for startCamera: a superseded getUserMedia result
+  // must never adopt (or leak) a stream — e.g. a double-tapped retry
+  // resolving after a newer attempt would otherwise leave the older
+  // stream running and holding the camera.
+  const cameraGenRef = useRef(0);
   const shotsRef = useRef<HTMLCanvasElement[]>([]);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const boothChannelRef = useRef<ReturnType<
@@ -697,6 +702,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
 
   // ------------------------------------------------------------ camera ----
   const startCamera = useCallback(async (deviceId?: string) => {
+    const gen = ++cameraGenRef.current;
     try {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -705,6 +711,13 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
           : { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
         audio: false,
       });
+      if (gen !== cameraGenRef.current) {
+        // Superseded while awaiting (retry/flip raced ahead, or the
+        // booth unmounted): stop this stream instead of adopting it,
+        // or it would keep holding the camera with no owner.
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
       streamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
       setCameraOn(true);
@@ -712,10 +725,25 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
       setError(null);
       const all = await navigator.mediaDevices.enumerateDevices();
       setDevices(all.filter((d) => d.kind === 'videoinput'));
-    } catch {
+    } catch (e) {
+      if (gen !== cameraGenRef.current) return;
       setCameraOn(false);
       setTileStream(null);
-      setError('No camera here — allow camera access to use the booth.');
+      // A busy camera is not a denied permission: on one phone the
+      // call and the booth cannot hold the camera at once, and the
+      // second getUserMedia fails with NotReadableError. Say so
+      // plainly instead of sending the user to re-allow access.
+      // (The existing "Try camera again" button below re-runs this.)
+      const name = (e as { name?: unknown } | null)?.name;
+      if (name === 'NotReadableError') {
+        setError('camera is busy — close the call video or try again.');
+      } else if (name === 'NotAllowedError' || name === 'SecurityError') {
+        setError('No camera here — allow camera access to use the booth.');
+      } else if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+        setError('No camera found on this device — the booth needs a camera to shoot.');
+      } else {
+        setError('No camera here — allow camera access to use the booth.');
+      }
     }
   }, []);
 
@@ -729,7 +757,11 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
     });
     return () => {
       alive = false;
+      // Invalidate any pending getUserMedia so its result is stopped,
+      // not adopted, by the generation guard in startCamera.
+      cameraGenRef.current++;
       clearTimers();
+      if (videoRef.current) videoRef.current.srcObject = null;
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     };
@@ -1481,7 +1513,20 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
           <div className="order-1 flex min-w-0 flex-1 flex-col items-center lg:order-2">
             <div className="relative z-[41] w-full overflow-hidden rounded-xl bg-black lg:h-[min(78vh,920px)] lg:aspect-[3/4] lg:w-auto lg:max-w-full lg:flex-none">
               <video
-                ref={videoRef}
+                ref={(node) => {
+                  videoRef.current = node;
+                  // Re-attach on remount: the stream outlives the
+                  // preview element (review/done unmount it, "Start
+                  // over"/"Take another" remount it, and a retry can
+                  // succeed while it is unmounted), so a fresh
+                  // <video> would otherwise stay blank even though
+                  // the camera is still running. Same pattern the
+                  // live filter tiles already use.
+                  if (node && streamRef.current && node.srcObject !== streamRef.current) {
+                    node.srcObject = streamRef.current;
+                    void node.play().catch(() => {});
+                  }
+                }}
                 autoPlay
                 playsInline
                 muted
