@@ -14,6 +14,7 @@ import {
   type ProgressMap,
 } from '@/lib/progress';
 import { useTheme } from '@/components/ThemeProvider';
+import StickyActionBar from '@/components/StickyActionBar';
 import BotRaceBar, { useBotRace } from '@/components/BotRaceBar';
 import { cipherProgress } from '@/lib/together/versus';
 
@@ -367,6 +368,17 @@ export default function CipherDeskPage() {
           </div>
         </section>
       )}
+      <StickyActionBar
+        status={msg ?? `Level ${level} · Hints used: ${state.hints}`}
+        actions={
+          won === null
+            ? [
+                { label: 'Check my answer', onClick: doCheck, primary: true },
+                { label: 'Hint (free)', onClick: useHint },
+              ]
+            : []
+        }
+      />
     </main>
   );
 }

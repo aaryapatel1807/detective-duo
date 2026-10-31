@@ -15,6 +15,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ChevronLeft, ChevronRight, Home, RotateCcw } from 'lucide-react';
+import StickyActionBar from '@/components/StickyActionBar';
 import {
   botAnswer,
   botDelayForLevel,
@@ -437,6 +438,18 @@ export default function QuizGkPage() {
           </div>
         </section>
       )}
+      <StickyActionBar
+        status={mode ? (finished ? 'Round finished' : `Question ${index + 1} of ${questions.length}`) : undefined}
+        actions={
+          !mode
+            ? []
+            : finished
+              ? [{ label: 'Play again', onClick: restart, primary: true }]
+              : revealed
+                ? [{ label: index + 1 >= questions.length ? 'See the result' : 'Next question', onClick: onNext, primary: true }]
+                : []
+        }
+      />
     </main>
   );
 }

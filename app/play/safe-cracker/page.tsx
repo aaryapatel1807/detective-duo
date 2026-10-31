@@ -28,6 +28,7 @@ import {
   type ProgressMap,
 } from '@/lib/progress';
 import { useTheme } from '@/components/ThemeProvider';
+import StickyActionBar from '@/components/StickyActionBar';
 import { PlayHeader, WinPanel } from '@/components/duo/PlayBits';
 
 const GAME_ID = 'safe-cracker';
@@ -330,6 +331,17 @@ export default function SafeCrackerPage() {
           </div>
         </section>
       )}
+      <StickyActionBar
+        status={state ? `Safe Cracker · ${state.guesses.length} guesses` : 'Safe Cracker'}
+        actions={
+          state && won === null && !botWon
+            ? [
+                { label: 'Guess', onClick: submitGuess, primary: true, disabled: state.current.length !== params.digits },
+                { label: 'Hint (free)', onClick: useHint },
+              ]
+            : []
+        }
+      />
     </main>
   );
 }

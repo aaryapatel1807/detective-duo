@@ -27,6 +27,7 @@ import {
   type ProgressMap,
 } from '@/lib/progress';
 import { useTheme } from '@/components/ThemeProvider';
+import StickyActionBar from '@/components/StickyActionBar';
 import { PlayHeader, WinPanel } from '@/components/duo/PlayBits';
 
 const GAME_ID = 'escape-maze';
@@ -339,6 +340,27 @@ export default function EscapeMazePage() {
           onNext={() => setLevel(level + 1)}
         />
       )}
+      <StickyActionBar
+        status="Escape the Maze"
+        spacerPx={176}
+        actions={
+          won === null
+            ? [
+                { label: 'Hint (free)', onClick: useHint },
+                { label: 'Start over', onClick: restart },
+              ]
+            : []
+        }
+      >
+        <div className="flex flex-col items-center gap-1">
+          {padButton('up', ChevronUp, 'up')}
+          <div className="flex gap-1">
+            {padButton('left', ChevronLeft, 'left')}
+            {padButton('down', ChevronDown, 'down')}
+            {padButton('right', ChevronRight, 'right')}
+          </div>
+        </div>
+      </StickyActionBar>
     </main>
   );
 }

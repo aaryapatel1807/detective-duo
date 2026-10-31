@@ -26,6 +26,7 @@ import {
   type ProgressMap,
 } from '@/lib/progress';
 import { useTheme } from '@/components/ThemeProvider';
+import StickyActionBar from '@/components/StickyActionBar';
 import { PlayHeader } from '@/components/duo/PlayBits';
 import SketchCanvas from '@/components/duo/SketchCanvas';
 
@@ -175,6 +176,17 @@ export default function SketchCluePage() {
           </div>
         )}
       </section>
+      <StickyActionBar
+        status={`Sketch the Clue · ${strokes.length} strokes`}
+        actions={
+          won === null
+            ? [
+                { label: 'Ask the guesser', onClick: askGuesser, primary: true, disabled: !strokes.length },
+                { label: 'Undo stroke', onClick: () => setStrokes(strokes.slice(0, -1)), disabled: !strokes.length },
+              ]
+            : []
+        }
+      />
     </main>
   );
 }

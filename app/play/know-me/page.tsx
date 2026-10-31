@@ -32,6 +32,7 @@ import {
   type ProgressMap,
 } from '@/lib/progress';
 import { useTheme } from '@/components/ThemeProvider';
+import StickyActionBar from '@/components/StickyActionBar';
 import { PlayHeader, WinPanel } from '@/components/duo/PlayBits';
 
 const GAME_ID = 'know-me';
@@ -364,6 +365,23 @@ export default function KnowMePage() {
           )}
         </section>
       )}
+      <StickyActionBar
+        status={`Know Me · ${state.phase}`}
+        actions={
+          state.phase === 'answer'
+            ? [
+                {
+                  label: section === 'questions' ? "Now guess Pip's answers" : "Now guess Pip's picks",
+                  onClick: () => setState({ ...state, phase: 'guess' }),
+                  primary: true,
+                  disabled: !answeredAll,
+                },
+              ]
+            : state.phase === 'guess'
+              ? [{ label: 'Reveal them together', onClick: reveal, primary: true, disabled: !guessedAll }]
+              : []
+        }
+      />
     </main>
   );
 }

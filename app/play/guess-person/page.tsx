@@ -29,6 +29,7 @@ import {
 } from '@/lib/generators/guessPerson';
 import { rngFromSeed, shuffle } from '@/lib/generators/rng';
 import SoloQuickShell from '@/components/quickgames/SoloQuickShell';
+import StickyActionBar from '@/components/StickyActionBar';
 
 const GAME_ID = 'guess-person';
 
@@ -213,6 +214,14 @@ function GuessBoard({
       {!game.finished && footer && (
         <div className="mt-4 flex flex-wrap gap-2">{footer}</div>
       )}
+      <StickyActionBar
+        status={`${game.remaining.length} left · ${game.questionsUsed} of ${game.budget} questions`}
+        actions={
+          interactive && selected
+            ? [{ label: `Guess ${selected}`, onClick: () => setGame((g) => makeGuess(g, selected)), primary: true }]
+            : []
+        }
+      />
     </div>
   );
 }
