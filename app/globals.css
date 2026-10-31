@@ -979,10 +979,75 @@ h1, h2, h3, .font-display {
 .cf-dots span:nth-child(2) { animation-delay: 0.2s; }
 .cf-dots span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes cf-blink { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+/* ------------------------------------------- Case Files murder board --- */
+/* Murder Mystery section only (31 Oct): the poster's language — board
+ * tabs above the folder, a CLASSIFIED stamp, red string and pins
+ * across the file header. Same manila exception as the v3 block above;
+ * the normal case board renders none of this. */
+.cf-boardtabs {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0 2px;
+}
+.cf-boardtab {
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 2px solid #8a6d3b;
+  background: #f6ead0;
+  color: #6b543a;
+  cursor: pointer;
+}
+.cf-boardtab.on {
+  background: #8a1f1f;
+  border-color: #8a1f1f;
+  color: #fff;
+}
+.cf-murder .cf-filehead {
+  padding-top: 30px;
+}
+.cf-stamp-classified {
+  position: absolute;
+  top: 2px;
+  left: 8px;
+  border: 4px solid #b01e1e;
+  color: #b01e1e;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  padding: 3px 12px;
+  transform: rotate(-7deg);
+  border-radius: 6px;
+  opacity: 0.85;
+  font-size: 15px;
+}
+.cf-string {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 28px;
+  pointer-events: none;
+}
+.cf-string line {
+  stroke: #c00;
+  stroke-width: 2;
+}
+.cf-pin {
+  position: absolute;
+  top: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff8a8a, #c00 60%, #7a0000);
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.4);
+}
 @media (max-width: 760px) {
   .cf-meta { grid-template-columns: 1fr; }
   .cf-filehead .cf-title { font-size: 24px; }
   .cf-stamp-head { position: static; display: inline-block; margin-bottom: 8px; }
+  .cf-stamp-classified { position: static; display: inline-block; margin-bottom: 8px; }
   .cf-ftab { padding: 8px 12px; font-size: 12px; }
   .cf-mug { grid-template-columns: 110px 1fr; }
   .cf-report { padding-left: 56px; }

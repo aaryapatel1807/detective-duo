@@ -26,8 +26,10 @@ import mediumB from '../content/cases/medium-b.json';
 import hardA from '../content/cases/hard-a.json';
 import hardB from '../content/cases/hard-b.json';
 import expert from '../content/cases/expert.json';
+import murder from '../content/cases/murder.json';
 
 export const GAME_ID = 'case-files';
+export const MURDER_GAME_ID = 'murder-mystery';
 
 const asCases = (json: unknown): CaseFile[] => json as CaseFile[];
 
@@ -44,6 +46,20 @@ export const ALL_CASES: CaseFile[] = [
   ...CASES_BY_TIER.Hard,
   ...CASES_BY_TIER.Expert,
 ];
+
+/**
+ * Murder Mystery section (31 Oct): its own ladder, separate from the
+ * tier rotation above. Levels 1-6 map in bank order, then rotate —
+ * the same "no repeat until exhausted, then cycle" behaviour as the
+ * Expert tier. Progress is tracked under MURDER_GAME_ID, so the two
+ * sections never share a level or a star.
+ */
+export const MURDER_CASES: CaseFile[] = asCases(murder);
+
+export function murderCaseForLevel(level: number): CaseFile {
+  const idx = ((level - 1) % MURDER_CASES.length + MURDER_CASES.length) % MURDER_CASES.length;
+  return MURDER_CASES[idx];
+}
 
 export interface TierRange {
   tier: CaseDifficulty;

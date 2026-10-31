@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_CASES, CASES_BY_TIER, caseForLevel, tierForLevel } from './bank';
-import { validateCase } from './validator';
+import { ALL_CASES, CASES_BY_TIER, caseForLevel, MURDER_CASES, murderCaseForLevel, tierForLevel } from './bank';
+import { validateCase, survivingSuspects } from './validator';
+import { MURDER_PORTRAIT_FILES, portraitForMurderSuspect } from './portraits';
 
 describe('case bank', () => {
   it('holds at least 60 cases', () => {
@@ -61,5 +62,45 @@ describe('case bank', () => {
     expect(caseForLevel(67).id).toBe('cf-exp-12');
     expect(caseForLevel(68).id).toBe('cf-exp-13');
     expect(ALL_CASES.length).toBe(66);
+  });
+});
+
+describe('murder mystery section', () => {
+  it('holds six original murder cases, all validator-passing', () => {
+    expect(MURDER_CASES.length).toBe(6);
+    const failures: string[] = [];
+    for (const c of MURDER_CASES) {
+      const r = validateCase(c);
+      if (!r.valid) failures.push(`${c.id}: ${r.errors.join('; ')}`);
+    }
+    expect(failures).toEqual([]);
+  });
+
+  it('keeps murder ids unique across both banks', () => {
+    const ids = [...ALL_CASES.map((c) => c.id), ...MURDER_CASES.map((c) => c.id)];
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('maps murder levels 1-6 in bank order, then cycles', () => {
+    const ids = MURDER_CASES.map((c) => c.id);
+    expect(ids).toEqual(['mm-001', 'mm-002', 'mm-003', 'mm-004', 'mm-005', 'mm-006']);
+    for (let level = 1; level <= 6; level++) {
+      expect(murderCaseForLevel(level).id).toBe(ids[level - 1]);
+    }
+    expect(murderCaseForLevel(7).id).toBe('mm-001');
+  });
+
+  it('leaves exactly the culprit standing when every clue is pinned', () => {
+    for (const c of MURDER_CASES) {
+      expect(survivingSuspects(c)).toEqual([c.solution.culpritId]);
+    }
+  });
+
+  it('never repeats a face within a murder case', () => {
+    expect(MURDER_PORTRAIT_FILES.length).toBe(20);
+    for (const c of MURDER_CASES) {
+      const faces = c.suspects.map((_, i) => portraitForMurderSuspect(c.id, i));
+      expect(new Set(faces).size).toBe(faces.length);
+    }
   });
 });

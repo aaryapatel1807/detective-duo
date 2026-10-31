@@ -29,6 +29,12 @@
  * the story as a typed report on ruled paper, evidence as tagged
  * exhibits, elimination as a clearance roster, suspects as mugshot
  * sheets, and accuse as a final report to sign. Mechanics unchanged.
+ *
+ * Murder Mystery section (31 Oct): a second board inside this page —
+ * same mechanics, same dossier, its own ladder (MM-001…, progress
+ * under MURDER_GAME_ID) and its own skin: CASE No. tags, red string
+ * and pins, a CLASSIFIED stamp, and a twenty-face portrait pool.
+ * Normal case files are untouched by the switch.
  */
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -44,9 +50,9 @@ import {
   Star,
   Users,
 } from 'lucide-react';
-import { caseForLevel, CASES_BY_TIER, GAME_ID, tierForLevel, tierStartForLevel, ALL_CASES } from '@/lib/cases/bank';
+import { caseForLevel, CASES_BY_TIER, GAME_ID, MURDER_CASES, MURDER_GAME_ID, murderCaseForLevel, tierForLevel, tierStartForLevel, ALL_CASES } from '@/lib/cases/bank';
 import { eliminationFor } from '@/lib/cases/elimination';
-import { portraitForSuspect } from '@/lib/cases/portraits';
+import { portraitForMurderSuspect, portraitForSuspect } from '@/lib/cases/portraits';
 import { hashSeed, mulberry32 } from '@/lib/generators/logicGrid';
 import {
   computeStars,
@@ -60,6 +66,7 @@ import EmptyState from '@/components/EmptyState';
 import { tierCycleNote, unknownCase } from '@/lib/emptyStates';
 
 type Tab = 'story' | 'evidence' | 'suspects' | 'accuse';
+type Section = 'cases' | 'murder';
 type RevealPhase = 'accuse' | 'suspense' | 'verdict' | 'steps' | 'confession' | 'done';
 
 interface PlayState {
@@ -81,6 +88,12 @@ const freshState = (): PlayState => ({
 });
 
 const storageKey = (level: number) => `dd-v2-cf-${level}`;
+const murderStorageKey = (level: number) => `dd-v2-cf-mm-${level}`;
+const keyFor = (section: Section, level: number) =>
+  section === 'murder' ? murderStorageKey(level) : storageKey(level);
+const gameIdFor = (section: Section) =>
+  section === 'murder' ? MURDER_GAME_ID : GAME_ID;
+const SECTION_KEY = 'dd-v2-cf-section';
 
 function shuffleFor<T>(items: T[], seed: string): T[] {
   const rng = mulberry32(hashSeed(seed));
@@ -94,6 +107,7 @@ function shuffleFor<T>(items: T[], seed: string): T[] {
 
 export default function CaseFilesPage() {
   const [progress, setProgress] = useState<ProgressMap>({});
+  const [section, setSection] = useState<Section>('cases');
   const [level, setLevel] = useState(1);
   const [state, setState] = useState<PlayState>(freshState());
   const [tab, setTab] = useState<Tab>('story');
@@ -102,23 +116,32 @@ export default function CaseFilesPage() {
   const [revealPhase, setRevealPhase] = useState<RevealPhase>('accuse');
   const [revealCount, setRevealCount] = useState(0);
   const [accusedName, setAccusedName] = useState<string | null>(null);
-  const [loadedFor, setLoadedFor] = useState(0);
+  const [loadedFor, setLoadedFor] = useState('');
   const [leftCaseId, setLeftCaseId] = useState<string | null>(null);
   const [badCaseId, setBadCaseId] = useState<string | null>(null);
 
-  const myProgress = getGameProgress(progress, GAME_ID);
+  const activeGameId = gameIdFor(section);
+  const myProgress = getGameProgress(progress, activeGameId);
   const unlocked = Math.max(myProgress.currentLevel, 1);
   const levelStars = myProgress.stars[String(level)] ?? 0;
 
   useEffect(() => {
     const map = loadLocalProgress();
     setProgress(map);
-    setLevel(getGameProgress(map, GAME_ID).currentLevel);
+    // Remember which board she was on; a gifted murder case forces it.
+    let nextSection: Section = 'cases';
+    try {
+      if (localStorage.getItem(SECTION_KEY) === 'murder') nextSection = 'murder';
+    } catch {
+      /* ignore */
+    }
     // A case left by a partner opens by id (?case=...), and is marked seen.
     // An unknown id shows an error state instead of silently opening level 1.
+    // Murder ids open the murder board; normal ids open the case board.
     try {
       const id = new URLSearchParams(window.location.search).get('case');
-      if (id && ALL_CASES.some((c) => c.id === id)) {
+      if (id && [...ALL_CASES, ...MURDER_CASES].some((c) => c.id === id)) {
+        if (MURDER_CASES.some((c) => c.id === id)) nextSection = 'murder';
         setLeftCaseId(id);
         void markLeftCaseSeen(id);
       } else if (id) {
@@ -127,10 +150,17 @@ export default function CaseFilesPage() {
     } catch {
       /* ignore */
     }
+    setSection(nextSection);
+    setLevel(getGameProgress(map, gameIdFor(nextSection)).currentLevel);
   }, []);
 
-  const leftCase = leftCaseId ? ALL_CASES.find((c) => c.id === leftCaseId) : undefined;
-  const c = useMemo(() => leftCase ?? caseForLevel(level), [leftCase, level]);
+  const leftCase = leftCaseId
+    ? [...ALL_CASES, ...MURDER_CASES].find((c) => c.id === leftCaseId)
+    : undefined;
+  const c = useMemo(
+    () => leftCase ?? (section === 'murder' ? murderCaseForLevel(level) : caseForLevel(level)),
+    [leftCase, level, section],
+  );
 
   // Live elimination: pinned clues rule suspects out as you pin.
   const elim = useMemo(
@@ -156,7 +186,7 @@ export default function CaseFilesPage() {
     [c],
   );
 
-  // Load / resume in-progress state for this level.
+  // Load / resume in-progress state for this board + level.
   // Left cases always start fresh and never touch ladder storage.
   useEffect(() => {
     if (leftCaseId) {
@@ -166,8 +196,9 @@ export default function CaseFilesPage() {
       setState(freshState());
       return;
     }
-    if (loadedFor === level) return;
-    setLoadedFor(level);
+    const key = `${section}-${level}`;
+    if (loadedFor === key) return;
+    setLoadedFor(key);
     setWon(null);
     setAccuseMsg(null);
     setRevealPhase('accuse');
@@ -175,7 +206,7 @@ export default function CaseFilesPage() {
     setAccusedName(null);
     setTab('story');
     try {
-      const raw = localStorage.getItem(storageKey(level));
+      const raw = localStorage.getItem(keyFor(section, level));
       if (raw) {
         setState(JSON.parse(raw) as PlayState);
         return;
@@ -184,17 +215,17 @@ export default function CaseFilesPage() {
       /* ignore */
     }
     setState(freshState());
-  }, [level, loadedFor, leftCaseId]);
+  }, [section, level, loadedFor, leftCaseId]);
 
   // Persist in-progress state.
   useEffect(() => {
-    if (leftCaseId || loadedFor !== level) return;
+    if (leftCaseId || loadedFor !== `${section}-${level}`) return;
     try {
-      localStorage.setItem(storageKey(level), JSON.stringify(state));
+      localStorage.setItem(keyFor(section, level), JSON.stringify(state));
     } catch {
       /* ignore */
     }
-  }, [state, level, loadedFor, leftCaseId]);
+  }, [state, section, level, loadedFor, leftCaseId]);
 
   const togglePin = (id: string) =>
     setState((s) => ({
@@ -229,11 +260,11 @@ export default function CaseFilesPage() {
         setWon(computeStars(state.hints, state.mistakes));
         return;
       }
-      const { map, stars } = recordWin(progress, GAME_ID, level, state.hints, state.mistakes);
+      const { map, stars } = recordWin(progress, activeGameId, level, state.hints, state.mistakes);
       setProgress(map);
       setWon(stars);
       try {
-        localStorage.removeItem(storageKey(level));
+        localStorage.removeItem(keyFor(section, level));
       } catch {
         /* ignore */
       }
@@ -262,7 +293,7 @@ export default function CaseFilesPage() {
     setRevealCount(0);
     setAccusedName(null);
     try {
-      localStorage.removeItem(storageKey(level));
+      localStorage.removeItem(keyFor(section, level));
     } catch {
       /* ignore */
     }
@@ -296,12 +327,35 @@ export default function CaseFilesPage() {
     { id: 'accuse', label: 'Accuse', icon: <Footprints size={16} aria-hidden /> },
   ];
 
-  const cycleNote = !leftCase
+  const cycleNote = !leftCase && section === 'cases'
     ? tierCycleNote(level, tierStartForLevel(level), CASES_BY_TIER[tierForLevel(level)].length)
+    : null;
+  const murderNote = !leftCase && section === 'murder'
+    ? `Murder board · case ${((level - 1) % MURDER_CASES.length) + 1} of ${MURDER_CASES.length} — the board cycles back to the start after the last case.`
     : null;
 
   // The file's number: the level on the ladder, the case id for a gifted case.
-  const fileNo = leftCase ? c.id.toUpperCase() : `CF-${String(level).padStart(3, '0')}`;
+  const fileNo = leftCase
+    ? c.id.toUpperCase()
+    : section === 'murder'
+      ? `MM-${String(level).padStart(3, '0')}`
+      : `CF-${String(level).padStart(3, '0')}`;
+
+  // One face per suspect: the murder board draws from the twenty-face
+  // pool, the case board from the original sixteen.
+  const portrait = (i: number) =>
+    section === 'murder' ? portraitForMurderSuspect(c.id, i) : portraitForSuspect(c.id, i);
+
+  const switchSection = (next: Section) => {
+    if (next === section) return;
+    setSection(next);
+    setLevel(getGameProgress(progress, gameIdFor(next)).currentLevel);
+    try {
+      localStorage.setItem(SECTION_KEY, next);
+    } catch {
+      /* ignore */
+    }
+  };
 
   if (badCaseId) {
     return (
@@ -348,19 +402,44 @@ export default function CaseFilesPage() {
         )}
       </div>
 
-      <h1 className="mt-4 text-3xl font-bold">Case Files</h1>
+      <h1 className="mt-4 text-3xl font-bold">
+        {section === 'murder' ? 'Murder Mystery' : 'Case Files'}
+      </h1>
       {cycleNote && (
         <p className="mt-2 text-sm text-[var(--ink-dim)]">{cycleNote}</p>
       )}
+      {murderNote && (
+        <p className="mt-2 text-sm text-[var(--ink-dim)]">{murderNote}</p>
+      )}
       <p className="mt-1 text-[var(--ink-dim)]">
-        Open the file, tag the exhibits that matter, question everyone — then sign the
-        final report. Hints are free, and a wrong accusation never locks you out.
+        {section === 'murder'
+          ? 'A murder board, worked like a real investigation: police report, crime scene, interrogations, evidence folder, one final accusation. Hints are free, and a wrong accusation never locks you out.'
+          : 'Open the file, tag the exhibits that matter, question everyone — then sign the final report. Hints are free, and a wrong accusation never locks you out.'}
       </p>
       {levelStars > 0 && !leftCase && (
         <p className="mt-2 flex items-center gap-1 text-sm font-semibold">
           <Star size={16} aria-hidden /> Best on this level: {'★'.repeat(levelStars)}
           {'☆'.repeat(3 - levelStars)}
         </p>
+      )}
+
+      {!leftCase && (
+        <nav className="cf-boardtabs" aria-label="Case boards">
+          <button
+            type="button"
+            className={`cf-boardtab ${section === 'cases' ? 'on' : ''}`}
+            onClick={() => switchSection('cases')}
+          >
+            Case Files
+          </button>
+          <button
+            type="button"
+            className={`cf-boardtab ${section === 'murder' ? 'on' : ''}`}
+            onClick={() => switchSection('murder')}
+          >
+            Murder Mystery
+          </button>
+        </nav>
       )}
 
       <nav className="cf-ftabs" aria-label="Case sections">
@@ -376,12 +455,24 @@ export default function CaseFilesPage() {
         ))}
       </nav>
 
-      <div className="cf-folder">
+      <div className={`cf-folder ${section === 'murder' ? 'cf-murder' : ''}`}>
         <div className="cf-filehead">
           <span className="cf-stamp-head" aria-hidden>
             STATUS: {won !== null ? 'CLOSED' : 'OPEN'}
           </span>
-          <div className="cf-title">CASE FILE</div>
+          {section === 'murder' && (
+            <>
+              <span className="cf-stamp-classified" aria-hidden>CLASSIFIED</span>
+              <svg className="cf-string" aria-hidden viewBox="0 0 100 28" preserveAspectRatio="none">
+                <line x1="8" y1="4" x2="52" y2="22" />
+                <line x1="52" y1="22" x2="92" y2="6" />
+              </svg>
+              <span className="cf-pin" style={{ left: '8%' }} aria-hidden />
+              <span className="cf-pin" style={{ left: '52%' }} aria-hidden />
+              <span className="cf-pin" style={{ left: '92%' }} aria-hidden />
+            </>
+          )}
+          <div className="cf-title">{section === 'murder' ? 'MURDER FILE' : 'CASE FILE'}</div>
           <div className="mt-1 text-sm">File Nº {fileNo} · {c.title}</div>
           <div className="cf-meta">
             <div><b>Location:</b> <span className="val">{c.setting}</span></div>
@@ -393,7 +484,9 @@ export default function CaseFilesPage() {
 
       {tab === 'story' && (
         <section>
-          <h2 className="cf-sec">CASE SUMMARY (TYPED REPORT)</h2>
+          <h2 className="cf-sec">
+            {section === 'murder' ? 'POLICE REPORT (TYPED REPORT)' : 'CASE SUMMARY (TYPED REPORT)'}
+          </h2>
           <div className="cf-report">
             {c.narrative}
             <span className="cf-hand">Note: work the evidence, not the gossip.</span>
@@ -426,7 +519,9 @@ export default function CaseFilesPage() {
             </b>{' '}
             Tag an exhibit and the roster updates.
           </div>
-          <h2 className="cf-sec">EXHIBITS (EVIDENCE)</h2>
+          <h2 className="cf-sec">
+            {section === 'murder' ? 'EVIDENCE FOLDER (EXHIBITS)' : 'EXHIBITS (EVIDENCE)'}
+          </h2>
           {evidence.map((item, i) => {
             const pinned = state.pinned.includes(item.id);
             return (
@@ -456,8 +551,9 @@ export default function CaseFilesPage() {
         <section>
           <h2 className="cf-sec">SUSPECT SHEETS (MUGSHOTS)</h2>
           <p className="mb-3 text-sm opacity-70">
-            Everyone&apos;s statement is on file. Tap &ldquo;Ask&rdquo; to hear what they would rather
-            keep quiet. Faces are imaginary — every suspect gets a portrait.
+            {section === 'murder'
+              ? 'Everyone’s statement is on file. Tap “Interrogate” to hear what they would rather keep quiet. Faces are imaginary — every suspect gets a portrait.'
+              : 'Everyone’s statement is on file. Tap “Ask” to hear what they would rather keep quiet. Faces are imaginary — every suspect gets a portrait.'}
           </p>
           {c.suspects.map((s, i) => {
             const asked = state.questioned.includes(s.id);
@@ -465,7 +561,7 @@ export default function CaseFilesPage() {
             return (
               <article key={s.id} className={`cf-mug ${ruled ? 'out' : ''}`}>
                 <img
-                  src={portraitForSuspect(c.id, i)}
+                  src={portrait(i)}
                   alt={`Portrait of ${s.name}`}
                   loading="lazy"
                 />
@@ -491,7 +587,7 @@ export default function CaseFilesPage() {
                     <div className="field"><b>NOTES:</b> {s.secret}</div>
                   ) : (
                     <button type="button" className="btn mt-3" onClick={() => question(s.id)}>
-                      Ask {s.name.split(' ')[0]}
+                      {section === 'murder' ? 'Interrogate' : 'Ask'} {s.name.split(' ')[0]}
                     </button>
                   )}
                 </div>
@@ -520,7 +616,7 @@ export default function CaseFilesPage() {
                   onClick={() => accuse(s.id)}
                 >
                   <img
-                    src={portraitForSuspect(c.id, i)}
+                    src={portrait(i)}
                     alt=""
                     aria-hidden
                     loading="lazy"

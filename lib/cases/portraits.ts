@@ -30,3 +30,22 @@ export function portraitForSuspect(caseId: string, suspectIndex: number): string
   const n = portraitIndexForSuspect(caseId, suspectIndex) + 1;
   return `/suspects/p${String(n).padStart(2, '0')}.jpg`;
 }
+
+/**
+ * Murder Mystery portraits (31 Oct): the same sixteen faces plus four
+ * new ones (public/suspects/m01.jpg … m04.jpg, made for this section).
+ * A SEPARATE pool and function, so the existing cases keep exactly the
+ * faces they have today — only murder cases draw from the twenty.
+ * Twenty faces ≥ the largest murder case (6 suspects), so no case
+ * repeats a face within itself.
+ */
+export const MURDER_PORTRAIT_FILES: string[] = [
+  ...Array.from({ length: 16 }, (_, i) => `/suspects/p${String(i + 1).padStart(2, '0')}.jpg`),
+  ...Array.from({ length: 4 }, (_, i) => `/suspects/m${String(i + 1).padStart(2, '0')}.jpg`),
+];
+
+export function portraitForMurderSuspect(caseId: string, suspectIndex: number): string {
+  return MURDER_PORTRAIT_FILES[
+    (hashSeed(caseId) + suspectIndex) % MURDER_PORTRAIT_FILES.length
+  ];
+}
