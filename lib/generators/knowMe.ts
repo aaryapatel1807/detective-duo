@@ -9,6 +9,13 @@
  * partner answers later, reveal when both are in).
  * Solo mode: the bot persona Pip answers from canned lines, and she
  * guesses Pip's answers.
+ *
+ * Together mode, self-validation: after the reveal (which shows
+ * answers and guesses with NO app verdict), each partner validates
+ * only the guesses made about their own answers, once per question.
+ * The final score is the count of guesses validated Correct. The
+ * Would You Rather section below uses the same flow, with its own
+ * state keys so the two sections never collide.
  */
 
 import { rngFromSeed, shuffle } from './rng';
@@ -118,3 +125,93 @@ export function countMatches(
 }
 
 export const BOT_NAME = 'Pip';
+
+/* ------------------------------------------------ Would You Rather ---- */
+
+/**
+ * A Would You Rather pair, written for Sachi: two cosy, couple-friendly
+ * options, nothing copied from any other app. A player's own pick and
+ * their partner's pick are both one of 'A' | 'B', so a guess is always
+ * exactly comparable — but in together mode the owner still validates
+ * it, exactly like the main questions.
+ */
+export interface KnowWyr {
+  id: string;
+  optionA: string;
+  optionB: string;
+}
+
+export type KnowWyrChoice = 'A' | 'B';
+
+const WYR = (id: string, optionA: string, optionB: string): KnowWyr => ({
+  id,
+  optionA,
+  optionB,
+});
+
+export const KNOW_WYR: KnowWyr[] = [
+  WYR('wyr-rain', 'A slow rainy day in, blankets and films', 'A sunny day out, walking somewhere new'),
+  WYR('wyr-food', 'Cook a long dinner together from scratch', 'Order in and eat it on the floor like a picnic'),
+  WYR('wyr-trip', 'A quiet cabin with no signal for a week', 'A busy city break, one new place every day'),
+  WYR('wyr-morning', 'Lie in with no alarm and nowhere to be', 'Get up early and watch the sunrise together'),
+  WYR('wyr-film', 'Rewatch a comfort film you both quote', 'Watch something neither of you has ever seen'),
+  WYR('wyr-music', 'Dance badly in the kitchen to a loud song', 'Slow dance in the living room to a quiet one'),
+  WYR('wyr-gift', 'A handmade gift, even a wonky one', 'A whole day planned just for the two of you'),
+  WYR('wyr-sea', 'Live by the sea, rain and all', 'Live in the hills, quiet and green'),
+  WYR('wyr-pets', 'Adopt a sleepy cat that sits on everything', 'Adopt a bouncy dog that drags you out walking'),
+  WYR('wyr-story', 'Read the same book at the same time and argue about it', 'Watch the same series, one episode a night, no spoilers'),
+  WYR('wyr-party', 'A tiny dinner with just the two of you', 'A big noisy gathering with all your favourite people'),
+  WYR('wyr-future', 'Save up for one big dream trip', 'Spend little and often on small adventures all year'),
+];
+
+/** Six Would You Rather pairs, seeded and shuffled. */
+export function pickWyr(seed: string, count = 6): KnowWyr[] {
+  const rng = rngFromSeed(seed);
+  return shuffle([...KNOW_WYR], rng).slice(0, Math.min(count, KNOW_WYR.length));
+}
+
+/** Pip's canned Would You Rather pick (seeded, always 'A' or 'B'). */
+export function botWyrChoice(w: KnowWyr, seed: string): KnowWyrChoice {
+  const rng = rngFromSeed(`${seed}|${w.id}`);
+  return rng() < 0.5 ? 'A' : 'B';
+}
+
+/* ------------------------------------------- Partner self-validation ---- */
+
+/**
+ * One partner's verdict on a guess about their own answer: 'correct'
+ * means "yes, that guess really is what I said/meant", 'incorrect'
+ * means "no, that is not it". Only the answer's owner may record a
+ * verdict for a question, and only once per question (the record is
+ * keyed by owner uid + question id, so a second tap overwrites rather
+ * than adding a second vote — the UI disables the buttons after the
+ * first tap).
+ */
+export type KnowValidation = 'correct' | 'incorrect';
+
+/** Validations keyed by answer-owner uid, then question/pair id. */
+export type KnowValidations = Record<string, Record<string, KnowValidation>>;
+
+/**
+ * How many of the guesses about one owner's answers that owner marked
+ * Correct. Entries keyed by any other uid are ignored — only the
+ * owner's own validations count for their answers.
+ */
+export function validatedCorrectCount(
+  validations: KnowValidations | undefined,
+  ownerUid: string,
+): number {
+  const mine = validations?.[ownerUid] ?? {};
+  return Object.values(mine).filter((v) => v === 'correct').length;
+}
+
+/** True when every listed owner has validated every listed question. */
+export function validationsComplete(
+  validations: KnowValidations | undefined,
+  ownerUids: string[],
+  questionIds: string[],
+): boolean {
+  return ownerUids.every((uid) =>
+    questionIds.every((qid) => (validations?.[uid]?.[qid] ?? null) !== null),
+  );
+}

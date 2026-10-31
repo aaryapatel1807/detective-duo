@@ -60,6 +60,34 @@ describe('duoCorner helpers', () => {
     expect(knowMePhase(both, both, ['a', 'b'], 6)).toBe('reveal');
   });
 
+  it('know-me self-validation phases: validating until every owner validated, then done', () => {
+    const both = {
+      a: { q1: 'x', q2: 'x' },
+      b: { q1: 'y', q2: 'y' },
+    };
+    const ids = ['q1', 'q2'];
+    // No validations yet: still validating (reveal without verdict).
+    expect(knowMePhase(both, both, ['a', 'b'], 2, {}, ids)).toBe('validating');
+    // Only one owner validated: still validating.
+    expect(
+      knowMePhase(both, both, ['a', 'b'], 2, { a: { q1: 'correct', q2: 'incorrect' } }, ids),
+    ).toBe('validating');
+    // Both owners validated every question: done, score may be shown.
+    expect(
+      knowMePhase(
+        both,
+        both,
+        ['a', 'b'],
+        2,
+        { a: { q1: 'correct', q2: 'incorrect' }, b: { q1: 'correct', q2: 'correct' } },
+        ids,
+      ),
+    ).toBe('done');
+    // Backwards compatibility: an old session with no validation state
+    // still reaches reveal (and can validate from there), nothing re-asked.
+    expect(knowMePhase(both, both, ['a', 'b'], 2)).toBe('reveal');
+  });
+
   it('liar phases follow writing, asking, picking, revealed', () => {
     const base = { writerUid: 'a', statements: [], lieIndex: null as number | null, questions: [], guessIndex: null as number | null };
     expect(liarPhase(base)).toBe('writing');

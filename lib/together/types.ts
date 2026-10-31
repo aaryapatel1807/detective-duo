@@ -29,8 +29,6 @@
  * - versus safe-cracker: { safeGuesses: Record<uid, GuessRecord[]>,
  *     safeProgress: Record<uid, number>, tally } (same secret code;
  *     progress = share of the candidate set ruled out)
- * - coop lantern-map: { lanternPos: [x,y], lanternKeys: number[],
- *     lanternRole: Record<uid, "walker"|"map">, lanternWon: boolean }
  * - coop sketch-clue: { sketchRound: number, sketchStrokes: Stroke[],
  *     sketchGuesses: {name,text}[], sketchWonUid: uid|null }
  * - coop spot-liar: { liarRound: number, liarWriter: uid,
@@ -38,8 +36,16 @@
  *     liarQuestions: {text, answer}[], liarGuess: number|null, tally }
  *     (round win: questioner if they pick the lie, writer if fooled)
  * - coop know-me: { knowAnswers: Record<uid, Record<qid, string>>,
- *     knowGuesses: Record<uid, Record<qid, string>> }
- *     (reveal only when every player has answered AND guessed)
+ *     knowGuesses: Record<uid, Record<qid, string>>,
+ *     knowValidations: Record<ownerUid, Record<qid, 'correct'|'incorrect'>> }
+ *     (reveal with NO app verdict once every player has answered AND
+ *     guessed; each partner then validates only the guesses about
+ *     their own answers, and the validated score shows once every
+ *     owner has validated every question)
+ * - coop know-me Would You Rather: { wyrAnswers: Record<uid, Record<wyrId, 'A'|'B'>>,
+ *     wyrGuesses: Record<uid, Record<wyrId, 'A'|'B'>>,
+ *     wyrValidations: Record<ownerUid, Record<wyrId, 'correct'|'incorrect'>> }
+ *     (same answer -> guess -> reveal -> validate flow, separate keys)
  * - every game: { notes: string, chat: ChatMsg[] } (shared extras)
  * - tally (private, Phase 5): round wins per player inside this room
  *   only. Not a leaderboard, not XP, not a rank — just the two of them.

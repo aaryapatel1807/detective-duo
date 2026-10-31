@@ -2,8 +2,9 @@
 
 /**
  * A Monopoly-style board game, solo vs the bot or two-player pass-and-play.
- * Classic mechanics live in lib/generators/monopoly (original place names
- * and card wording — no official streets, card text, logos, or artwork).
+ * Classic mechanics live in lib/generators/monopoly (real world cities
+ * and airports, original card wording — no official Monopoly streets,
+ * card text, logos, or artwork).
  * No real money, no timers that can fail a player; the bot just pauses
  * briefly so its moves can be watched.
  */
@@ -145,9 +146,10 @@ export default function MonopolyPage() {
         </div>
         <h1 className="mt-4 text-3xl font-bold">Monopoly</h1>
         <p className="mt-1 text-[var(--ink-dim)]">
-          A Monopoly-style stroll around the village: roll, buy streets, collect
+          A Monopoly-style stroll around the world: roll, buy cities, collect
           rent, build houses and hotels, and be the last player with money.
-          Place names and cards are our own — the rules are the classic ones.
+          Properties are real cities grouped by country, and the airports are
+          real too — the rules are the classic ones.
         </p>
         <section className="card mt-4 p-5">
           <p className="font-semibold">How do you want to play?</p>

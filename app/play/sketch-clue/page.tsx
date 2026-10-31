@@ -81,7 +81,7 @@ export default function SketchCluePage() {
 
   const askGuesser = () => {
     if (won !== null || !strokes.length) return;
-    const g = classifyDrawing(strokes, `${salt}|${level}|${theme}`);
+    const g = classifyDrawing(strokes, `${salt}|${level}|${theme}`, theme);
     setGuess(g);
     const right = normaliseGuess(g.guess) === normaliseGuess(word.word);
     const { map, stars } = recordWin(progress, GAME_ID, level, 0, right ? 0 : 2);
@@ -153,6 +153,11 @@ export default function SketchCluePage() {
             <p className="font-display text-lg font-bold">
               The guesser says: {guess.guess}
             </p>
+            {guess.secondGuess && normaliseGuess(guess.guess) !== normaliseGuess(word.word) && (
+              <p className="mt-1 text-sm text-[var(--ink-dim)]">
+                Also possible: {guess.secondGuess} (a hint only — it does not count as a win).
+              </p>
+            )}
             <p className="mt-1 text-sm text-[var(--ink-dim)]">{guess.note}</p>
             <p className="mt-1 text-sm">
               {normaliseGuess(guess.guess) === normaliseGuess(word.word)

@@ -19,7 +19,6 @@ import { CaseCoopView, EscapeCoopView } from '@/components/together/CoopViews';
 import {
   DotsBoxesDuo,
   KnowMeDuo,
-  LanternDuo,
   LiarDuo,
   SafeCrackerVersus,
   SketchDuo,
@@ -71,7 +70,6 @@ const GAME_NAMES: Record<string, string> = {
   'nonograms': 'Nonograms',
   'dots-boxes': 'Dots and Boxes',
   'safe-cracker': 'Safe Cracker',
-  'lantern-map': 'Lantern and Map',
   'sketch-clue': 'Sketch the Clue',
   'spot-liar': 'Spot the Liar',
   'know-me': 'How Well Do You Know Me',
@@ -472,23 +470,6 @@ export default function PlayPage({ params }: { params: { code: string } }) {
   } else if (session.mode === 'versus' && session.game === 'safe-cracker') {
     body = (
       <SafeCrackerVersus
-        seed={session.seed}
-        level={session.level}
-        me={me}
-        other={other}
-        players={session.players}
-        isHost={isHost}
-        paused={paused}
-        state={state}
-        update={update}
-        updateSession={updateSession}
-        sendChat={sendChat}
-        winnerUid={session.winnerUid}
-      />
-    );
-  } else if (session.mode === 'coop' && session.game === 'lantern-map') {
-    body = (
-      <LanternDuo
         seed={session.seed}
         level={session.level}
         me={me}

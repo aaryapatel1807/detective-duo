@@ -24,7 +24,6 @@ const COOP_GAMES = [
   { id: 'case-files', name: 'Case Files', note: 'Split clues — talk to solve.' },
   { id: 'escape-rooms', name: 'Escape Rooms', note: 'Room vs notebook — talk to escape.' },
   { id: 'logic-grids', name: 'Logic Grids', note: 'One shared grid, both marking.' },
-  { id: 'lantern-map', name: 'Lantern and Map', note: 'Walker in the dark, partner holds the map.' },
   { id: 'sketch-clue', name: 'Sketch the Clue', note: 'One draws, the other guesses.' },
   { id: 'spot-liar', name: 'Spot the Liar', note: 'Three statements, three questions, one lie.' },
   { id: 'know-me', name: 'How Well Do You Know Me', note: 'Answer, guess, reveal together.' },

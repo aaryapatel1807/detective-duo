@@ -31,13 +31,28 @@ export function dotsResult(
   return { winnerUid: playerUids[a > b ? 0 : 1] ?? null, tie: false, finished: true };
 }
 
-/** Know Me phase from who has answered / guessed (async-safe). */
+/**
+ * Know Me phase from who has answered / guessed / validated (async-safe).
+ *
+ * Flow: answering -> guessing -> reveal-without-verdict, then each
+ * partner validates only the guesses about their own answers ->
+ * 'validating' until every player has validated every question ->
+ * 'done', when the validated score is shown.
+ *
+ * Backwards compatibility: callers that pass no validations (old
+ * sessions, old tests) still get 'reveal' once everyone has guessed,
+ * so an in-progress session from before self-validation simply
+ * enters the reveal and can validate from there — nothing already
+ * answered or guessed is lost or re-asked.
+ */
 export function knowMePhase(
   answers: Record<string, Record<string, string>>,
   guesses: Record<string, Record<string, string>>,
   playerUids: string[],
   questionCount: number,
-): 'answering' | 'guessing' | 'reveal' {
+  validations?: Record<string, Record<string, string>>,
+  questionIds?: string[],
+): 'answering' | 'guessing' | 'reveal' | 'validating' | 'done' {
   const answered = (uid: string) =>
     Object.keys(answers[uid] ?? {}).filter((k) => (answers[uid][k] ?? '').trim() !== '').length >=
     questionCount;
@@ -46,7 +61,12 @@ export function knowMePhase(
     questionCount;
   if (!playerUids.every(answered)) return 'answering';
   if (!playerUids.every(guessed)) return 'guessing';
-  return 'reveal';
+  if (validations === undefined) return 'reveal';
+  const ids = questionIds ?? Object.keys(answers[playerUids[0] ?? ''] ?? {});
+  const validated = (uid: string) =>
+    ids.every((qid) => (validations[uid]?.[qid] ?? '') !== '');
+  if (!playerUids.every(validated)) return 'validating';
+  return 'done';
 }
 
 /** Spot the Liar round phase from the round record. */

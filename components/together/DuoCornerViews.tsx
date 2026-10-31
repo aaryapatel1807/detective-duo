@@ -28,24 +28,25 @@ import {
   type GuessRecord,
 } from '@/lib/generators/safeCracker';
 import {
-  describeView,
-  generateMaze,
-  tryStep,
-  visibleCells,
-  type Dir,
-  type LanternMaze,
-} from '@/lib/generators/lanternMaze';
-import {
+  guessCloseness,
   normaliseGuess,
   pickTheme,
   pickWord,
+  sketchBlanks,
+  sketchFirstLetterHint,
   SKETCH_THEMES,
   type SketchTheme,
   type Stroke,
 } from '@/lib/generators/sketchWords';
 import { LIAR_PROMPTS } from '@/lib/generators/liarBank';
 import { rngFromSeed, shuffle } from '@/lib/generators/rng';
-import { KNOW_TAG_LABEL, pickQuestions } from '@/lib/generators/knowMe';
+import {
+  KNOW_TAG_LABEL,
+  pickQuestions,
+  pickWyr,
+  validatedCorrectCount,
+  type KnowValidation,
+} from '@/lib/generators/knowMe';
 import {
   dotsNextTurn,
   dotsResult,
@@ -351,197 +352,6 @@ export function SafeCrackerVersus(props: DuoViewProps) {
   );
 }
 
-// ------------------------------------------------------- Lantern and Map ----
-
-function MazeGrid({
-  maze,
-  visible,
-  pos,
-  keys,
-}: {
-  maze: LanternMaze;
-  /** Null = whole map visible (map-reader). Otherwise only these tiles. */
-  visible: Set<string> | null;
-  pos: [number, number] | null;
-  keys: number[];
-}) {
-  const isDoor = (key: string) => maze.doors.includes(key);
-  return (
-    <div
-      className="mx-auto grid w-full max-w-md"
-      style={{ gridTemplateColumns: `repeat(${maze.w}, minmax(0, 1fr))` }}
-      role="img"
-      aria-label="Maze"
-    >
-      {Array.from({ length: maze.h }, (_, y) =>
-        Array.from({ length: maze.w }, (_, x) => {
-          const key = `${x},${y}`;
-          const seen = visible === null || visible.has(key);
-          const isPlayer = pos !== null && pos[0] === x && pos[1] === y;
-          const isExit = maze.exit[0] === x && maze.exit[1] === y;
-          const keyHere = maze.keyCells[key];
-          const hasKey = keyHere !== undefined && !keys.includes(keyHere);
-          if (!seen && !isPlayer) return <div key={key} className="aspect-square" />;
-          const side = (wall: boolean, doorKey: string) => {
-            if (!wall) return { color: 'transparent', style: 'none' as const };
-            if (isDoor(doorKey)) return { color: 'var(--accent-2)', style: 'dashed' as const };
-            return { color: 'var(--line)', style: 'solid' as const };
-          };
-          const top = side(maze.hWalls[y][x], `h:${y},${x}`);
-          const bottom = side(maze.hWalls[y + 1][x], `h:${y + 1},${x}`);
-          const left = side(maze.vWalls[y][x], `v:${y},${x}`);
-          const right = side(maze.vWalls[y][x + 1], `v:${y},${x + 1}`);
-          return (
-            <div
-              key={key}
-              className="relative flex aspect-square items-center justify-center"
-              style={{
-                background: 'var(--cell)',
-                borderTopWidth: 2,
-                borderBottomWidth: 2,
-                borderLeftWidth: 2,
-                borderRightWidth: 2,
-                borderTopColor: top.color,
-                borderTopStyle: top.style,
-                borderBottomColor: bottom.color,
-                borderBottomStyle: bottom.style,
-                borderLeftColor: left.color,
-                borderLeftStyle: left.style,
-                borderRightColor: right.color,
-                borderRightStyle: right.style,
-              }}
-            >
-              {isPlayer && (
-                <span
-                  className="block h-1/2 w-1/2 rounded-full"
-                  style={{ background: 'var(--accent)', boxShadow: 'var(--glow)' }}
-                  aria-label="Walker is here"
-                />
-              )}
-              {!isPlayer && isExit && <span className="text-xs font-bold">EXIT</span>}
-              {!isPlayer && hasKey && <span className="text-xs font-bold">KEY</span>}
-            </div>
-          );
-        }),
-      )}
-    </div>
-  );
-}
-
-export function LanternDuo(props: DuoViewProps) {
-  const maze = generateMaze(props.seed, props.level);
-  const pos = (props.state.lanternPos as [number, number] | undefined) ?? maze.start;
-  const keys = (props.state.lanternKeys as number[] | undefined) ?? [];
-  const roles = (props.state.lanternRole as Record<string, 'walker' | 'map'> | undefined) ?? {};
-  const myRole = roles[props.me.uid] ?? (props.isHost ? 'walker' : 'map');
-  const won = (props.state.lanternWon as boolean | undefined) ?? false;
-  const [msg, setMsg] = useState<string | null>(null);
-
-  const swapRole = () => {
-    const next: Record<string, 'walker' | 'map'> = { ...roles };
-    const otherUid = guestUid(props.players, props.me.uid);
-    next[props.me.uid] = myRole === 'walker' ? 'map' : 'walker';
-    if (otherUid) next[otherUid] = next[props.me.uid] === 'walker' ? 'map' : 'walker';
-    props.update({ lanternRole: next }, true);
-  };
-
-  const move = (dir: Dir) => {
-    if (myRole !== 'walker' || props.paused || won) return;
-    const res = tryStep(maze, pos, dir, keys);
-    if (!res.info.ok) {
-      setMsg(
-        res.info.blocked === 'locked-door'
-          ? 'Locked. Its key is somewhere in the dark.'
-          : res.info.blocked === 'edge'
-            ? 'That way is the edge of the map.'
-            : 'A wall. Try another way.',
-      );
-      return;
-    }
-    const nextKeys = res.info.pickedKey !== null ? [...keys, res.info.pickedKey] : keys;
-    props.update({ lanternPos: res.pos, lanternKeys: nextKeys }, true);
-    if (res.info.reachedExit) {
-      props.update({ lanternWon: true }, true);
-      props.updateSession({ status: 'finished' });
-      return;
-    }
-    setMsg(
-      res.info.hitTrap
-        ? 'A trapdoor! Back at the start. The maze has not changed.'
-        : res.info.pickedKey !== null
-          ? 'You found a key. It opens one locked door somewhere ahead.'
-          : null,
-    );
-  };
-
-  const vis = new Set(visibleCells(maze, pos, keys).map(([x, y]) => `${x},${y}`));
-  const padBtn = 'btn !px-2 !py-3';
-
-  return (
-    <div>
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="chip">
-          You are the {myRole === 'walker' ? 'walker' : 'map-reader'}
-        </span>
-        <button type="button" className="btn !px-3 !py-2 text-sm" onClick={swapRole}>
-          Swap roles
-        </button>
-      </div>
-      {myRole === 'walker' ? (
-        <section className="card mt-3 p-4">
-          <p className="text-sm text-[var(--ink-dim)]">
-            You see only your tile and its open passages. Describe what you see to your
-            partner — they hold the whole map.
-          </p>
-          <div className="mt-3">
-            <MazeGrid maze={maze} visible={vis} pos={pos} keys={keys} />
-          </div>
-          <div className="mx-auto mt-4 grid w-40 grid-cols-3 gap-1">
-            <span />
-            <button type="button" className={padBtn} onClick={() => move('up')} aria-label="Move up"><ChevronUp size={20} aria-hidden /></button>
-            <span />
-            <button type="button" className={padBtn} onClick={() => move('left')} aria-label="Move left"><ChevronLeft size={20} aria-hidden /></button>
-            <button type="button" className={padBtn} onClick={() => move('down')} aria-label="Move down"><ChevronDown size={20} aria-hidden /></button>
-            <button type="button" className={padBtn} onClick={() => move('right')} aria-label="Move right"><ChevronRight size={20} aria-hidden /></button>
-          </div>
-          <button
-            type="button"
-            className="btn mt-3"
-            onClick={() => props.sendChat(describeView(maze, pos, keys))}
-          >
-            Tell my partner what I see
-          </button>
-          {msg && <p className="mt-2 text-sm font-semibold">{msg}</p>}
-          <p className="mt-1 text-sm text-[var(--ink-dim)]">
-            Keys: {keys.length} of {maze.doors.length} · Dashed lines are locked doors.
-          </p>
-        </section>
-      ) : (
-        <section className="card mt-3 p-4">
-          <p className="text-sm text-[var(--ink-dim)]">
-            You see the whole maze — but not where your partner is. Only what they
-            describe. Guide them with the chat.
-          </p>
-          <div className="mt-3">
-            <MazeGrid maze={maze} visible={null} pos={null} keys={keys} />
-          </div>
-          <p className="mt-2 text-sm text-[var(--ink-dim)]">
-            The walker’s keys so far: {keys.length} of {maze.doors.length}.
-          </p>
-        </section>
-      )}
-      {won && (
-        <section className="card mt-4 p-5 text-center">
-          <p className="font-display text-2xl font-bold">You escaped together.</p>
-          <p className="mt-1 text-sm text-[var(--ink-dim)]">
-            Walker and map-reader, talking the whole way. Back to the room for a harder maze.
-          </p>
-        </section>
-      )}
-    </div>
-  );
-}
-
 // -------------------------------------------------------- Sketch the Clue ----
 
 export function SketchDuo(props: DuoViewProps) {
@@ -556,6 +366,12 @@ export function SketchDuo(props: DuoViewProps) {
   const guesses = (props.state.sketchGuesses as { name: string; text: string }[] | undefined) ?? [];
   const wonUid = (props.state.sketchWonUid as string | undefined) ?? null;
   const [guess, setGuess] = useState('');
+  // Guesser aids: wrong guesses so far, and the first-letter hint that
+  // unlocks after 3 wrong guesses (guesser side only, below).
+  const wrongCount = guesses.filter(
+    (g) => normaliseGuess(g.text) !== normaliseGuess(word.word),
+  ).length;
+  const firstLetterHint = sketchFirstLetterHint(word.word, wrongCount);
 
   const submitGuess = () => {
     if (props.paused || wonUid || guess.trim() === '') return;
@@ -610,6 +426,15 @@ export function SketchDuo(props: DuoViewProps) {
           <p className="text-sm text-[var(--ink-dim)]">
             Watch the drawing appear, then type what you think it is. No rush.
           </p>
+          <p className="mt-2 font-display text-xl font-bold tracking-widest" aria-label={`Word length: ${word.word.replace(/ /g, '').length} letters`}>
+            {sketchBlanks(word.word)}
+          </p>
+          <p className="text-sm text-[var(--ink-dim)]">
+            {word.word.replace(/ /g, '').length} letters
+            {!wonUid && firstLetterHint && (
+              <> · Hint after 3 wrong guesses: starts with “{firstLetterHint.toUpperCase()}”</>
+            )}
+          </p>
           <div className="mt-3">
             <SketchCanvas strokes={strokes} onStrokeEnd={() => {}} disabled />
           </div>
@@ -635,11 +460,21 @@ export function SketchDuo(props: DuoViewProps) {
       )}
       {guesses.length > 0 && (
         <div className="mt-3 space-y-1.5">
-          {guesses.map((g, i) => (
-            <p key={i} className="panel p-3 text-sm">
-              <span className="font-semibold">{g.name}:</span> {g.text}
-            </p>
-          ))}
+          {guesses.map((g, i) => {
+            const c = guessCloseness(g.text, word.word);
+            return (
+              <p key={i} className="panel p-3 text-sm">
+                <span className="font-semibold">{g.name}:</span> {g.text}
+                <span className="ml-2 text-[var(--ink-dim)]">
+                  {c.closeness === 'exact'
+                    ? '· Exact!'
+                    : c.closeness === 'close'
+                      ? `· Close — ${c.reason}`
+                      : '· Not close'}
+                </span>
+              </p>
+            );
+          })}
         </div>
       )}
       {wonUid && (
@@ -899,11 +734,37 @@ export function LiarDuo(props: DuoViewProps) {
 // ------------------------------------------------- How Well Do You Know Me ----
 
 export function KnowMeDuo(props: DuoViewProps) {
+  const [section, setSection] = useState<'questions' | 'wyr'>('questions');
   const questions = pickQuestions(props.seed);
-  const answers = (props.state.knowAnswers as Record<string, Record<string, string>> | undefined) ?? {};
-  const guesses = (props.state.knowGuesses as Record<string, Record<string, string>> | undefined) ?? {};
+  const wyrPairs = pickWyr(`${props.seed}|wyr`);
+  // Separate state keys per section, so Questions and Would You Rather never collide.
+  const answersKey = section === 'wyr' ? 'wyrAnswers' : 'knowAnswers';
+  const guessesKey = section === 'wyr' ? 'wyrGuesses' : 'knowGuesses';
+  const validationsKey = section === 'wyr' ? 'wyrValidations' : 'knowValidations';
+  const answers = (props.state[answersKey] as Record<string, Record<string, string>> | undefined) ?? {};
+  const guesses = (props.state[guessesKey] as Record<string, Record<string, string>> | undefined) ?? {};
+  const validations = (props.state[validationsKey] as
+    | Record<string, Record<string, KnowValidation>>
+    | undefined) ?? {};
+  // Unified items: questions are free text, WYR pairs are an A/B choice.
+  // Stored values are the answer text for questions, 'A' | 'B' for WYR.
+  const items =
+    section === 'questions'
+      ? questions.map((q) => ({
+          id: q.id,
+          prompt: q.text,
+          chip: KNOW_TAG_LABEL[q.tag] as string | undefined,
+          options: undefined as [string, string] | undefined,
+        }))
+      : wyrPairs.map((w) => ({
+          id: w.id,
+          prompt: 'Would you rather…',
+          chip: undefined as string | undefined,
+          options: [w.optionA, w.optionB] as [string, string],
+        }));
+  const itemIds = items.map((i) => i.id);
   const uids = props.players.length >= 2 ? props.players.map((p) => p.uid) : [props.me.uid, '__waiting__'];
-  const phase = knowMePhase(answers, guesses, uids, questions.length);
+  const phase = knowMePhase(answers, guesses, uids, items.length, validations, itemIds);
   const otherUid = guestUid(props.players, props.me.uid);
   const [draft, setDraft] = useState<Record<string, string>>({});
 
@@ -911,20 +772,43 @@ export function KnowMeDuo(props: DuoViewProps) {
   const partnerAnswers = otherUid ? (answers[otherUid] ?? {}) : {};
   const myGuesses = guesses[props.me.uid] ?? {};
   const partnerGuesses = otherUid ? (guesses[otherUid] ?? {}) : {};
+  const myValidations = validations[props.me.uid] ?? {};
+  const partnerValidations = otherUid ? (validations[otherUid] ?? {}) : {};
+  // Validations are keyed by answer-owner: validations[partner] are the
+  // partner's verdicts on MY guesses (my score), validations[me] are my
+  // verdicts on the partner's guesses (their score).
+  const myScore = otherUid ? validatedCorrectCount(validations, otherUid) : 0;
+  const partnerScore = validatedCorrectCount(validations, props.me.uid);
   const answeredCount = (m: Record<string, string>) =>
     Object.values(m).filter((v) => (v ?? '').trim() !== '').length;
 
   const saveAnswers = () => {
-    props.update({ knowAnswers: { ...answers, [props.me.uid]: draft } }, true);
+    props.update({ [answersKey]: { ...answers, [props.me.uid]: draft } }, true);
   };
 
   const saveGuesses = () => {
-    props.update({ knowGuesses: { ...guesses, [props.me.uid]: draft } }, true);
+    props.update({ [guessesKey]: { ...guesses, [props.me.uid]: draft } }, true);
   };
 
-  // Draft follows the current phase's fields.
+  /** Mark the partner's guess about MY answer — owner-only, once per question. */
+  const validate = (qid: string, verdict: KnowValidation) => {
+    if (props.paused || myValidations[qid]) return;
+    props.update(
+      { [validationsKey]: { ...validations, [props.me.uid]: { ...myValidations, [qid]: verdict } } },
+      true,
+    );
+  };
+
+  /** Display text for a stored value (option text for WYR, raw text for questions). */
+  const display = (item: (typeof items)[number], value: string | undefined) => {
+    if (value === undefined) return '';
+    if (!item.options) return value;
+    return value === 'A' ? item.options[0] : item.options[1];
+  };
+
+  // Draft follows the current section + phase's fields.
   const draftFor = phase === 'answering' ? myAnswers : myGuesses;
-  const draftKey = `${phase}|${Object.keys(draftFor).length}`;
+  const draftKey = `${section}|${phase}|${Object.keys(draftFor).length}`;
   const [seenKey, setSeenKey] = useState(draftKey);
   if (seenKey !== draftKey) {
     setSeenKey(draftKey);
@@ -932,29 +816,63 @@ export function KnowMeDuo(props: DuoViewProps) {
   }
 
   const allFilled = (m: Record<string, string>) =>
-    questions.every((q) => (m[q.id] ?? '').trim() !== '');
+    items.every((it) => (m[it.id] ?? '').trim() !== '');
 
   return (
     <div>
       <p className="text-sm text-[var(--ink-dim)]">
-        Six questions, three moods. Answer privately, guess each other’s, reveal together.
+        Six questions, three moods. Answer privately, guess each other’s, reveal together —
+        then each of you marks the guesses about your own answers Correct or Incorrect.
       </p>
+      <div className="mt-3 flex flex-wrap gap-2" role="tablist" aria-label="Know Me sections">
+        {(['questions', 'wyr'] as const).map((s) => (
+          <button
+            key={s}
+            type="button"
+            role="tab"
+            aria-selected={section === s}
+            className={`chip ${section === s ? '!bg-[var(--accent)] !text-[var(--accent-ink)]' : ''}`}
+            onClick={() => setSection(s)}
+          >
+            {s === 'questions' ? 'Questions' : 'Would You Rather'}
+          </button>
+        ))}
+      </div>
 
       {phase === 'answering' && (
         <section className="mt-3 space-y-3">
-          <h2 className="text-lg font-bold">First, about you</h2>
-          {questions.map((q) => (
-            <label key={q.id} className="card block p-4">
-              <span className="font-semibold">{q.text}</span>
-              <span className="chip ml-2">{KNOW_TAG_LABEL[q.tag]}</span>
-              <input
-                className="input mt-2 w-full"
-                value={draft[q.id] ?? ''}
-                onChange={(e) => setDraft({ ...draft, [q.id]: e.target.value })}
-                placeholder="Your answer"
-                disabled={props.paused}
-              />
-            </label>
+          <h2 className="text-lg font-bold">
+            {section === 'questions' ? 'First, about you' : 'First, your picks'}
+          </h2>
+          {items.map((item) => (
+            <div key={item.id} className="card p-4">
+              <span className="font-semibold">{item.prompt}</span>
+              {item.chip && <span className="chip ml-2">{item.chip}</span>}
+              {item.options ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {(['A', 'B'] as const).map((choice, i) => (
+                    <button
+                      key={choice}
+                      type="button"
+                      className={`btn ${draft[item.id] === choice ? 'btn-primary' : ''}`}
+                      aria-pressed={draft[item.id] === choice}
+                      disabled={props.paused}
+                      onClick={() => setDraft({ ...draft, [item.id]: choice })}
+                    >
+                      {item.options![i]}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <input
+                  className="input mt-2 w-full"
+                  value={draft[item.id] ?? ''}
+                  onChange={(e) => setDraft({ ...draft, [item.id]: e.target.value })}
+                  placeholder="Your answer"
+                  disabled={props.paused}
+                />
+              )}
+            </div>
           ))}
           <button
             type="button"
@@ -967,9 +885,9 @@ export function KnowMeDuo(props: DuoViewProps) {
           <p className="text-sm text-[var(--ink-dim)]">
             {props.players.length < 2
               ? 'Waiting for your partner to join with the room code.'
-              : answeredCount(partnerAnswers) >= questions.length
+              : answeredCount(partnerAnswers) >= items.length
                 ? 'Your partner has answered.'
-                : `Your partner has answered ${answeredCount(partnerAnswers)} of ${questions.length}. Their answers stay hidden until the reveal.`}
+                : `Your partner has answered ${answeredCount(partnerAnswers)} of ${items.length}. Their answers stay hidden until the reveal.`}
           </p>
         </section>
       )}
@@ -977,20 +895,37 @@ export function KnowMeDuo(props: DuoViewProps) {
       {phase === 'guessing' && (
         <section className="mt-3 space-y-3">
           <h2 className="text-lg font-bold">Now guess each other’s answers</h2>
-          {questions.map((q) => (
-            <label key={q.id} className="card block p-4">
-              <span className="font-semibold">{q.text}</span>
+          {items.map((item) => (
+            <div key={item.id} className="card p-4">
+              <span className="font-semibold">{item.prompt}</span>
               <span className="mt-1 block text-sm text-[var(--ink-dim)]">
-                You answered: {myAnswers[q.id]}
+                You answered: {display(item, myAnswers[item.id])}
               </span>
-              <input
-                className="input mt-2 w-full"
-                value={draft[q.id] ?? ''}
-                onChange={(e) => setDraft({ ...draft, [q.id]: e.target.value })}
-                placeholder={`${props.other?.name ?? 'Your partner'} would say…`}
-                disabled={props.paused}
-              />
-            </label>
+              {item.options ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {(['A', 'B'] as const).map((choice, i) => (
+                    <button
+                      key={choice}
+                      type="button"
+                      className={`btn ${draft[item.id] === choice ? 'btn-primary' : ''}`}
+                      aria-pressed={draft[item.id] === choice}
+                      disabled={props.paused}
+                      onClick={() => setDraft({ ...draft, [item.id]: choice })}
+                    >
+                      {item.options![i]}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <input
+                  className="input mt-2 w-full"
+                  value={draft[item.id] ?? ''}
+                  onChange={(e) => setDraft({ ...draft, [item.id]: e.target.value })}
+                  placeholder={`${props.other?.name ?? 'Your partner'} would say…`}
+                  disabled={props.paused}
+                />
+              )}
+            </div>
           ))}
           <button
             type="button"
@@ -1001,34 +936,110 @@ export function KnowMeDuo(props: DuoViewProps) {
             Save my guesses
           </button>
           <p className="text-sm text-[var(--ink-dim)]">
-            {answeredCount(partnerGuesses) >= questions.length
+            {answeredCount(partnerGuesses) >= items.length
               ? 'Your partner has guessed.'
-              : `Your partner has guessed ${answeredCount(partnerGuesses)} of ${questions.length}.`}
+              : `Your partner has guessed ${answeredCount(partnerGuesses)} of ${items.length}.`}
           </p>
         </section>
       )}
 
-      {phase === 'reveal' && (
+      {(phase === 'validating' || phase === 'reveal') && (
         <section className="mt-3 space-y-3">
-          <h2 className="text-lg font-bold">The reveal</h2>
-          {questions.map((q) => {
-            const norm = (s: string) => s.trim().toLowerCase();
-            const iMatch = norm(myGuesses[q.id] ?? '') === norm(partnerAnswers[q.id] ?? '');
-            const pMatch = norm(partnerGuesses[q.id] ?? '') === norm(myAnswers[q.id] ?? '');
+          <h2 className="text-lg font-bold">The reveal — no score yet</h2>
+          <p className="text-sm text-[var(--ink-dim)]">
+            Answers and guesses are out in the open, but the app has not judged them. Mark
+            each guess about <em>your</em> answers Correct or Incorrect — only you can mark
+            those, one tap each. The score appears once you have both marked everything.
+          </p>
+          {items.map((item) => {
+            const myVerdict = myValidations[item.id];
+            const partnerVerdict = partnerValidations[item.id];
             return (
-              <div key={q.id} className="card p-4">
-                <p className="font-semibold">{q.text}</p>
-                <p className="mt-1 text-sm">You: {myAnswers[q.id]}</p>
-                <p className="text-sm">{props.other?.name ?? 'Partner'}: {partnerAnswers[q.id]}</p>
+              <div key={item.id} className="card p-4">
+                <p className="font-semibold">{item.prompt}</p>
+                <p className="mt-1 text-sm">You: {display(item, myAnswers[item.id])}</p>
                 <p className="text-sm">
-                  You guessed: {myGuesses[q.id]} — {iMatch ? 'Match.' : 'Not quite.'}
+                  {props.other?.name ?? 'Partner'}: {display(item, partnerAnswers[item.id])}
                 </p>
                 <p className="text-sm">
-                  They guessed: {partnerGuesses[q.id]} — {pMatch ? 'Match.' : 'Not quite.'}
+                  You guessed: {display(item, myGuesses[item.id])}
+                  {partnerVerdict && (
+                    <>
+                      {' — '}Partner marked your guess:{' '}
+                      <span className="font-semibold">
+                        {partnerVerdict === 'correct' ? 'Correct.' : 'Incorrect.'}
+                      </span>
+                    </>
+                  )}
                 </p>
+                <p className="text-sm">
+                  They guessed: {display(item, partnerGuesses[item.id])}
+                </p>
+                {myVerdict ? (
+                  <p className="mt-2 text-sm">
+                    You marked their guess:{' '}
+                    <span className="font-semibold">
+                      {myVerdict === 'correct' ? 'Correct.' : 'Incorrect.'}
+                    </span>
+                  </p>
+                ) : (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="text-sm">Was their guess about you right?</span>
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={props.paused}
+                      onClick={() => validate(item.id, 'correct')}
+                    >
+                      Correct
+                    </button>
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={props.paused}
+                      onClick={() => validate(item.id, 'incorrect')}
+                    >
+                      Incorrect
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
+        </section>
+      )}
+
+      {phase === 'done' && (
+        <section className="mt-3 space-y-3">
+          <h2 className="text-lg font-bold">
+            Validated score — You {myScore} of {items.length} ·{' '}
+            {props.other?.name ?? 'Partner'} {partnerScore} of {items.length}
+          </h2>
+          <p className="text-sm text-[var(--ink-dim)]">
+            Each score is the guesses the other partner marked Correct — nobody scored
+            their own guesses.
+          </p>
+          {items.map((item) => (
+            <div key={item.id} className="card p-4">
+              <p className="font-semibold">{item.prompt}</p>
+              <p className="mt-1 text-sm">You: {display(item, myAnswers[item.id])}</p>
+              <p className="text-sm">
+                {props.other?.name ?? 'Partner'}: {display(item, partnerAnswers[item.id])}
+              </p>
+              <p className="text-sm">
+                You guessed: {display(item, myGuesses[item.id])} — Partner marked it:{' '}
+                <span className="font-semibold">
+                  {partnerValidations[item.id] === 'correct' ? 'Correct.' : 'Incorrect.'}
+                </span>
+              </p>
+              <p className="text-sm">
+                They guessed: {display(item, partnerGuesses[item.id])} — You marked it:{' '}
+                <span className="font-semibold">
+                  {myValidations[item.id] === 'correct' ? 'Correct.' : 'Incorrect.'}
+                </span>
+              </p>
+            </div>
+          ))}
           <button
             type="button"
             className="btn btn-primary"
