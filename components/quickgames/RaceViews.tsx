@@ -51,11 +51,15 @@ import {
   applySlap,
   generateUnoSlap,
   isSlapMatch,
+  reshuffleUnoSlapDeck,
+  restartedUnoSlapDeck,
   spokenNumber,
   unoSlapBotDelayMs,
   unoSlapBotErrorRate,
+  unoSlapDeckExhausted,
   unoSlapProgress,
 } from '@/lib/quickgames/unoSlap';
+import { rngFromSeed } from '@/lib/generators/rng';
 
 export interface RaceViewProps {
   seed: string;
@@ -662,6 +666,11 @@ export function UnoSlapView(props: RaceViewProps) {
     () => generateUnoSlap(props.seed, props.level),
     [props.seed, props.level],
   );
+  // The pile being played: starts as the dealt deck, then changes on a
+  // restart (fresh deck) or a reshuffle (same cards, new order).
+  const [deck, setDeck] = useState(game.deck);
+  const [round, setRound] = useState(0);
+  const [reshuffleCount, setReshuffleCount] = useState(0);
   const [laid, setLaid] = useState(0);
   const [score, setScore] = useState(0);
   const [mistakes, setMistakes] = useState(0);
@@ -670,7 +679,7 @@ export function UnoSlapView(props: RaceViewProps) {
   const [msg, setMsg] = useState<string | null>(null);
   const finished = score >= game.target;
   const botFinished = botScore >= game.target;
-  const top = laid > 0 ? game.deck[laid - 1]! : null;
+  const top = laid > 0 ? deck[laid - 1]! : null;
   // The nth card laid (1-indexed) is spoken as ((n - 1) % 10) + 1.
   const spoken = spokenNumber(Math.max(0, laid - 1));
   const match = top !== null && isSlapMatch(top, spoken);
@@ -681,7 +690,7 @@ export function UnoSlapView(props: RaceViewProps) {
     if (laid === 0) return;
     const t = setTimeout(
       () => {
-        const isMatch = isSlapMatch(game.deck[laid - 1]!, spokenNumber(laid - 1));
+        const isMatch = isSlapMatch(deck[laid - 1]!, spokenNumber(laid - 1));
         if (isMatch) {
           setBotScore((s) => s + 1);
         } else if (Math.random() < unoSlapBotErrorRate(props.level)) {
@@ -692,7 +701,7 @@ export function UnoSlapView(props: RaceViewProps) {
       unoSlapBotDelayMs(props.level),
     );
     return () => clearTimeout(t);
-  }, [laid, finished, botFinished, props.mode, props.level, props.disabled, game]);
+  }, [laid, finished, botFinished, props.mode, props.level, props.disabled, deck]);
 
   useOnce(finished, () => {
     props.onProgress?.(1);
@@ -719,7 +728,7 @@ export function UnoSlapView(props: RaceViewProps) {
         </p>
         <p className="mt-3 text-sm">
           Spoken: <strong className="text-xl">{spoken}</strong> · Cards laid: {laid} of{' '}
-          {game.deck.length}
+          {deck.length}
         </p>
         <div
           className="mx-auto mt-3 flex h-32 w-24 items-center justify-center rounded-xl border-2 text-4xl font-bold"
@@ -729,19 +738,42 @@ export function UnoSlapView(props: RaceViewProps) {
           {top ?? '—'}
         </div>
         {msg && <p className="mt-2 text-sm">{msg}</p>}
+        {(finished || botFinished) && props.mode === 'solo' && (
+          <p className="mt-2 text-sm">
+            Round over — use “Play again” / “Try again” below for a fresh, newly
+            shuffled round.
+          </p>
+        )}
         <div className="mt-3 flex flex-wrap justify-center gap-2">
           <button
             type="button"
             className="btn"
-            disabled={props.disabled || finished || laid >= game.deck.length}
-            onClick={() => setLaid((n) => n + 1)}
+            disabled={props.disabled || finished || botFinished}
+            onClick={() => {
+              // Auto-reshuffle: a spent pile never dead-ends the round.
+              // The whole pile is shuffled into a new order and the
+              // first card of the new pile is laid; scores are kept.
+              if (unoSlapDeckExhausted(laid, deck.length)) {
+                setDeck(
+                  reshuffleUnoSlapDeck(
+                    deck,
+                    rngFromSeed(`${props.seed}|auto-${reshuffleCount}`),
+                  ),
+                );
+                setReshuffleCount((c) => c + 1);
+                setLaid(1);
+                setMsg('Deck ran out — reshuffled, counting starts again.');
+              } else {
+                setLaid((n) => n + 1);
+              }
+            }}
           >
             Lay a card
           </button>
           <button
             type="button"
             className="btn btn-primary"
-            disabled={props.disabled || finished || top === null}
+            disabled={props.disabled || finished || botFinished || top === null}
             onClick={() => {
               const r = applySlap(match, { score, mistakes });
               setScore(r.score);
@@ -751,6 +783,44 @@ export function UnoSlapView(props: RaceViewProps) {
             }}
           >
             Slap!
+          </button>
+          <button
+            type="button"
+            className="btn"
+            disabled={props.disabled || finished || botFinished}
+            onClick={() => {
+              // Manual reshuffle: same cards, new order, counting
+              // restarts — scores (yours and the bot's) are kept.
+              setDeck(
+                reshuffleUnoSlapDeck(
+                  deck,
+                  rngFromSeed(`${props.seed}|reshuffle-${reshuffleCount}`),
+                ),
+              );
+              setReshuffleCount((c) => c + 1);
+              setLaid(0);
+              setMsg('Reshuffled — scores kept, counting starts again.');
+            }}
+          >
+            Reshuffle
+          </button>
+          <button
+            type="button"
+            className="btn"
+            disabled={props.disabled || finished || botFinished}
+            onClick={() => {
+              // Restart: a fresh round — new deck order, all scores reset.
+              setDeck(restartedUnoSlapDeck(props.seed, props.level, round + 1));
+              setRound((r) => r + 1);
+              setLaid(0);
+              setScore(0);
+              setMistakes(0);
+              setBotScore(0);
+              setBotMistakes(0);
+              setMsg('Fresh round — newly shuffled deck.');
+            }}
+          >
+            Restart
           </button>
         </div>
         <p className="mt-2 text-sm">

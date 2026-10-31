@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import { rngFromSeed } from '../generators/rng';
 import {
   applySlap,
   generateUnoSlap,
   isSlapMatch,
+  reshuffleUnoSlapDeck,
+  restartedUnoSlapDeck,
   spokenNumber,
   unoSlapBotDelayMs,
   unoSlapBotErrorRate,
+  unoSlapDeckExhausted,
   unoSlapProgress,
   unoSlapTargetForLevel,
 } from './unoSlap';
@@ -34,6 +38,29 @@ describe('uno slap', () => {
     expect(applySlap(false, { score: 0, mistakes: 0 })).toEqual({ score: 0, mistakes: 1 });
     expect(applySlap(false, { score: 2, mistakes: 1 })).toEqual({ score: 1, mistakes: 2 });
     expect(unoSlapProgress(generateUnoSlap('s', 5), 5)).toBe(1);
+  });
+
+  it('reshuffles keep the same 40 cards but in a new order', () => {
+    const { deck } = generateUnoSlap('s', 5);
+    const reshuffled = reshuffleUnoSlapDeck(deck, rngFromSeed('reshuffle-test'));
+    expect(reshuffled).toHaveLength(40);
+    expect([...reshuffled].sort((a, b) => a - b)).toEqual(
+      [...deck].sort((a, b) => a - b),
+    );
+    expect(reshuffled).not.toEqual(deck);
+  });
+
+  it('restarted rounds deal a different order, and exhaustion is detected', () => {
+    const { deck } = generateUnoSlap('s', 5);
+    const restarted = restartedUnoSlapDeck('s', 5, 1);
+    expect(restarted).toHaveLength(40);
+    expect([...restarted].sort((a, b) => a - b)).toEqual(
+      [...deck].sort((a, b) => a - b),
+    );
+    expect(restarted).not.toEqual(deck);
+    expect(restartedUnoSlapDeck('s', 5, 2)).not.toEqual(restarted);
+    expect(unoSlapDeckExhausted(40, 40)).toBe(true);
+    expect(unoSlapDeckExhausted(39, 40)).toBe(false);
   });
 
   it('makes the bot faster and sharper with level', () => {

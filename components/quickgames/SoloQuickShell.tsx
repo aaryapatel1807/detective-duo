@@ -49,7 +49,14 @@ export default function SoloQuickShell({
   }, [gameId]);
 
   const unlocked = Math.max(getGameProgress(progress, gameId).currentLevel, 1);
-  const seed = levelSeed(gameId, level, salt);
+  // Uno Slap only: fold the attempt into the seed, so Replay / Play
+  // again / Try again deal a genuinely new shuffled deck instead of
+  // replaying the identical deal. Every other quick game keeps its
+  // stable per-level seed and is unaffected.
+  const seed =
+    gameId === 'uno-slap'
+      ? `${levelSeed(gameId, level, salt)}|attempt-${attempt}`
+      : levelSeed(gameId, level, salt);
   const done = won !== null || lost;
 
   const handleFinish = (isWin: boolean) => {
@@ -108,7 +115,7 @@ export default function SoloQuickShell({
           <ChevronRight size={18} aria-hidden />
         </button>
         <button type="button" className="btn !px-3 !py-2" onClick={replay}>
-          <RotateCcw size={16} aria-hidden /> Replay
+          <RotateCcw size={16} aria-hidden /> {gameId === 'uno-slap' ? 'Restart' : 'Replay'}
         </button>
       </div>
 

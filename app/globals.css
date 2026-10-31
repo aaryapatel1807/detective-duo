@@ -10,6 +10,11 @@
 
 html {
   background: var(--bg);
+  /* App-wide smooth scrolling: the app scrolls as one document (no
+   * fixed header, no app-owned vertical scroll panel), so this single
+   * rule covers every page, including any anchor / focus / programmatic
+   * scroll added later. Manual wheel/touch scrolling is unaffected. */
+  scroll-behavior: smooth;
 }
 
 body {
@@ -243,6 +248,12 @@ h1, h2, h3, .font-display {
 /* ------------------------------------------------------------- motion --- */
 
 @media (prefers-reduced-motion: reduce) {
+  /* Scrolling must be instant, not gliding, for reduced-motion users.
+   * This needs its own rule: the animation/transition overrides below
+   * do not affect scroll-behavior. */
+  html {
+    scroll-behavior: auto;
+  }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

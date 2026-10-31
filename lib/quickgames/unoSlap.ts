@@ -31,6 +31,29 @@ export function generateUnoSlap(seed: string, level: number): UnoSlapGame {
   return { deck: shuffle(deck, rng), target: unoSlapTargetForLevel(level) };
 }
 
+/**
+ * Shuffle a pile of card values into a new order, keeping exactly the
+ * same cards. Used for a mid-round reshuffle and for the automatic
+ * reshuffle when the draw pile runs out — scores are untouched.
+ */
+export function reshuffleUnoSlapDeck(deck: number[], rng: () => number): number[] {
+  return shuffle(deck, rng);
+}
+
+/** True when every card in the pile has been laid (time to reshuffle). */
+export function unoSlapDeckExhausted(laid: number, deckLength: number): boolean {
+  return laid >= deckLength;
+}
+
+/**
+ * A fresh deck for a restarted round: the same 40 cards (four suits of
+ * 1-10) in a different order than the round identified by `seed`.
+ * `round` increments per restart so no two restarts deal alike.
+ */
+export function restartedUnoSlapDeck(seed: string, level: number, round: number): number[] {
+  return generateUnoSlap(`${seed}|restart-${round}`, level).deck;
+}
+
 /** Spoken number when `laid` cards are down (cycles 1..10). */
 export function spokenNumber(laid: number): number {
   return (laid % 10) + 1;
