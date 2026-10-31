@@ -1043,6 +1043,212 @@ h1, h2, h3, .font-display {
   background: radial-gradient(circle at 35% 30%, #ff8a8a, #c00 60%, #7a0000);
   box-shadow: 0 3px 5px rgba(0, 0, 0, 0.4);
 }
+/* ---------------------------------- Murder board guided flow (31 Oct) --- */
+/* Murder section only: the Criminal Case-style step rail, suspect
+ * lineup, interrogation room and arrest lineup. Same manila exception
+ * as the v3 block; the normal board renders none of this. */
+.cf-rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  align-items: center;
+  margin: 14px 0 2px;
+}
+.cf-railitem {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.cf-railarrow {
+  color: #8a6d3b;
+  font-weight: 900;
+  padding: 0 2px;
+}
+.cf-railstep {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 2px solid #8a6d3b;
+  background: #f6ead0;
+  color: #6b543a;
+  cursor: pointer;
+}
+.cf-railstep.done {
+  background: #2b6e3f;
+  border-color: #2b6e3f;
+  color: #fff;
+}
+.cf-railstep.now {
+  background: #8a1f1f;
+  border-color: #8a1f1f;
+  color: #fff;
+}
+.cf-lineup {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.cf-suscard {
+  background: #fdf6e3;
+  border: 3px solid #8a6d3b;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 6px 14px rgba(60, 40, 10, 0.3);
+  cursor: pointer;
+  text-align: left;
+  color: #232338;
+  padding: 0 0 12px;
+}
+.cf-suscard img {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  object-position: center 22%;
+  display: block;
+}
+.cf-susname {
+  display: block;
+  font-weight: 900;
+  font-size: 18px;
+  padding: 10px 12px 0;
+}
+.cf-susrole {
+  display: block;
+  font-size: 12px;
+  color: #6b543a;
+  padding: 2px 12px 0;
+}
+.cf-chip-interest {
+  display: inline-block;
+  margin: 8px 0 0 12px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #ffe9a8;
+  color: #6b543a;
+}
+.cf-suscard.out img {
+  filter: grayscale(1);
+  opacity: 0.75;
+}
+.cf-suscard.out .cf-stamp-inline {
+  margin: 8px 0 0 12px;
+}
+.cf-interro {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 18px;
+  background: #fdf6e3;
+  border: 3px solid #8a6d3b;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 14px;
+  box-shadow: 0 6px 14px rgba(60, 40, 10, 0.3);
+}
+.cf-interro > img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  object-position: center 20%;
+  border-radius: 8px;
+  border: 6px solid #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+.cf-interro.out > img {
+  filter: grayscale(1);
+  opacity: 0.8;
+}
+.cf-bubble {
+  background: #fff;
+  border: 2px solid #d9b878;
+  border-radius: 16px;
+  border-top-left-radius: 2px;
+  padding: 14px 16px;
+  font-size: 15px;
+  line-height: 1.55;
+  margin-top: 12px;
+  color: #232338;
+}
+.cf-bubble small {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #8a1f1f;
+  margin-bottom: 4px;
+}
+.cf-bubble.secret {
+  border-style: dashed;
+}
+.cf-arrest {
+  background: #2b2118;
+  color: #f4e9d4;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+.cf-arrest-title {
+  font-weight: 900;
+  font-size: 24px;
+  letter-spacing: 0.04em;
+}
+.cf-arrest-lineup {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  margin: 16px 0;
+}
+.cf-arrest-sus {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #f4e9d4;
+  width: 92px;
+}
+.cf-arrest-sus:disabled {
+  cursor: default;
+}
+.cf-arrest-sus img {
+  width: 76px;
+  height: 76px;
+  object-fit: cover;
+  object-position: center 20%;
+  border-radius: 50%;
+  border: 3px solid #f4e9d4;
+  display: block;
+  margin: 0 auto;
+}
+.cf-arrest-sus.out img {
+  filter: grayscale(1);
+  opacity: 0.5;
+  border-color: #888;
+}
+.cf-arrest-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+.cf-arrest-ruled {
+  display: block;
+  font-size: 11px;
+  color: #cbb894;
+  margin-top: 2px;
+}
+.cf-arrest-note {
+  font-size: 12px;
+  color: #cbb894;
+  margin-top: 12px;
+  line-height: 1.5;
+}
 @media (max-width: 760px) {
   .cf-meta { grid-template-columns: 1fr; }
   .cf-filehead .cf-title { font-size: 24px; }
@@ -1051,6 +1257,9 @@ h1, h2, h3, .font-display {
   .cf-ftab { padding: 8px 12px; font-size: 12px; }
   .cf-mug { grid-template-columns: 110px 1fr; }
   .cf-report { padding-left: 56px; }
+  .cf-interro { grid-template-columns: 1fr; }
+  .cf-interro > img { height: 220px; }
+  .cf-railstep { font-size: 12px; padding: 8px 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .cf-dots span { animation: none; }

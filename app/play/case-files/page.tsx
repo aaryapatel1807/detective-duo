@@ -67,6 +67,15 @@ import { tierCycleNote, unknownCase } from '@/lib/emptyStates';
 
 type Tab = 'story' | 'evidence' | 'suspects' | 'accuse';
 type Section = 'cases' | 'murder';
+/** Murder board only: the guided Criminal Case-style flow. The normal
+ * board keeps its folder tabs; this state is inert there. */
+type FlowStep = 'story' | 'suspects' | 'evidence' | 'arrest';
+const FLOW_STEPS: { id: FlowStep; label: string; icon: typeof BookOpen }[] = [
+  { id: 'story', label: 'Story', icon: BookOpen },
+  { id: 'suspects', label: 'Suspects', icon: Users },
+  { id: 'evidence', label: 'Evidence', icon: Search },
+  { id: 'arrest', label: 'Arrest', icon: Footprints },
+];
 type RevealPhase = 'accuse' | 'suspense' | 'verdict' | 'steps' | 'confession' | 'done';
 
 interface PlayState {
@@ -108,6 +117,9 @@ function shuffleFor<T>(items: T[], seed: string): T[] {
 export default function CaseFilesPage() {
   const [progress, setProgress] = useState<ProgressMap>({});
   const [section, setSection] = useState<Section>('cases');
+  const [flowStep, setFlowStep] = useState<FlowStep>('story');
+  const [selectedSuspect, setSelectedSuspect] = useState<string | null>(null);
+  const [visitedSteps, setVisitedSteps] = useState<FlowStep[]>(['story']);
   const [level, setLevel] = useState(1);
   const [state, setState] = useState<PlayState>(freshState());
   const [tab, setTab] = useState<Tab>('story');
@@ -193,6 +205,9 @@ export default function CaseFilesPage() {
       setWon(null);
       setAccuseMsg(null);
       setTab('story');
+      setFlowStep('story');
+      setSelectedSuspect(null);
+      setVisitedSteps(['story']);
       setState(freshState());
       return;
     }
@@ -205,6 +220,9 @@ export default function CaseFilesPage() {
     setRevealCount(0);
     setAccusedName(null);
     setTab('story');
+    setFlowStep('story');
+    setSelectedSuspect(null);
+    setVisitedSteps(['story']);
     try {
       const raw = localStorage.getItem(keyFor(section, level));
       if (raw) {
@@ -292,6 +310,9 @@ export default function CaseFilesPage() {
     setRevealPhase('accuse');
     setRevealCount(0);
     setAccusedName(null);
+    setFlowStep('story');
+    setSelectedSuspect(null);
+    setVisitedSteps(['story']);
     try {
       localStorage.removeItem(keyFor(section, level));
     } catch {
@@ -346,10 +367,25 @@ export default function CaseFilesPage() {
   const portrait = (i: number) =>
     section === 'murder' ? portraitForMurderSuspect(c.id, i) : portraitForSuspect(c.id, i);
 
+  // Murder interrogation room: the tapped suspect's dossier, if any.
+  const selIdx = c.suspects.findIndex((s) => s.id === selectedSuspect);
+  const selSuspect = selIdx >= 0 ? c.suspects[selIdx] : null;
+  const selAsked = selSuspect ? state.questioned.includes(selSuspect.id) : false;
+  const selRuled = selSuspect ? ruledBy.get(selSuspect.id) : undefined;
+
+  const goFlowStep = (next: FlowStep) => {
+    setFlowStep(next);
+    setSelectedSuspect(null);
+    setVisitedSteps((v) => (v.includes(next) ? v : [...v, next]));
+  };
+
   const switchSection = (next: Section) => {
     if (next === section) return;
     setSection(next);
     setLevel(getGameProgress(progress, gameIdFor(next)).currentLevel);
+    setFlowStep('story');
+    setSelectedSuspect(null);
+    setVisitedSteps(['story']);
     try {
       localStorage.setItem(SECTION_KEY, next);
     } catch {
@@ -413,7 +449,7 @@ export default function CaseFilesPage() {
       )}
       <p className="mt-1 text-[var(--ink-dim)]">
         {section === 'murder'
-          ? 'A murder board, worked like a real investigation: police report, crime scene, interrogations, evidence folder, one final accusation. Hints are free, and a wrong accusation never locks you out.'
+          ? 'Follow the investigation, step by step: story, suspects, evidence, then the arrest. Hints are free, and a wrong accusation never locks you out.'
           : 'Open the file, tag the exhibits that matter, question everyone — then sign the final report. Hints are free, and a wrong accusation never locks you out.'}
       </p>
       {levelStars > 0 && !leftCase && (
@@ -442,18 +478,42 @@ export default function CaseFilesPage() {
         </nav>
       )}
 
-      <nav className="cf-ftabs" aria-label="Case sections">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            className={`cf-ftab ${tab === t.id ? 'on' : ''}`}
-            onClick={() => setTab(t.id)}
-          >
-            {t.icon} {t.label}
-          </button>
-        ))}
-      </nav>
+      {section === 'cases' && (
+        <nav className="cf-ftabs" aria-label="Case sections">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              className={`cf-ftab ${tab === t.id ? 'on' : ''}`}
+              onClick={() => setTab(t.id)}
+            >
+              {t.icon} {t.label}
+            </button>
+          ))}
+        </nav>
+      )}
+
+      {section === 'murder' && (
+        <nav className="cf-rail" aria-label="Investigation steps">
+          {FLOW_STEPS.map((s, i) => {
+            const Icon = s.icon;
+            const state = flowStep === s.id ? 'now' : visitedSteps.includes(s.id) ? 'done' : '';
+            return (
+              <span key={s.id} className="cf-railitem">
+                {i > 0 && <span className="cf-railarrow" aria-hidden>›</span>}
+                <button
+                  type="button"
+                  className={`cf-railstep ${state}`}
+                  onClick={() => goFlowStep(s.id)}
+                >
+                  <Icon size={15} aria-hidden /> {i + 1} · {s.label}
+                  {state === 'done' && ' ✓'}
+                </button>
+              </span>
+            );
+          })}
+        </nav>
+      )}
 
       <div className={`cf-folder ${section === 'murder' ? 'cf-murder' : ''}`}>
         <div className="cf-filehead">
@@ -482,10 +542,10 @@ export default function CaseFilesPage() {
           </div>
         </div>
 
-      {tab === 'story' && (
+      {section === 'cases' && tab === 'story' && (
         <section>
           <h2 className="cf-sec">
-            {section === 'murder' ? 'POLICE REPORT (TYPED REPORT)' : 'CASE SUMMARY (TYPED REPORT)'}
+            CASE SUMMARY (TYPED REPORT)
           </h2>
           <div className="cf-report">
             {c.narrative}
@@ -499,7 +559,7 @@ export default function CaseFilesPage() {
         </section>
       )}
 
-      {tab === 'evidence' && (
+      {section === 'cases' && tab === 'evidence' && (
         <section>
           <h2 className="cf-sec">PERSONS OF INTEREST — CLEARANCE ROSTER</h2>
           <div className="cf-roster">
@@ -520,7 +580,7 @@ export default function CaseFilesPage() {
             Tag an exhibit and the roster updates.
           </div>
           <h2 className="cf-sec">
-            {section === 'murder' ? 'EVIDENCE FOLDER (EXHIBITS)' : 'EXHIBITS (EVIDENCE)'}
+            EXHIBITS (EVIDENCE)
           </h2>
           {evidence.map((item, i) => {
             const pinned = state.pinned.includes(item.id);
@@ -547,13 +607,11 @@ export default function CaseFilesPage() {
         </section>
       )}
 
-      {tab === 'suspects' && (
+      {section === 'cases' && tab === 'suspects' && (
         <section>
           <h2 className="cf-sec">SUSPECT SHEETS (MUGSHOTS)</h2>
           <p className="mb-3 text-sm opacity-70">
-            {section === 'murder'
-              ? 'Everyone’s statement is on file. Tap “Interrogate” to hear what they would rather keep quiet. Faces are imaginary — every suspect gets a portrait.'
-              : 'Everyone’s statement is on file. Tap “Ask” to hear what they would rather keep quiet. Faces are imaginary — every suspect gets a portrait.'}
+Everyone’s statement is on file. Tap “Ask” to hear what they would rather keep quiet. Faces are imaginary — every suspect gets a portrait.
           </p>
           {c.suspects.map((s, i) => {
             const asked = state.questioned.includes(s.id);
@@ -587,7 +645,7 @@ export default function CaseFilesPage() {
                     <div className="field"><b>NOTES:</b> {s.secret}</div>
                   ) : (
                     <button type="button" className="btn mt-3" onClick={() => question(s.id)}>
-                      {section === 'murder' ? 'Interrogate' : 'Ask'} {s.name.split(' ')[0]}
+                      Ask {s.name.split(' ')[0]}
                     </button>
                   )}
                 </div>
@@ -597,7 +655,7 @@ export default function CaseFilesPage() {
         </section>
       )}
 
-      {tab === 'accuse' && (
+      {section === 'cases' && tab === 'accuse' && (
         <section>
           <h2 className="cf-sec">FINAL REPORT (ACCUSE)</h2>
           <div className="cf-final">
@@ -635,6 +693,182 @@ export default function CaseFilesPage() {
             {accuseMsg && <p className="pt-2 text-sm font-semibold">{accuseMsg}</p>}
             <p className="mt-4">
               Signed: <span className="cf-sigline" /> Date: <span className="cf-sigline" style={{ minWidth: 120 }} />
+            </p>
+          </div>
+        </section>
+      )}
+
+      {section === 'murder' && flowStep === 'story' && (
+        <section>
+          <h2 className="cf-sec">THE STORY (POLICE REPORT)</h2>
+          <div className="cf-report">
+            {c.narrative}
+            <span className="cf-hand">Note: work the evidence, not the gossip.</span>
+            <div className="cf-stain" aria-hidden />
+          </div>
+          <p className="mt-3 text-sm opacity-70">
+            {c.suspects.length} suspects · {c.clues.length} clues · {c.redHerrings.length}{' '}
+            suspicious-looking details that may mean nothing.
+          </p>
+          <button type="button" className="btn btn-primary mt-4" onClick={() => goFlowStep('suspects')}>
+            Start investigation <ChevronRight size={16} aria-hidden />
+          </button>
+        </section>
+      )}
+
+      {section === 'murder' && flowStep === 'suspects' && (
+        <section>
+          <h2 className="cf-sec">THE SUSPECTS</h2>
+          {selSuspect ? (
+            <div>
+              <button type="button" className="btn" onClick={() => setSelectedSuspect(null)}>
+                <ChevronLeft size={16} aria-hidden /> Back to the lineup
+              </button>
+              <div className={`cf-interro ${selRuled ? 'out' : ''}`}>
+                <img src={portrait(selIdx)} alt={`Portrait of ${selSuspect.name}`} />
+                <div>
+                  <h3 className="font-hand text-3xl leading-none">{selSuspect.name}</h3>
+                  <div className="field"><b>OCCUPATION:</b> {selSuspect.role}</div>
+                  {selRuled && (
+                    <div className="field">
+                      <span className="cf-stamp-inline">CLEARED</span>{' '}
+                      <b>CLEARED BY:</b>{' '}
+                      {selRuled.by === 'clue' ? selRuled.clueText : 'your accusation'}
+                    </div>
+                  )}
+                  <div className="cf-bubble">
+                    <small>{selSuspect.name.toUpperCase()} — STATEMENT</small>
+                    &ldquo;{selSuspect.alibi}&rdquo;
+                  </div>
+                  {selAsked ? (
+                    <div className="cf-bubble secret">
+                      <small>PRESSED FURTHER — WHAT THEY HID</small>
+                      &ldquo;{selSuspect.secret}&rdquo;
+                    </div>
+                  ) : (
+                    <button type="button" className="btn btn-primary mt-3" onClick={() => question(selSuspect.id)}>
+                      Press further
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="mb-3 text-sm opacity-70">
+                Tap a suspect to bring them in for questioning. Faces are imaginary — every
+                suspect gets a portrait.
+              </p>
+              <div className="cf-lineup">
+                {c.suspects.map((s, i) => {
+                  const ruled = ruledBy.get(s.id);
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className={`cf-suscard ${ruled ? 'out' : ''}`}
+                      onClick={() => setSelectedSuspect(s.id)}
+                    >
+                      <img src={portrait(i)} alt={`Portrait of ${s.name}`} loading="lazy" />
+                      <span className="cf-susname">{s.name}</span>
+                      <span className="cf-susrole">{s.role}</span>
+                      {ruled ? (
+                        <span className="cf-stamp-inline">CLEARED</span>
+                      ) : (
+                        <span className="cf-chip-interest">OF INTEREST</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              <button type="button" className="btn btn-primary mt-4" onClick={() => goFlowStep('evidence')}>
+                Continue to evidence <ChevronRight size={16} aria-hidden />
+              </button>
+            </>
+          )}
+        </section>
+      )}
+
+      {section === 'murder' && flowStep === 'evidence' && (
+        <section>
+          <h2 className="cf-sec">PERSONS OF INTEREST — CLEARANCE ROSTER</h2>
+          <div className="cf-roster">
+            {c.suspects.map((s) => {
+              const ruled = ruledBy.get(s.id);
+              return (
+                <span key={s.id}>
+                  <span className={ruled ? 'out' : 'live'}>{s.name}</span>{' '}
+                  {ruled && <span className="cf-stamp-inline">CLEARED</span>}{' '}
+                </span>
+              );
+            })}
+            <br />
+            <b>
+              Still of interest: {elim.standingIds.length} of {c.suspects.length}.
+              {elim.standingIds.length === 1 && ' Only one name left standing.'}
+            </b>{' '}
+            Tag an exhibit and the roster updates.
+          </div>
+          <h2 className="cf-sec">EVIDENCE FOLDER (EXHIBITS)</h2>
+          {evidence.map((item, i) => {
+            const pinned = state.pinned.includes(item.id);
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className="cf-exhibit"
+                onClick={() => togglePin(item.id)}
+                aria-pressed={pinned}
+              >
+                <span className="cf-extag">
+                  EXHIBIT {String.fromCharCode(65 + i)}
+                </span>{' '}
+                {pinned && <span className="cf-stamp-inline">TAGGED</span>}
+                <span className="ml-1 text-xs font-bold uppercase opacity-60">
+                  {item.kind}
+                  {won !== null && (item.real ? ' · a real clue' : ' · a red herring')}
+                </span>
+                <span className="mt-1 block">{item.text}</span>
+              </button>
+            );
+          })}
+          <button type="button" className="btn btn-primary mt-4" onClick={() => goFlowStep('arrest')}>
+            Line up the suspects <ChevronRight size={16} aria-hidden />
+          </button>
+        </section>
+      )}
+
+      {section === 'murder' && flowStep === 'arrest' && (
+        <section>
+          <h2 className="cf-sec">THE ARREST</h2>
+          <div className="cf-arrest">
+            <p className="cf-arrest-title">WHO DID IT?</p>
+            <p className="text-sm opacity-70">Tap a suspect to make the arrest.</p>
+            <div className="cf-arrest-lineup">
+              {c.suspects.map((s, i) => {
+                const ruled = ruledBy.get(s.id);
+                const wasWrong = state.wrongAccused.includes(s.id);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`cf-arrest-sus ${ruled ? 'out' : ''}`}
+                    disabled={won !== null}
+                    onClick={() => accuse(s.id)}
+                  >
+                    <img src={portrait(i)} alt={s.name} loading="lazy" />
+                    <span className="cf-arrest-name">{s.name}</span>
+                    {wasWrong && (
+                      <span className="cf-arrest-ruled">Ruled out by your accusation</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            {accuseMsg && <p className="mt-3 text-sm font-semibold">{accuseMsg}</p>}
+            <p className="cf-arrest-note">
+              A wrong name costs one mistake and nothing else — you can keep accusing until
+              the clues point to one person.
             </p>
           </div>
         </section>
