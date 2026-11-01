@@ -231,6 +231,46 @@ export function Fireworks() {
   );
 }
 
+/** Floating dust motes drifting in the warm light above the board:
+ * a small preallocated point cloud, slowly swirling — atmosphere
+ * that costs almost nothing. */
+export function Dust() {
+  const points = useRef<THREE.Points>(null);
+  const geo = useMemo(() => new THREE.BufferGeometry(), []);
+  const COUNT = 42;
+  const data = useMemo(() => {
+    const pos = new Float32Array(COUNT * 3);
+    const seeds: { x: number; y: number; z: number; s: number; p: number }[] = [];
+    for (let i = 0; i < COUNT; i += 1) {
+      seeds.push({
+        x: (Math.random() - 0.5) * 16,
+        y: 0.5 + Math.random() * 4,
+        z: (Math.random() - 0.5) * 16,
+        s: 0.1 + Math.random() * 0.3,
+        p: Math.random() * Math.PI * 2,
+      });
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    return { pos, seeds };
+  }, [geo]);
+  useFrame(({ clock }) => {
+    if (!points.current) return;
+    const t = clock.getElapsedTime();
+    for (let i = 0; i < COUNT; i += 1) {
+      const s = data.seeds[i];
+      data.pos[i * 3] = s.x + Math.sin(t * s.s + s.p) * 0.8;
+      data.pos[i * 3 + 1] = s.y + Math.sin(t * s.s * 0.7 + s.p) * 0.4;
+      data.pos[i * 3 + 2] = s.z + Math.cos(t * s.s * 0.8 + s.p) * 0.8;
+    }
+    geo.attributes.position.needsUpdate = true;
+  });
+  return (
+    <points ref={points} geometry={geo} frustumCulled={false}>
+      <pointsMaterial size={0.07} color="#ffe9c9" transparent opacity={0.55} sizeAttenuation />
+    </points>
+  );
+}
+
 export interface MoneyFlight {
   key: number;
   from: [number, number];

@@ -133,6 +133,38 @@ function Birds() {
   );
 }
 
+/** Fake god-ray light shafts: a few large, very translucent additive
+ * planes leaning in from the sun's direction, shimmering slowly.
+ * No postprocessing pass, so the cost is three quads. */
+function LightRays() {
+  const group = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (!group.current) return;
+    const t = clock.getElapsedTime();
+    group.current.children.forEach((child, i) => {
+      const mat = (child as THREE.Mesh).material as THREE.MeshBasicMaterial;
+      mat.opacity = 0.05 + Math.sin(t * 0.4 + i * 1.3) * 0.02;
+    });
+  });
+  return (
+    <group ref={group} position={[4, 3.5, -2]} rotation={[0.3, 0, -0.5]}>
+      {[0, 1.6, 3.1].map((x, i) => (
+        <mesh key={i} position={[x, 0, 0]}>
+          <planeGeometry args={[1.4, 11]} />
+          <meshBasicMaterial
+            color="#ffe9c9"
+            transparent
+            opacity={0.06}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 export default function World() {
   const floorTex = useMemo(() => {
     const t = woodTexture('#8a5a33', '#5d3a1a');
@@ -187,6 +219,7 @@ export default function World() {
       <Butterfly origin={[4, 2.2, -2]} colour="#ffd166" />
       <Butterfly origin={[1, 1.4, 5]} colour="#a78bfa" />
       <Birds />
+      <LightRays />
     </group>
   );
 }

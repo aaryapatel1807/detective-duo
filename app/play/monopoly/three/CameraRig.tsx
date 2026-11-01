@@ -1,7 +1,9 @@
 /** Cinematic camera rig: smooth damped movement between modes.
  * idle = gentle floating drift; dice = quick zoom to the dice;
  * walk = follows the active token; buy/build = focuses the tile;
- * victory = slow orbit. Reduced-motion locks a calm static camera
+ * victory = slow orbit. Shake fires ONLY on important moments
+ * (doubles, jail, bankruptcy, hotel) via `shakeKey` — never on an
+ * ordinary roll landing. Reduced-motion locks a calm static camera
  * and disables shake entirely. */
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
@@ -14,27 +16,24 @@ export default function CameraRig({
   mode,
   focusTile,
   followSquare,
-  rolling,
+  shakeKey,
   reducedMotion,
 }: {
   mode: CameraMode;
   focusTile: number | null;
   followSquare: number;
-  rolling: boolean;
+  shakeKey: number;
   reducedMotion: boolean;
 }) {
   const { camera } = useThree();
   const look = useRef(new THREE.Vector3(0, 0.3, 0));
   const shakeUntil = useRef(0);
-  const prevRolling = useRef(rolling);
 
   useEffect(() => {
-    if (prevRolling.current && !rolling) {
-      // The dice just landed: a brief, small shake (not for reduced motion).
-      if (!reducedMotion) shakeUntil.current = performance.now() / 1000 + 0.3;
-    }
-    prevRolling.current = rolling;
-  }, [rolling, reducedMotion]);
+    // Important moment only (doubles / jail / bankruptcy / hotel):
+    // a brief, small shake. Ordinary roll landings do not shake.
+    if (shakeKey > 0 && !reducedMotion) shakeUntil.current = performance.now() / 1000 + 0.35;
+  }, [shakeKey, reducedMotion]);
 
   useFrame(({ clock }, dt) => {
     const t = clock.getElapsedTime();

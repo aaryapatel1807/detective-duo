@@ -204,6 +204,13 @@ export default function Token3D({
     const hopAge = now - hopStart.current;
     const hopping = !reducedMotion && hopAge < 0.17;
     const hopY = hopping ? Math.sin((hopAge / 0.17) * Math.PI) * 0.35 : 0;
+    // Settle bounce: one small second bounce right after the hop, so
+    // the token lands with weight instead of stopping dead.
+    const settleAge = hopAge - 0.17;
+    const settleY =
+      !reducedMotion && settleAge >= 0 && settleAge < 0.23
+        ? Math.sin((settleAge / 0.23) * Math.PI) * 0.12
+        : 0;
     let bob = 0;
     let rotZ = 0;
     let rotX = 0;
@@ -224,7 +231,7 @@ export default function Token3D({
     } else {
       bob = Math.sin(t * 2 + phase) * 0.045;
     }
-    group.current.position.set(base[0], base[1] + bob + hopY, base[2]);
+    group.current.position.set(base[0], base[1] + bob + hopY + settleY, base[2]);
     group.current.rotation.set(rotX, rotY, rotZ);
   });
 

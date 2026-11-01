@@ -14,7 +14,7 @@ import Board3D from './Board3D';
 import Token3D, { type TokenMood } from './Token3D';
 import Dice3D from './Dice3D';
 import CameraRig, { type CameraMode } from './CameraRig';
-import { Burst, Fireworks, MoneyFlyer, Petals, StepPuff, type MoneyFlight } from './Effects';
+import { Burst, Dust, Fireworks, MoneyFlyer, Petals, StepPuff, type MoneyFlight } from './Effects';
 
 export interface BurstEvent {
   key: number;
@@ -59,6 +59,9 @@ export default function MonopolyScene({
   jailClosed,
   dimmed,
   stepPuff,
+  shakeKey,
+  shineTile,
+  landingTile,
   onTileClick,
   onError,
   reducedMotion,
@@ -80,6 +83,9 @@ export default function MonopolyScene({
   jailClosed: boolean;
   dimmed: boolean;
   stepPuff: { key: number; tile: number } | null;
+  shakeKey: number;
+  shineTile: number | null;
+  landingTile: { tile: number; key: number } | null;
   onTileClick: (index: number) => void;
   onError: () => void;
   reducedMotion: boolean;
@@ -97,16 +103,16 @@ export default function MonopolyScene({
     <SceneErrorBoundary onError={onError}>
       <div style={{ height: 480, borderRadius: 18, overflow: 'hidden' }}>
         <Canvas
-          shadows
+          shadows="soft"
           dpr={[1, 1.75]}
           camera={{ fov: 42, position: [0, 15, 15], near: 0.1, far: 90 }}
           gl={{ antialias: true, powerPreference: 'high-performance' }}
         >
-          <ambientLight intensity={dimmed ? 0.35 : 0.7} />
-          <hemisphereLight args={['#ffe9c9', '#5d4a2e', dimmed ? 0.3 : 0.6]} />
+          <ambientLight intensity={dimmed ? 0.35 : 0.75} />
+          <hemisphereLight args={['#ffe9c9', '#5d4a2e', dimmed ? 0.3 : 0.7]} />
           <directionalLight
             position={[8, 14, 6]}
-            intensity={dimmed ? 0.9 : 1.9}
+            intensity={dimmed ? 0.9 : 2.1}
             color="#ffdfae"
             castShadow
             shadow-mapSize={[1024, 1024]}
@@ -122,6 +128,8 @@ export default function MonopolyScene({
               focusTile={focusTile}
               highlightTile={highlightTile}
               jailClosed={jailClosed}
+              shineTile={shineTile}
+              landingTile={landingTile}
               reducedMotion={reducedMotion}
               onTileClick={onTileClick}
             />
@@ -139,6 +147,7 @@ export default function MonopolyScene({
             ))}
             <Dice3D faces={faces} rolling={rolling} doubles={doubles} reducedMotion={reducedMotion} />
             <Petals />
+            <Dust />
             {burst && burstPos && (
               <Burst
                 burstKey={burst.key}
@@ -165,7 +174,7 @@ export default function MonopolyScene({
               mode={cameraMode}
               focusTile={focusTile}
               followSquare={followSquare}
-              rolling={rolling}
+              shakeKey={shakeKey}
               reducedMotion={reducedMotion}
             />
           </Suspense>

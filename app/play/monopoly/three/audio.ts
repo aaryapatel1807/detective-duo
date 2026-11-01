@@ -118,6 +118,12 @@ export const sfx = {
     ensureAudio();
     noise(0.06, 0.12, 500);
   },
+  /** Landing on a destination tile: a soft thud plus a tiny sparkle. */
+  land(): void {
+    ensureAudio();
+    tone(180, 90, 0.12, 'triangle', 0.15);
+    tone(1320, 1320, 0.08, 'sine', 0.06, 0.05);
+  },
   /** Coins: two bright pings. */
   coin(): void {
     ensureAudio();
@@ -182,6 +188,13 @@ export const sfx = {
     tone(392, 392, 0.25, 'triangle', 0.12);
     tone(330, 330, 0.25, 'triangle', 0.12, 0.22);
     tone(262, 262, 0.4, 'triangle', 0.12, 0.44);
+  },
+  /** Doubles: a bright two-note celebration so a double roll sounds
+   * different from an ordinary roll. */
+  doubles(): void {
+    ensureAudio();
+    tone(880, 880, 0.12, 'sine', 0.14);
+    tone(1318, 1318, 0.2, 'sine', 0.14, 0.1);
   },
 };
 

@@ -82,6 +82,37 @@ function Buildings({ square, houses, tileX, tileZ }: { square: number; houses: n
   );
 }
 
+/** Golden shine that washes over a tile for ~0.8s when it is bought
+ * (or, in pink, when a token lands on it): the ownership / arrival
+ * moment, made visible in the scene. */
+function ShineTile({ tile, colour = '#ffd166', reducedMotion }: { tile: number; colour?: string; reducedMotion: boolean }) {
+  const mesh = useRef<THREE.Mesh>(null);
+  const start = useRef(performance.now() / 1000);
+  useEffect(() => {
+    start.current = performance.now() / 1000;
+  }, [tile]);
+  useFrame(() => {
+    if (!mesh.current) return;
+    const age = performance.now() / 1000 - start.current;
+    const mat = mesh.current.material as THREE.MeshBasicMaterial;
+    if (reducedMotion || age >= 0.8) {
+      mat.opacity = 0;
+      mesh.current.visible = age < 0.8 && !reducedMotion;
+      return;
+    }
+    mesh.current.visible = true;
+    mat.opacity = 0.55 * (1 - age / 0.8);
+    mesh.current.scale.setScalar(1 + age * 0.25);
+  });
+  const [x, z] = tilePos(tile);
+  return (
+    <mesh ref={mesh} position={[x, 0.35, z]} rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[1.2, 1.2]} />
+      <meshBasicMaterial color={colour} transparent opacity={0.55} blending={THREE.AdditiveBlending} depthWrite={false} />
+    </mesh>
+  );
+}
+
 /** Pulsing glow above the tile the camera is focusing on (buy/build). */
 function FocusGlow({ position }: { position: [number, number] }) {
   const mesh = useRef<THREE.Mesh>(null);
@@ -171,6 +202,8 @@ export default function Board3D({
   focusTile,
   highlightTile,
   jailClosed,
+  shineTile,
+  landingTile,
   reducedMotion,
   onTileClick,
 }: {
@@ -178,6 +211,8 @@ export default function Board3D({
   focusTile: number | null;
   highlightTile: number | null;
   jailClosed: boolean;
+  shineTile: number | null;
+  landingTile: { tile: number; key: number } | null;
   reducedMotion: boolean;
   onTileClick: (index: number) => void;
 }) {
@@ -275,6 +310,10 @@ export default function Board3D({
       })}
       {focusTile !== null && <FocusGlow position={tilePos(focusTile)} />}
       {highlightTile !== null && <TravelGlow position={tilePos(highlightTile)} />}
+      {shineTile !== null && <ShineTile key={shineTile} tile={shineTile} reducedMotion={reducedMotion} />}
+      {landingTile !== null && (
+        <ShineTile key={landingTile.key} tile={landingTile.tile} colour="#ff8fb3" reducedMotion={reducedMotion} />
+      )}
       <JailCell closed={jailClosed} reducedMotion={reducedMotion} />
     </group>
   );

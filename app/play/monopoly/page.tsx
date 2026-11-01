@@ -11,7 +11,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, Dices, Home, RotateCcw } from 'lucide-react';
 import {
   acceptTrade,
@@ -69,19 +69,42 @@ import type { MoneyFlight } from './three/Effects';
 const Monopoly3D = dynamic(() => import('./three/MonopolyScene'), { ssr: false });
 
 /** Button press feel for this page only: lift on hover, compress on
- * click, soft glow — the Sachi glass buttons, just more tactile. */
+ * click, soft glow — the Sachi glass buttons, just more tactile.
+ * Plus the Turn Director's tiny animations: money floats, owner
+ * badge drops, tap bounce, thinking dots, and the turn banner pulse.
+ * All 200–300ms except where the director's timeline says otherwise.
+ * Reduced-motion skips the floats (the page does not render them). */
 function MonopolyButtonStyles() {
   return (
     <style>{`main .btn { transition: transform 0.15s ease, box-shadow 0.15s ease; }
 main .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(0,0,0,0.25); }
 main .btn:active { transform: scale(0.97); }
 @keyframes walletPulse { 0% { box-shadow: 0 0 0 0 rgba(74,222,128,0.55); } 100% { box-shadow: 0 0 0 14px rgba(74,222,128,0); } }
-main .wallet-pulse { animation: walletPulse 1.3s ease-out; }`}</style>
+main .wallet-pulse { animation: walletPulse 1.3s ease-out; }
+@keyframes moneyFloatUp { 0% { opacity: 0; transform: translate(-50%, 6px) scale(0.9); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.05); } 100% { opacity: 0; transform: translate(-50%, -46px) scale(1); } }
+@keyframes moneyShake { 0%, 100% { margin-left: 0; } 25% { margin-left: -3px; } 75% { margin-left: 3px; } }
+main .money-float { position: absolute; top: 2px; z-index: 5; font-weight: 800; font-size: 15px; pointer-events: none; animation: moneyFloatUp 1.4s ease-out forwards; text-shadow: 0 1px 2px rgba(255,255,255,0.9); }
+main .money-float.loss { animation: moneyFloatUp 1.4s ease-out forwards, moneyShake 0.3s ease-in-out 2; }
+@keyframes ownerDrop { 0% { opacity: 0; transform: translateY(-8px); } 100% { opacity: 1; transform: translateY(0); } }
+main .owner-drop { display: block; animation: ownerDrop 0.8s ease-out; }
+@keyframes btnTap { 0% { transform: scale(1); } 30% { transform: scale(0.94); } 100% { transform: scale(1); } }
+main .btn-tap { animation: btnTap 0.3s ease; }
+@keyframes thinkingBlink { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+main .thinking-dot { animation: thinkingBlink 1.2s infinite; }
+main .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+main .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bannerPulse { 0% { box-shadow: 0 0 0 0 rgba(255,107,157,0.35); } 100% { box-shadow: 0 0 0 12px rgba(255,107,157,0); } }
+main .turn-banner-pulse { animation: bannerPulse 1s ease-out; }
+main .mono-tile { transition: filter 0.2s ease, transform 0.15s ease; }
+main .mono-tile:hover { filter: brightness(1.18); }
+main .mono-tile:active { transform: scale(0.98); }`}</style>
   );
 }
 
 /** Money counter that counts smoothly to its target instead of
- * jumping — the underlying balance is always the generator's value. */
+ * jumping — the underlying balance is always the generator's value.
+ * Counts over the director's 1s money beat; reduced-motion jumps
+ * straight to the value. */
 function AnimatedMoney({ value }: { value: number }) {
   const [shown, setShown] = useState(value);
   const prev = useRef(value);
@@ -90,8 +113,15 @@ function AnimatedMoney({ value }: { value: number }) {
     const to = value;
     prev.current = value;
     if (from === to) return;
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      setShown(to);
+      return;
+    }
     const start = performance.now();
-    const duration = 600;
+    const duration = DIRECTOR_TIMING.moneyMs;
     let raf = 0;
     const tick = (now: number) => {
       const p = Math.min(1, (now - start) / duration);
@@ -103,6 +133,47 @@ function AnimatedMoney({ value }: { value: number }) {
     return () => cancelAnimationFrame(raf);
   }, [value]);
   return <span>${shown}</span>;
+}
+
+/** Floating money feedback over a wallet: red loss floats up with a
+ * shake, green gain glows with sparkles. Amounts are signed and
+ * reason-free, so they can never mislabel a transfer. */
+function MoneyFloat({ player, amount }: { player: number; amount: number }) {
+  const gain = amount > 0;
+  return (
+    <span
+      aria-hidden
+      className={gain ? 'money-float' : 'money-float loss'}
+      style={{
+        left: player === 0 ? '25%' : '75%',
+        color: gain ? '#15803d' : '#dc2626',
+        textShadow: gain ? '0 0 8px rgba(74,222,128,0.9)' : undefined,
+      }}
+    >
+      {gain ? `✦ +$${amount} ✦` : `-$${Math.abs(amount)}`}
+    </span>
+  );
+}
+
+/** One momentary glass notification for a key event (rent, buy,
+ * build, pass). Slides in and out; the event log below stays the
+ * permanent history. */
+interface GameNotification {
+  key: number;
+  icon: string;
+  title: string;
+  detail: string;
+  sub: string;
+}
+
+function ThinkingDots() {
+  return (
+    <span aria-hidden>
+      <span className="thinking-dot">.</span>
+      <span className="thinking-dot">.</span>
+      <span className="thinking-dot">.</span>
+    </span>
+  );
 }
 
 /** Victory statistics, tracked in page-level localStorage only —
@@ -144,6 +215,44 @@ function formatDuration(ms: number): string {
 const GAME_ID = 'monopoly';
 const PLAYER_COLOURS = ['#2563eb', '#db2777'];
 
+/** TURN DIRECTOR — the presentation timeline for one turn. Every
+ * outcome is already decided by the generator; the director only
+ * stages WHEN it is revealed, so a turn reads instead of flashing by:
+ *   dice tumble 1.2s → settle 0.5s → token walks 170ms/square →
+ *   camera pauses 0.5s → popup springs in (~0.7s feel) → money
+ *   counts over 1s → ownership shines for 0.8s → next-turn banner
+ *   pulses for 1s. A full turn lands around 7–8s instead of 2–3s.
+ * The director never re-rolls, re-decides, or blocks input: reveals
+ * staged behind a walk are dropped (not queued) if a faster second
+ * action supersedes them, so bot chains and duo passing never stall.
+ * Reduced-motion skips every stage and reveals immediately. */
+const DIRECTOR_TIMING = {
+  rollTumbleMs: 1200,
+  settleMs: 500,
+  stepMs: 170,
+  cameraPauseMs: 500,
+  moneyMs: 1000,
+  ownershipMs: 800,
+  nextTurnBeatMs: 1000,
+} as const;
+
+/** Turn Director — staged reveal types. A staged reveal is always
+ * tied to the exact game state that produced it; if a newer state
+ * arrives first, the staged reveal is dropped, never queued. */
+interface StagedMoney {
+  line: string | null;
+  flight: MoneyFlight | null;
+  pulsePlayer: number | null;
+  floats: { player: number; amount: number }[];
+  sound: 'rent' | 'coin' | null;
+}
+interface StagedReveal {
+  game: GameState;
+  card?: { deck: 'chance' | 'chest'; text: string; key: string };
+  deed?: number;
+  money?: StagedMoney;
+}
+
 type Mode = 'solo' | 'duo';
 
 /** Classic perimeter layout on an 11x11 grid (Go at bottom-right). */
@@ -166,6 +275,27 @@ function playerLabel(mode: Mode, index: PlayerIndex): string {
 /** Display name: strip ", Country" from property names; corners have no comma. */
 function shortName(name: string): string {
   return name.split(',')[0] ?? name;
+}
+
+/** Event-feed icon for one generator log line. The line itself is
+ * shown verbatim — only the icon is derived, so nothing is invented. */
+function feedIcon(line: string): string {
+  if (line.includes('is out of money')) return '💔';
+  if (line.startsWith('Turn cap reached')) return '🏁';
+  if (line.includes('goes to Prison')) return '🔒';
+  if (line.includes('leaves Prison') || line.includes('Prison pass')) return '🔓';
+  if (line.startsWith('Card: ')) return '🃏';
+  if (line.includes('proposes a trade')) return '🤝';
+  if (line.includes('accepts the trade')) return '✅';
+  if (line.includes('declines the trade')) return '❌';
+  if (line.includes('passes Start')) return '💰';
+  if (line.includes('passes on')) return '🤝';
+  if (line.includes(' buys ')) return '🏡';
+  if (line.includes(' pays $')) return '💸';
+  if (line.includes('lands on')) return '📍';
+  if (line.includes('is for sale')) return '🏷️';
+  if (line.includes('rolls')) return '🎲';
+  return '•';
 }
 
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -359,6 +489,20 @@ export default function MonopolyPage() {
   const [walletPulse, setWalletPulse] = useState<{ player: number; key: number } | null>(null);
   const [travelHighlight, setTravelHighlight] = useState<number | null>(null);
   const [stepPuff, setStepPuff] = useState<{ key: number; tile: number } | null>(null);
+  // Turn Director state (presentation only): one momentary glass
+  // notification, floating money feedback, the tile just bought
+  // (2D glow + 3D shine), and the camera shake trigger for important
+  // moments only (doubles, jail, bankruptcy, hotel).
+  const [notification, setNotification] = useState<GameNotification | null>(null);
+  const [moneyFloats, setMoneyFloats] = useState<{ key: number; player: number; amount: number }[]>([]);
+  const [justBoughtTile, setJustBoughtTile] = useState<number | null>(null);
+  const [shakeKey, setShakeKey] = useState(0);
+  // RichUp-pattern captions (presentation only, every word derived
+  // from live state): the director's current step, the buy sequence,
+  // and the tile a token just landed on.
+  const [directorCaption, setDirectorCaption] = useState<{ text: string; key: string } | null>(null);
+  const [buyCaption, setBuyCaption] = useState<{ step: 'available' | 'purchasing' | 'purchased'; text: string; key: string } | null>(null);
+  const [landingTile, setLandingTile] = useState<{ tile: number; key: number } | null>(null);
   const [stats, setStats] = useState<WinStats>(EMPTY_STATS);
   const gameStartRef = useRef(Date.now());
   const luckiestRef = useRef(0);
@@ -378,6 +522,19 @@ export default function MonopolyPage() {
   const passGoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const walletPulseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const travelTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Turn Director bookkeeping (presentation only, never gameplay):
+  // a staged reveal waiting for the token to arrive + camera pause,
+  // the notification dismiss timer, and seen-log keys for notifications.
+  const pendingRevealRef = useRef<StagedReveal | null>(null);
+  const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const notificationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const justBoughtTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const seenNotifyLogRef = useRef<Set<string>>(new Set());
+  const prevDiceKeyRef = useRef<string | null>(null);
+  const buyCaptionKeyRef = useRef<string | null>(null);
+  const buyCaptionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wasWalkingRef = useRef(false);
+  const lastMoverRef = useRef(0);
 
   useEffect(() => {
     setProgress(loadLocalProgress());
@@ -407,7 +564,13 @@ export default function MonopolyPage() {
       startAmbient();
     };
     const tap = (e: MouseEvent) => {
-      if ((e.target as HTMLElement | null)?.closest?.('button')) sfx.tap();
+      const btn = (e.target as HTMLElement | null)?.closest?.('button');
+      if (btn) {
+        sfx.tap();
+        // Tiny tap bounce: a 300ms press feel on top of the CSS lift.
+        btn.classList.add('btn-tap');
+        setTimeout(() => btn.classList.remove('btn-tap'), 300);
+      }
     };
     window.addEventListener('pointerdown', start, { once: true });
     window.addEventListener('click', tap);
@@ -426,6 +589,87 @@ export default function MonopolyPage() {
     }
   }, [stats]);
 
+  // --- Turn Director helpers (presentation only) ---
+  const pushNotification = (n: Omit<GameNotification, 'key'>) => {
+    setNotification({ ...n, key: Date.now() });
+    if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
+    notificationTimeoutRef.current = setTimeout(() => setNotification(null), 2400);
+  };
+
+  const applyMoneyPart = (part: StagedMoney) => {
+    if (part.sound === 'rent') sfx.rent();
+    else if (part.sound === 'coin') sfx.coin();
+    if (part.line) setMoneyLine(part.line);
+    if (part.flight) {
+      setMoneyFlight(part.flight);
+      if (moneyFlightTimeoutRef.current) clearTimeout(moneyFlightTimeoutRef.current);
+      moneyFlightTimeoutRef.current = setTimeout(() => setMoneyFlight(null), 1100);
+    }
+    if (part.pulsePlayer !== null) {
+      setWalletPulse({ player: part.pulsePlayer, key: Date.now() });
+      if (walletPulseTimeoutRef.current) clearTimeout(walletPulseTimeoutRef.current);
+      walletPulseTimeoutRef.current = setTimeout(() => setWalletPulse(null), 1400);
+    }
+    if (part.floats.length > 0 && !reducedMotion()) {
+      const stamped = part.floats.map((f, i) => ({ ...f, key: Date.now() + i }));
+      setMoneyFloats((prev) => [...prev, ...stamped]);
+      setTimeout(() => {
+        setMoneyFloats((prev) => prev.filter((f) => !stamped.some((s) => s.key === f.key)));
+      }, 1500);
+    }
+  };
+
+  const applyRevealPart = (part: Omit<StagedReveal, 'game'>) => {
+    if (part.card) {
+      shownCardKeysRef.current.add(part.card.key);
+      setCardModal({ deck: part.card.deck, text: part.card.text });
+    }
+    if (part.deed !== undefined) setDeedIndex(part.deed);
+    if (part.money) applyMoneyPart(part.money);
+  };
+
+  /** Stage a reveal behind the token's walk + camera pause, or
+   * reveal it now when nothing is walking. Never blocks input. */
+  const stageReveal = (g: GameState, part: Omit<StagedReveal, 'game'>, walking: boolean) => {
+    if (!walking || reducedMotion()) {
+      applyRevealPart(part);
+      return;
+    }
+    const prev = pendingRevealRef.current;
+    pendingRevealRef.current = { game: g, ...(prev && prev.game === g ? prev : {}), ...part };
+  };
+
+  // Flush staged reveals once the token has arrived and the camera
+  // has had its pause (walk -> pause -> reveal). A staged reveal
+  // superseded by a newer game state is dropped, not queued.
+  useEffect(() => {
+    if (!game) return;
+    const pending = pendingRevealRef.current;
+    if (!pending) return;
+    if (pending.game !== game) {
+      pendingRevealRef.current = null;
+      return;
+    }
+    const settled =
+      displayPos[0] === game.players[0].position && displayPos[1] === game.players[1].position;
+    if (!settled || revealTimerRef.current) return;
+    revealTimerRef.current = setTimeout(() => {
+      revealTimerRef.current = null;
+      const p = pendingRevealRef.current;
+      pendingRevealRef.current = null;
+      if (!p) return;
+      const { game: _g, ...part } = p;
+      applyRevealPart(part);
+    }, DIRECTOR_TIMING.cameraPauseMs);
+    return () => {
+      if (revealTimerRef.current) {
+        clearTimeout(revealTimerRef.current);
+        revealTimerRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayPos, game, mode]);
+
   // Watch the game state for presentation events only: buys, builds,
   // hotels, money moving, airport landings. The generator's numbers
   // are never altered here — bursts, flights and sounds just mirror
@@ -438,7 +682,10 @@ export default function MonopolyPage() {
     const nowJail: [boolean, boolean] = [game.players[0].inJail, game.players[1].inJail];
     if (prevJail) {
       nowJail.forEach((jailed, i) => {
-        if (jailed && !prevJail[i]) sfx.lock();
+        if (jailed && !prevJail[i]) {
+          sfx.lock();
+          setShakeKey((k) => k + 1);
+        }
         if (!jailed && prevJail[i]) sfx.unlock();
       });
     }
@@ -456,6 +703,32 @@ export default function MonopolyPage() {
       if (passGoTimeoutRef.current) clearTimeout(passGoTimeoutRef.current);
       passGoTimeoutRef.current = setTimeout(() => setPassGo(null), 2600);
     });
+    // Momentary glass notifications for rent and passes, read from
+    // the generator's own log lines — never invented, never relabelled.
+    game.log.forEach((line) => {
+      const key = `${game.turnCount}|${line}`;
+      if (seenNotifyLogRef.current.has(key)) return;
+      seenNotifyLogRef.current.add(key);
+      const rent = line.match(/^(.+) pays \$(\d+) \((?:double )?rent for (.+)\)\.$/);
+      if (rent) {
+        pushNotification({
+          icon: '🏠',
+          title: 'Paid Rent',
+          detail: `-$${rent[2]}`,
+          sub: shortName(rent[3]),
+        });
+        return;
+      }
+      const pass = line.match(/^(.+) passes on (.+)\.$/);
+      if (pass) {
+        pushNotification({
+          icon: '🤝',
+          title: `${pass[1]} passed`,
+          detail: '',
+          sub: shortName(pass[2]),
+        });
+      }
+    });
     const prevHouses = prevHousesRef.current;
     const prevOwners = prevOwnersRef.current;
     const prevMoney = prevMoneyRef.current;
@@ -466,10 +739,13 @@ export default function MonopolyPage() {
           if (pr.houses === 5) {
             hotelsBuiltRef.current += 1;
             sfx.hotel();
+            setShakeKey((k) => k + 1);
+            pushNotification({ icon: '🏨', title: 'Hotel built', detail: '', sub: shortName(BOARD[idx].name) });
             setBurst({ key: ++burstKeyRef.current, kind: 'hotel', tile: idx, player: pr.owner ?? 0 });
           } else {
             housesBuiltRef.current += 1;
             sfx.build();
+            pushNotification({ icon: '🧱', title: 'House built', detail: '', sub: shortName(BOARD[idx].name) });
             setBurst({ key: ++burstKeyRef.current, kind: 'build', tile: idx, player: pr.owner ?? 0 });
           }
           setBuildFlash({ tile: idx, at: Date.now() });
@@ -482,6 +758,33 @@ export default function MonopolyPage() {
       game.property.forEach((pr, idx) => {
         if (pr.owner !== null && prevOwners[idx] === null) {
           sfx.buy();
+          pushNotification({
+            icon: '🏡',
+            title: `${game.players[pr.owner].name} bought`,
+            detail: shortName(BOARD[idx].name),
+            sub: BOARD[idx].price !== undefined ? `-$${BOARD[idx].price}` : '',
+          });
+          setJustBoughtTile(idx);
+          if (justBoughtTimeoutRef.current) clearTimeout(justBoughtTimeoutRef.current);
+          justBoughtTimeoutRef.current = setTimeout(() => setJustBoughtTile(null), 1000);
+          // Buy-sequence captions, steps 2–3: Purchasing… (~0.5s)
+          // then the confirmation. The tile glow, owner badge, and
+          // money float are the remaining steps of the same sequence.
+          const buyKey = `buy-${game.turnCount}-${idx}`;
+          buyCaptionKeyRef.current = buyKey;
+          setBuyCaption({ step: 'purchasing', text: 'Purchasing…', key: buyKey });
+          if (buyCaptionTimeoutRef.current) clearTimeout(buyCaptionTimeoutRef.current);
+          buyCaptionTimeoutRef.current = setTimeout(() => {
+            const buyerIsBot = mode === 'solo' && pr.owner === 1;
+            setBuyCaption({
+              step: 'purchased',
+              text: buyerIsBot ? 'Purchased!' : `${shortName(BOARD[idx].name)} is now yours`,
+              key: buyKey,
+            });
+            buyCaptionTimeoutRef.current = setTimeout(() => {
+              setBuyCaption((prev) => (prev && prev.key === buyKey ? null : prev));
+            }, 1400);
+          }, 500);
           setBurst({ key: ++burstKeyRef.current, kind: 'buy', tile: idx, player: pr.owner });
         }
       });
@@ -489,38 +792,56 @@ export default function MonopolyPage() {
     if (prevMoney) {
       const [m0, m1] = [game.players[0].money, game.players[1].money];
       const [o0, o1] = prevMoney;
-      let flight: MoneyFlight | null = null;
+      // The director stages money feedback behind the token's walk:
+      // the numbers, flight, pulse, floats, and sound all land
+      // together at the reveal beat, never the instant the state lands.
+      const walkingNow =
+        displayPos[0] !== game.players[0].position || displayPos[1] !== game.players[1].position;
+      let part: StagedMoney | null = null;
       if (m0 < o0 && m1 > o1) {
-        flight = { key: Date.now(), from: tilePos(game.players[0].position), to: tilePos(game.players[1].position) };
-        sfx.rent();
-        setMoneyLine(`${game.players[0].name} pays $${m1 - o1} rent to ${game.players[1].name}`);
-        setWalletPulse({ player: 1, key: Date.now() });
+        part = {
+          line: `${game.players[0].name} pays $${m1 - o1} rent to ${game.players[1].name}`,
+          flight: { key: Date.now(), from: tilePos(game.players[0].position), to: tilePos(game.players[1].position) },
+          pulsePlayer: 1,
+          floats: [
+            { player: 0, amount: -(m1 - o1) },
+            { player: 1, amount: m1 - o1 },
+          ],
+          sound: 'rent',
+        };
       } else if (m1 < o1 && m0 > o0) {
-        flight = { key: Date.now(), from: tilePos(game.players[1].position), to: tilePos(game.players[0].position) };
-        sfx.rent();
-        setMoneyLine(`${game.players[1].name} pays $${m0 - o0} rent to ${game.players[0].name}`);
-        setWalletPulse({ player: 0, key: Date.now() });
+        part = {
+          line: `${game.players[1].name} pays $${m0 - o0} rent to ${game.players[0].name}`,
+          flight: { key: Date.now(), from: tilePos(game.players[1].position), to: tilePos(game.players[0].position) },
+          pulsePlayer: 0,
+          floats: [
+            { player: 1, amount: -(m0 - o0) },
+            { player: 0, amount: m0 - o0 },
+          ],
+          sound: 'rent',
+        };
       } else if (m0 < o0 || m1 < o1) {
         const loser = m0 < o0 ? 0 : 1;
-        flight = { key: Date.now(), from: tilePos(game.players[loser].position), to: [0, 0] };
-        sfx.coin();
-        setMoneyLine(`${game.players[loser].name} pays $${(loser === 0 ? o0 - m0 : o1 - m1)} to the bank`);
+        const amount = loser === 0 ? o0 - m0 : o1 - m1;
+        part = {
+          line: `${game.players[loser].name} pays $${amount} to the bank`,
+          flight: { key: Date.now(), from: tilePos(game.players[loser].position), to: [0, 0] },
+          pulsePlayer: null,
+          floats: [{ player: loser, amount: -amount }],
+          sound: 'coin',
+        };
       } else if (m0 > o0 || m1 > o1) {
         const gainer = m0 > o0 ? 0 : 1;
-        flight = { key: Date.now(), from: [0, 0], to: tilePos(game.players[gainer].position) };
-        sfx.coin();
-        setMoneyLine(`${game.players[gainer].name} collects $${(gainer === 0 ? m0 - o0 : m1 - o1)}`);
-        setWalletPulse({ player: gainer, key: Date.now() });
+        const amount = gainer === 0 ? m0 - o0 : m1 - o1;
+        part = {
+          line: `${game.players[gainer].name} collects $${amount}`,
+          flight: { key: Date.now(), from: [0, 0], to: tilePos(game.players[gainer].position) },
+          pulsePlayer: gainer,
+          floats: [{ player: gainer, amount }],
+          sound: 'coin',
+        };
       }
-      if (flight) {
-        if (walletPulseTimeoutRef.current) clearTimeout(walletPulseTimeoutRef.current);
-        walletPulseTimeoutRef.current = setTimeout(() => setWalletPulse(null), 1400);
-      }
-      if (flight) {
-        setMoneyFlight(flight);
-        if (moneyFlightTimeoutRef.current) clearTimeout(moneyFlightTimeoutRef.current);
-        moneyFlightTimeoutRef.current = setTimeout(() => setMoneyFlight(null), 1100);
-      }
+      if (part) stageReveal(game, { money: part }, walkingNow);
     }
     if (prevPositions) {
       game.players.forEach((p, i) => {
@@ -530,6 +851,14 @@ export default function MonopolyPage() {
     if (game.lastDice) {
       const total = game.lastDice[0] + game.lastDice[1];
       if (total > luckiestRef.current) luckiestRef.current = total;
+      // Doubles get their own celebration: a bright chime and a
+      // small camera shake — ordinary rolls get neither.
+      const diceKey = `${game.turnCount}|${game.lastDice[0]}-${game.lastDice[1]}`;
+      if (game.rolledDoubles && prevDiceKeyRef.current !== diceKey) {
+        prevDiceKeyRef.current = diceKey;
+        sfx.doubles();
+        setShakeKey((k) => k + 1);
+      }
     }
     prevHousesRef.current = game.property.map((pr) => pr.houses);
     prevOwnersRef.current = game.property.map((pr) => pr.owner);
@@ -557,6 +886,8 @@ export default function MonopolyPage() {
   useEffect(() => {
     if (!game || game.winner === null || winStatsRef.current) return;
     winStatsRef.current = true;
+    // Bankruptcy is an important moment: the camera feels it.
+    setShakeKey((k) => k + 1);
     const w = game.winner;
     if (mode === 'duo' || w === 0) sfx.win();
     else sfx.lose();
@@ -615,6 +946,18 @@ export default function MonopolyPage() {
     setWalletPulse(null);
     setTravelHighlight(null);
     setStepPuff(null);
+    // Fresh director state for the new match.
+    pendingRevealRef.current = null;
+    seenNotifyLogRef.current.clear();
+    prevDiceKeyRef.current = null;
+    setNotification(null);
+    setMoneyFloats([]);
+    setJustBoughtTile(null);
+    setDirectorCaption(null);
+    setBuyCaption(null);
+    buyCaptionKeyRef.current = null;
+    setLandingTile(null);
+    wasWalkingRef.current = false;
     setStats((prev) => ({ ...prev, games: prev.games + 1 }));
   };
 
@@ -634,7 +977,8 @@ export default function MonopolyPage() {
     displayTargetRef.current = [game.players[0].position, game.players[1].position];
   }, [game]);
 
-  // Step tokens toward their target, one square per tick.
+  // Step tokens toward their target, one square per tick (director
+  // walking beat: 170ms per square, so a typical roll walks ~2s).
   useEffect(() => {
     const id = setInterval(() => {
       setDisplayPos((prev) => {
@@ -645,7 +989,7 @@ export default function MonopolyPage() {
           return fwd >= 1 && fwd <= 12 ? (cur + 1) % 40 : t[i];
         }) as [number, number];
       });
-    }, 170);
+    }, DIRECTOR_TIMING.stepMs);
     return () => clearInterval(id);
   }, []);
 
@@ -668,6 +1012,44 @@ export default function MonopolyPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayPos]);
 
+  // Director captions, steps 2–3: moving, then arrival. Arrival is
+  // the landing beat: destination tile glows (3D shine + 2D glow),
+  // the token's settle bounce and step dust already fired, and a
+  // soft land sound plays. Only the final arrival gets the beat —
+  // never every step.
+  useEffect(() => {
+    if (!game || mode === null || game.turnCount === 0) return;
+    const settled =
+      displayPos[0] === game.players[0].position && displayPos[1] === game.players[1].position;
+    if (!settled) {
+      wasWalkingRef.current = true;
+      const mover = displayPos[0] !== game.players[0].position ? 0 : 1;
+      lastMoverRef.current = mover;
+      setDirectorCaption({
+        text: `Moving to ${shortName(BOARD[game.players[mover].position].name)}…`,
+        key: `move-${game.turnCount}-${mover}`,
+      });
+      return;
+    }
+    if (wasWalkingRef.current) {
+      wasWalkingRef.current = false;
+      const mover = lastMoverRef.current;
+      const city = shortName(BOARD[game.players[mover].position].name);
+      const actor = playerLabel(mode, mover as PlayerIndex);
+      const arrivalKey = `land-${game.turnCount}-${mover}`;
+      setDirectorCaption({ text: `${actor} landed on ${city}…`, key: arrivalKey });
+      if (!reducedMotion()) sfx.land();
+      const tile = game.players[mover].position;
+      const glowKey = Date.now();
+      setLandingTile({ tile, key: glowKey });
+      setTimeout(() => {
+        setLandingTile((prev) => (prev && prev.key === glowKey ? null : prev));
+        setDirectorCaption((prev) => (prev && prev.key === arrivalKey ? null : prev));
+      }, 1600);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayPos, game, mode]);
+
   // Bot dice tumble: while Cosy Bot is about to roll, the centre dice
   // cycle faces (display only — the bot's real roll lands afterwards).
   const botTumbling =
@@ -680,9 +1062,21 @@ export default function MonopolyPage() {
     return () => clearInterval(id);
   }, [botTumbling]);
 
+  // Director captions, step 1: the roll itself, named as it happens.
+  useEffect(() => {
+    if (rollAnim) setDirectorCaption({ text: 'Rolling Dice…', key: 'roll' });
+    else if (botTumbling) setDirectorCaption({ text: 'Cosy Bot is rolling…', key: 'botroll' });
+    else
+      setDirectorCaption((prev) =>
+        prev && (prev.key === 'roll' || prev.key === 'botroll') ? null : prev,
+      );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rollAnim, botTumbling]);
+
   // Show a drawn Chance / Neighbour Chest card as a real card the first
   // time its log line appears (get-out cards are not discarded, so their
-  // deck is read from the square the drawer is standing on).
+  // deck is read from the square the drawer is standing on). The card
+  // is staged behind the token's walk + camera pause by the director.
   useEffect(() => {
     if (!game) return;
     const cardLines = game.log.filter((l) => l.startsWith('Card: '));
@@ -691,31 +1085,64 @@ export default function MonopolyPage() {
     const text = lastLine.slice('Card: '.length);
     const key = `${game.turnCount}|${text}`;
     if (shownCardKeysRef.current.has(key)) return;
-    shownCardKeysRef.current.add(key);
     const discarded = [...game.chanceDiscard, ...game.chestDiscard].find((c) => c.text === text);
-    if (discarded) {
-      setCardModal({ deck: discarded.deck, text });
-      return;
-    }
     const drawer = (1 - game.turn) as 0 | 1;
     const drawerSquare = BOARD[game.players[drawer].position];
-    setCardModal({ deck: drawerSquare.kind === 'chest' ? 'chest' : 'chance', text });
+    const intent = {
+      deck: (discarded ? discarded.deck : drawerSquare.kind === 'chest' ? 'chest' : 'chance') as 'chance' | 'chest',
+      text,
+      key,
+    };
+    const walking =
+      displayPos[0] !== game.players[0].position || displayPos[1] !== game.players[1].position;
+    stageReveal(game, { card: intent }, walking);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game]);
 
   // Auto-open the deed card when a property is offered for sale; closing
-  // it does not reopen it until the next offer.
+  // it does not reopen it until the next offer. Staged behind the
+  // walk + camera pause like the card reveal.
   useEffect(() => {
     if (!game) return;
     const pending = game.pendingBuy;
-    if (pending !== null && prevPendingBuyRef.current !== pending) setDeedIndex(pending);
+    if (pending !== null && prevPendingBuyRef.current !== pending) {
+      const walking =
+        displayPos[0] !== game.players[0].position || displayPos[1] !== game.players[1].position;
+      stageReveal(game, { deed: pending }, walking);
+    }
     prevPendingBuyRef.current = pending;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game]);
+
+  // Buy-sequence captions, step 1: the offer itself, from the real
+  // pending square. Steps 2–3 (Purchasing… / Purchased!) are set by
+  // the owner-change branch when the buy actually lands.
+  useEffect(() => {
+    if (!game) return;
+    if (game.phase === 'buy' && game.pendingBuy !== null) {
+      const key = `${game.turnCount}|${game.pendingBuy}`;
+      if (buyCaptionKeyRef.current !== key) {
+        buyCaptionKeyRef.current = key;
+        setBuyCaption({
+          step: 'available',
+          text: `${shortName(BOARD[game.pendingBuy].name)} Available`,
+          key,
+        });
+      }
+    } else if (buyCaption?.step === 'available' && buyCaptionKeyRef.current === buyCaption.key) {
+      buyCaptionKeyRef.current = null;
+      setBuyCaption(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game]);
 
   const reducedMotion = () =>
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /** Roll with a dice tumble; the dice are fixed first, animation only. */
+  /** Roll with a dice tumble and a settle beat; the dice are fixed
+   * first, animation only. Director: tumble 1.2s, then the final
+   * faces hold for a 0.5s settle before the outcome is applied. */
   const animateRoll = (apply: (dice: [number, number]) => void) => {
     if (rollAnim) return;
     sfx.dice();
@@ -725,15 +1152,19 @@ export default function MonopolyPage() {
       return;
     }
     let n = 0;
+    const totalTicks = DIRECTOR_TIMING.rollTumbleMs / 100;
     setRollAnim({ faces: [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)] });
     if (rollIntervalRef.current) clearInterval(rollIntervalRef.current);
     rollIntervalRef.current = setInterval(() => {
       n += 1;
-      if (n >= 9) {
+      if (n >= totalTicks) {
         if (rollIntervalRef.current) clearInterval(rollIntervalRef.current);
         rollIntervalRef.current = null;
-        setRollAnim(null);
-        apply(dice);
+        setRollAnim({ faces: dice });
+        setTimeout(() => {
+          setRollAnim(null);
+          apply(dice);
+        }, DIRECTOR_TIMING.settleMs);
       } else {
         setRollAnim({ faces: [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)] });
       }
@@ -959,13 +1390,17 @@ export default function MonopolyPage() {
                   { label: 'Pass', onClick: () => setGame(declineBuy(game)) },
                 ]
               : [{ label: 'Start over', onClick: restart }];
+  // Bot personality: the bot's 900ms pause is already inside the
+  // brief's 800–1200ms thinking window, so the work here is making
+  // that pause visible — and naming what it is deciding about, from
+  // the real pending square, never an invented intent.
   const botStatus =
     game.phase === 'roll'
       ? 'Cosy Bot is rolling…'
       : game.phase === 'buy'
-        ? 'Cosy Bot is deciding…'
+        ? `Cosy Bot is thinking about ${pendingSquare ? shortName(pendingSquare.name) : 'a property'}…`
         : game.phase === 'jail'
-          ? 'Cosy Bot in Prison…'
+          ? 'Cosy Bot is thinking…'
           : 'Cosy Bot is thinking…';
   const stickyStatus =
     winner !== null
@@ -1037,9 +1472,12 @@ export default function MonopolyPage() {
         {myProgress.stars['1'] ? ' You have won this board before.' : ''}
       </p>
 
-      {/* Turn banner — in duo mode this is the pass-and-play handoff. */}
+      {/* Turn banner — in duo mode this is the pass-and-play handoff.
+          The banner pulses for the director's 1s next-turn beat
+          whenever the turn passes to the other player. */}
       <section
-        className="card mt-4 p-4 text-center"
+        key={game.turn}
+        className="card mt-4 p-4 text-center turn-banner-pulse"
         style={{ borderColor: PLAYER_COLOURS[game.turn] }}
       >
         <p className="flex items-center justify-center gap-2 text-lg font-bold" style={{ color: PLAYER_COLOURS[game.turn] }}>
@@ -1047,10 +1485,19 @@ export default function MonopolyPage() {
           {winner !== null
             ? `${playerLabel(mode, winner)} wins!`
             : isBotTurn
-              ? botStatus
-              : mode === 'duo'
-                ? `${playerLabel(mode, game.turn)} — your turn`
-                : 'Your turn'}
+              ? (
+                <>
+                  Turn Complete — Cosy Bot is thinking
+                  <ThinkingDots />
+                </>
+              )
+              : game.phase === 'roll'
+                ? mode === 'duo'
+                  ? `${playerLabel(mode, game.turn)} — Roll the Dice`
+                  : 'YOUR TURN — Roll the Dice'
+                : mode === 'duo'
+                  ? `${playerLabel(mode, game.turn)} — your turn`
+                  : 'Your turn'}
         </p>
         <p className="text-sm text-[var(--ink-dim)]">
           {winner !== null
@@ -1068,6 +1515,29 @@ export default function MonopolyPage() {
         )}
       </section>
 
+      {/* Momentary glass notification — slides in and out over the
+          board; the event log below stays the permanent history. */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            key={notification.key}
+            className="card mt-4 p-3 text-center"
+            initial={reducedMotion() ? { opacity: 0 } : { y: -14, opacity: 0, scale: 0.96 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={reducedMotion() ? { opacity: 0 } : { y: -10, opacity: 0, scale: 0.97 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+          >
+            <p className="font-bold">
+              {notification.icon} {notification.title}
+              {notification.detail ? ` · ${notification.detail}` : ''}
+            </p>
+            {notification.sub && (
+              <p className="text-sm text-[var(--ink-dim)]">{notification.sub}</p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Pass-Go bonus popup — motion + sound, never a silent jump. */}
       {passGo && (
         <motion.div
@@ -1084,7 +1554,26 @@ export default function MonopolyPage() {
         </motion.div>
       )}
 
-      {/* Player money panels */}
+      {/* Director caption: one calm line narrating the turn's
+          current step — rolling, moving, landing, or the buy
+          sequence. Buy captions take precedence over travel ones. */}
+      <AnimatePresence mode="wait">
+        {(buyCaption || directorCaption) && (
+          <motion.p
+            key={buyCaption ? `buy-${buyCaption.key}` : `dir-${directorCaption?.key}`}
+            className="mt-3 text-center text-sm font-semibold"
+            initial={reducedMotion() ? { opacity: 0 } : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            {buyCaption ? buyCaption.text : directorCaption?.text}
+          </motion.p>
+        )}
+      </AnimatePresence>
+
+      {/* Player money panels — the money-float layer sits over them. */}
+      <div style={{ position: 'relative' }}>
       <section className="mt-4 grid grid-cols-2 gap-2">
         {game.players.map((p, i) => (
           <div
@@ -1108,12 +1597,21 @@ export default function MonopolyPage() {
               {p.getOutCards > 0 ? ` · ${p.getOutCards} pass${p.getOutCards > 1 ? 'es' : ''}` : ''}
             </p>
             <p className="text-sm text-[var(--ink-dim)]">
-              {game.property.filter((pr) => pr.owner === i).length} properties · value $
+              {game.property.filter((pr) => pr.owner === i).length} properties · net worth $
               {netWorth(game, i as PlayerIndex)}
+            </p>
+            <p className="text-sm text-[var(--ink-dim)]">
+              {game.property.filter((pr) => pr.owner === i).reduce((n, pr) => n + (pr.houses < 5 ? pr.houses : 0), 0)} houses ·{' '}
+              {game.property.filter((pr) => pr.owner === i && pr.houses === 5).length} hotels
             </p>
           </div>
         ))}
       </section>
+      {!reducedMotion() &&
+        moneyFloats.map((f) => (
+          <MoneyFloat key={f.key} player={f.player} amount={f.amount} />
+        ))}
+      </div>
 
       {/* Latest money transfer, in plain words — every money event
           gets a visible line, never just a changed number. */}
@@ -1146,6 +1644,9 @@ export default function MonopolyPage() {
             jailClosed={game.players.some((p) => p.inJail)}
             dimmed={mode === 'solo' && winner === 1}
             stepPuff={stepPuff}
+            shakeKey={shakeKey}
+            shineTile={justBoughtTile}
+            landingTile={landingTile}
             onTileClick={(idx) => setDeedIndex(idx)}
             onError={() => {
               setView3D(false);
@@ -1195,6 +1696,7 @@ export default function MonopolyPage() {
             return (
               <div
                 key={square.index}
+                className="mono-tile"
                 onClick={() => {
                   if (
                     square.kind === 'property' ||
@@ -1227,7 +1729,11 @@ export default function MonopolyPage() {
                       ? `2px solid ${PLAYER_COLOURS[propState.owner]}`
                       : '1px solid rgba(255,255,255,0.10)',
                   boxShadow:
-                    '0 5px 0 #120a24, 0 8px 12px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.28)',
+                    justBoughtTile === square.index
+                      ? '0 0 0 3px #ffd166, 0 5px 0 #120a24, 0 8px 12px rgba(0,0,0,0.45)'
+                      : landingTile?.tile === square.index
+                        ? '0 0 0 3px #ff8fb3, 0 5px 0 #120a24, 0 8px 12px rgba(0,0,0,0.45)'
+                        : '0 5px 0 #120a24, 0 8px 12px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.28)',
                   color: '#fff',
                   padding: 3,
                   minHeight: 52,
@@ -1303,7 +1809,7 @@ export default function MonopolyPage() {
                 )}
                 {propState.owner !== null && (
                   <span
-                    className="block truncate text-[9px] font-bold"
+                    className="owner-drop block truncate text-[9px] font-bold"
                     style={{ color: PLAYER_COLOURS[propState.owner] }}
                   >
                     {playerLabel(mode, propState.owner)}
@@ -1747,12 +2253,18 @@ export default function MonopolyPage() {
         })}
       </section>
 
-      {/* Recent events */}
+      {/* Event feed — one persistent, compact timeline built from
+          the generator's own log, with an icon per event. This is
+          the only log shown; the momentary notifications above are
+          just its loudest moments. */}
       <section className="card mt-4 p-4">
-        <p className="font-semibold">What just happened</p>
+        <p className="font-semibold">Event feed</p>
         <ul className="mt-1 space-y-1 text-sm text-[var(--ink-dim)]">
           {[...game.log].slice(-8).reverse().map((line, i) => (
-            <li key={`${game.turnCount}-${i}`}>{line}</li>
+            <li key={`${game.turnCount}-${i}`} className="flex items-start gap-2">
+              <span aria-hidden>{feedIcon(line)}</span>
+              <span>{line}</span>
+            </li>
           ))}
         </ul>
       </section>
