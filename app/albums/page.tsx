@@ -177,6 +177,21 @@ export default function AlbumsPage() {
         const done = batchIds.filter((id) => lastReadyIds.has(id)).length;
         setClassifyProgress(done >= batchSet.size ? null : { done, total: batchSet.size });
         setClassifyStuck(done < batchSet.size || pendingRemaining > 0 || lastFailedTotal > 0);
+        // When nothing is pending anywhere, an unfinished batch photo
+        // cannot still be classifying — it ended up 'failed'. Say so
+        // in the upload list (it renders state 'failed' as
+        // "Failed — …") instead of leaving it on Classifying… forever,
+        // which is what hid the Nov 2026 wasm-backend failure. The
+        // Retry button resets failed rows and re-runs this poll.
+        if (pendingRemaining === 0 && done < batchSet.size) {
+          setUploads((prev) =>
+            prev.map((u) =>
+              u.id && batchSet.has(u.id) && !lastReadyIds.has(u.id)
+                ? { ...u, state: 'failed' as const, detail: 'classification did not finish' }
+                : u,
+            ),
+          );
+        }
       } else {
         // Silent catch-up still surfaces a retry when older photos
         // ended up failed, so they are not invisible.

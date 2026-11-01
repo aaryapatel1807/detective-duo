@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { countFaces } from './decode';
 import { mapLabelsToTags } from './sceneTags';
+import { resolveWasmDir } from './wasmPaths';
 import type { ClassifyResult } from './types';
 
 /**
@@ -42,6 +43,16 @@ async function assetBytes(relative: string, assetBase?: string): Promise<Buffer>
 
 async function getSessions(assetBase?: string): Promise<Sessions> {
   if (cached) return cached;
+  // The wasm backend is imported from wasmPaths at session creation.
+  // In a deployed lambda the .mjs + .wasm pair is traced into the
+  // function by next.config (outputFileTracingIncludes) but lives
+  // outside the bundled code's default search path, so point at it
+  // explicitly whenever it is found on disk. Without this, session
+  // creation fails with "no available backend" and photos stay
+  // 'pending' until their claims run out, then 'failed' — while the
+  // page kept showing them as Classifying… (Nov 2026).
+  const wasmDir = resolveWasmDir();
+  if (wasmDir) ort.env.wasm.wasmPaths = wasmDir;
   const [faceBytes, sceneBytes, labelsBytes] = await Promise.all([
     assetBytes(FACE_MODEL, assetBase),
     assetBytes(SCENE_MODEL, assetBase),
