@@ -211,10 +211,21 @@ export default function AlbumsPage() {
   }, [albumKey, album, month, load]);
 
   // Catch up anything left pending (cold uploads), then refresh once.
+  // Force-fix (Nov 2026): photos that ended up 'failed' under the old
+  // broken builds are reset to pending first, so merely OPENING the
+  // album re-runs classification on them — no Retry tap needed, and
+  // a fresh upload never needs one either (its own poll covers it).
+  // Once a photo succeeds it is 'ready' and this reset never touches
+  // it again, so opening the album does not re-do finished work.
   useEffect(() => {
     if (!albumKey) return;
     let cancelled = false;
     void (async () => {
+      try {
+        await retryAlbums(albumKey);
+      } catch {
+        /* the poll below still processes whatever is pending */
+      }
       await pollClassify(albumKey, [], album, month);
       if (!cancelled) void load(albumKey, album, month);
     })();

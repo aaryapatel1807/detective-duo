@@ -466,15 +466,28 @@ function FilterGrid({
   stream,
   mirror,
   columns,
+  row,
 }: {
   selected: string;
   onSelect: (id: string) => void;
   stream: MediaStream | null;
   mirror: boolean;
   columns: string;
+  /**
+   * Horizontal tray (Nov 2026): the main picker grew to 34 filters,
+   * and as a 2-column grid it ran 17 rows tall, stretching the whole
+   * booth section and stranding the preview beside a wall of tiles
+   * with a void underneath. As a sideways-scrolling tray the picker
+   * takes one row on every screen instead.
+   */
+  row?: boolean;
 }) {
   return (
-    <div role="group" aria-label="Photo filters" className={`grid gap-2.5 ${columns}`}>
+    <div
+      role="group"
+      aria-label="Photo filters"
+      className={row ? 'flex gap-2.5 overflow-x-auto pb-1' : `grid gap-2.5 ${columns}`}
+    >
       {BOOTH_FILTERS.map((f) => {
         const active = f.id === selected;
         return (
@@ -485,8 +498,8 @@ function FilterGrid({
             aria-pressed={active}
             title={f.note ? `${f.name} — ${f.note}` : f.name}
             className={`relative aspect-square overflow-hidden rounded-2xl border-[3px] transition duration-150 hover:-translate-y-1 hover:scale-[1.04] hover:shadow-xl ${
-              active ? 'booth-tile-active border-[#ffc83d]' : 'border-transparent'
-            }`}
+              row ? 'w-20 shrink-0 sm:w-24' : ''
+            } ${active ? 'booth-tile-active border-[#ffc83d]' : 'border-transparent'}`}
           >
             {stream ? (
               <video
@@ -1483,35 +1496,36 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
   const totalShots = shotCount;
 
   return (
-    <section className="panel p-4 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-x-5">
-      <h2 className="flex items-center gap-2 font-display text-lg font-bold lg:col-span-2">
+    <section className="panel p-4">
+      <h2 className="flex items-center gap-2 font-display text-lg font-bold">
         <Camera size={18} aria-hidden /> Photo booth
       </h2>
-      <p className="mt-1 text-sm text-[var(--ink-dim)] lg:col-span-2">
+      <p className="mt-1 text-sm text-[var(--ink-dim)]">
         Pose, count down, shoot — a timer before every shot, so you always get
         time to change pose. Nothing leaves this device, except the shared strip
         between two phones in a room.
       </p>
-      {error && <p className="mt-2 text-sm lg:col-span-2">{error}</p>}
+      {error && <p className="mt-2 text-sm">{error}</p>}
       {!cameraOn && (
-        <button type="button" className="btn mt-3 lg:col-span-2" onClick={() => void startCamera()}>
+        <button type="button" className="btn mt-3" onClick={() => void startCamera()}>
           <RefreshCw size={16} aria-hidden /> Try camera again
         </button>
       )}
 
       {showCamera && (
-        <div className="mt-3 flex flex-col gap-3 lg:col-start-1 lg:mt-0 lg:flex-row lg:items-start">
-          <div className="order-2 lg:order-1 lg:w-[220px] lg:shrink-0">
+        <div className="mt-3 flex flex-col gap-3">
+          <div className="order-2">
             <FilterGrid
               selected={filterId}
               onSelect={setFilterId}
               stream={tileStream}
               mirror={mirror}
-              columns="grid-cols-5 lg:grid-cols-2"
+              columns="grid-cols-5"
+              row
             />
           </div>
-          <div className="order-1 flex min-w-0 flex-1 flex-col items-center lg:order-2">
-            <div className="relative z-[41] w-full overflow-hidden rounded-xl bg-black lg:h-[min(78vh,920px)] lg:aspect-[3/4] lg:w-auto lg:max-w-full lg:flex-none">
+          <div className="order-1 flex min-w-0 flex-1 flex-col items-center">
+            <div className="relative z-[41] mx-auto w-full max-w-[480px] overflow-hidden rounded-xl bg-black">
               <video
                 ref={(node) => {
                   videoRef.current = node;
@@ -1530,7 +1544,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
                 autoPlay
                 playsInline
                 muted
-                className="aspect-[3/4] w-full object-cover lg:aspect-auto lg:h-full"
+                className="aspect-[3/4] w-full object-cover"
                 style={{ transform: mirror ? 'scaleX(-1)' : undefined, filter: filterCss || undefined }}
                 aria-label="Booth camera preview"
               />
