@@ -10,6 +10,8 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { motion } from 'framer-motion';
 import { ArrowLeft, Dices, Home, RotateCcw } from 'lucide-react';
 import {
   acceptTrade,
@@ -48,6 +50,96 @@ import {
   MONOPOLY_TOKENS,
   tokenGlyph,
 } from '@/lib/generators/monopolyTokens';
+import { tilePos } from './three/boardMath';
+import {
+  ensureAudio,
+  loadMuted,
+  saveMuted,
+  setMutedInitial,
+  sfx,
+  startAmbient,
+  stopAmbient,
+} from './three/audio';
+import type { BurstEvent } from './three/MonopolyScene';
+import type { CameraMode } from './three/CameraRig';
+import type { MoneyFlight } from './three/Effects';
+
+/** The 3D scene is lazy-loaded client-only so Three.js never enters
+ * the server bundle or the pages that do not use it. */
+const Monopoly3D = dynamic(() => import('./three/MonopolyScene'), { ssr: false });
+
+/** Button press feel for this page only: lift on hover, compress on
+ * click, soft glow — the Sachi glass buttons, just more tactile. */
+function MonopolyButtonStyles() {
+  return (
+    <style>{`main .btn { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+main .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(0,0,0,0.25); }
+main .btn:active { transform: scale(0.97); }
+@keyframes walletPulse { 0% { box-shadow: 0 0 0 0 rgba(74,222,128,0.55); } 100% { box-shadow: 0 0 0 14px rgba(74,222,128,0); } }
+main .wallet-pulse { animation: walletPulse 1.3s ease-out; }`}</style>
+  );
+}
+
+/** Money counter that counts smoothly to its target instead of
+ * jumping — the underlying balance is always the generator's value. */
+function AnimatedMoney({ value }: { value: number }) {
+  const [shown, setShown] = useState(value);
+  const prev = useRef(value);
+  useEffect(() => {
+    const from = prev.current;
+    const to = value;
+    prev.current = value;
+    if (from === to) return;
+    const start = performance.now();
+    const duration = 600;
+    let raf = 0;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setShown(Math.round(from + (to - from) * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return <span>${shown}</span>;
+}
+
+/** Victory statistics, tracked in page-level localStorage only —
+ * per-device, best-effort, and never fed back into gameplay. */
+interface WinStats {
+  games: number;
+  longestMs: number;
+  luckiest: number;
+  propertiesAtWin: number;
+  moneyAtWin: number;
+  housesBuilt: number;
+  hotelsBuilt: number;
+}
+const STATS_KEY = 'sachi-monopoly-stats-v1';
+const EMPTY_STATS: WinStats = {
+  games: 0,
+  longestMs: 0,
+  luckiest: 0,
+  propertiesAtWin: 0,
+  moneyAtWin: 0,
+  housesBuilt: 0,
+  hotelsBuilt: 0,
+};
+function loadStats(): WinStats {
+  try {
+    const raw = localStorage.getItem(STATS_KEY);
+    if (!raw) return EMPTY_STATS;
+    const parsed = JSON.parse(raw) as Partial<WinStats>;
+    return { ...EMPTY_STATS, ...parsed };
+  } catch {
+    return EMPTY_STATS;
+  }
+}
+function formatDuration(ms: number): string {
+  const total = Math.floor(ms / 1000);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
 
 const GAME_ID = 'monopoly';
 const PLAYER_COLOURS = ['#2563eb', '#db2777'];
@@ -253,12 +345,232 @@ export default function MonopolyPage() {
   const [tradeRequestMoney, setTradeRequestMoney] = useState('');
   const recordedRef = useRef(false);
   const botBuiltRef = useRef('');
+  // 3D presentation state (cosmetic only — game state stays in `game`).
+  const [view3D, setView3D] = useState(true);
+  const [muted, setMuted] = useState(false);
+  const [burst, setBurst] = useState<BurstEvent | null>(null);
+  const [moneyFlight, setMoneyFlight] = useState<MoneyFlight | null>(null);
+  const [buildFlash, setBuildFlash] = useState<{ tile: number; at: number } | null>(null);
+  // Delta-pass presentation state (cosmetic only): pass-Go popup,
+  // latest money-transfer line, wallet pulse on the receiver's panel,
+  // and the tile a travelling token just stepped onto.
+  const [passGo, setPassGo] = useState<{ key: number; player: number; amount: number } | null>(null);
+  const [moneyLine, setMoneyLine] = useState<string | null>(null);
+  const [walletPulse, setWalletPulse] = useState<{ player: number; key: number } | null>(null);
+  const [travelHighlight, setTravelHighlight] = useState<number | null>(null);
+  const [stepPuff, setStepPuff] = useState<{ key: number; tile: number } | null>(null);
+  const [stats, setStats] = useState<WinStats>(EMPTY_STATS);
+  const gameStartRef = useRef(Date.now());
+  const luckiestRef = useRef(0);
+  const housesBuiltRef = useRef(0);
+  const hotelsBuiltRef = useRef(0);
+  const winStatsRef = useRef(false);
+  const prevHousesRef = useRef<number[] | null>(null);
+  const prevOwnersRef = useRef<(0 | 1 | null)[] | null>(null);
+  const prevMoneyRef = useRef<[number, number] | null>(null);
+  const prevPositionsRef = useRef<[number, number] | null>(null);
+  const burstKeyRef = useRef(0);
+  const moneyFlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const buildFlashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevJailRef = useRef<[boolean, boolean] | null>(null);
+  const prevDisplayRef = useRef<[number, number] | null>(null);
+  const seenPassGoRef = useRef<Set<string>>(new Set());
+  const passGoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const walletPulseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const travelTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setProgress(loadLocalProgress());
     setSoloToken(loadToken(SOLO_TOKEN_KEY, 'heart'));
     setDuoTokens(loadDuoTokens());
+    setStats(loadStats());
+    const m = loadMuted();
+    setMuted(m);
+    setMutedInitial(m);
+    // WebGL pre-check: without it, the 3D view never mounts and the
+    // classic 2D board is shown instead.
+    try {
+      const canvas = document.createElement('canvas');
+      if (!canvas.getContext('webgl') && !canvas.getContext('experimental-webgl')) {
+        setView3D(false);
+      }
+    } catch {
+      setView3D(false);
+    }
   }, []);
+
+  // Ambient garden sound starts only after the first gesture, never
+  // on page load; every button tap gets a soft tap sound.
+  useEffect(() => {
+    const start = () => {
+      ensureAudio();
+      startAmbient();
+    };
+    const tap = (e: MouseEvent) => {
+      if ((e.target as HTMLElement | null)?.closest?.('button')) sfx.tap();
+    };
+    window.addEventListener('pointerdown', start, { once: true });
+    window.addEventListener('click', tap);
+    return () => {
+      window.removeEventListener('pointerdown', start);
+      window.removeEventListener('click', tap);
+    };
+  }, []);
+
+  // Persist victory statistics (page-level only, never gameplay).
+  useEffect(() => {
+    try {
+      localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+    } catch {
+      /* persistence is a nicety */
+    }
+  }, [stats]);
+
+  // Watch the game state for presentation events only: buys, builds,
+  // hotels, money moving, airport landings. The generator's numbers
+  // are never altered here — bursts, flights and sounds just mirror
+  // what already happened.
+  useEffect(() => {
+    if (!game) return;
+    // Jail door sounds on transitions only (presentation mirrors the
+    // generator's inJail flags — no rule is invented here).
+    const prevJail = prevJailRef.current;
+    const nowJail: [boolean, boolean] = [game.players[0].inJail, game.players[1].inJail];
+    if (prevJail) {
+      nowJail.forEach((jailed, i) => {
+        if (jailed && !prevJail[i]) sfx.lock();
+        if (!jailed && prevJail[i]) sfx.unlock();
+      });
+    }
+    prevJailRef.current = nowJail;
+    // Pass-Go popup the first time each "passes Start" log line appears.
+    game.log.forEach((line) => {
+      const m = line.match(/^(.*) passes Start and collects \$(\d+)\.$/);
+      if (!m) return;
+      const key = `${game.turnCount}|${line}`;
+      if (seenPassGoRef.current.has(key)) return;
+      seenPassGoRef.current.add(key);
+      const playerIdx = game.players.findIndex((p) => p.name === m[1]);
+      sfx.coin();
+      setPassGo({ key: Date.now(), player: playerIdx >= 0 ? playerIdx : 0, amount: Number(m[2]) });
+      if (passGoTimeoutRef.current) clearTimeout(passGoTimeoutRef.current);
+      passGoTimeoutRef.current = setTimeout(() => setPassGo(null), 2600);
+    });
+    const prevHouses = prevHousesRef.current;
+    const prevOwners = prevOwnersRef.current;
+    const prevMoney = prevMoneyRef.current;
+    const prevPositions = prevPositionsRef.current;
+    if (prevHouses) {
+      game.property.forEach((pr, idx) => {
+        if (pr.houses > prevHouses[idx]) {
+          if (pr.houses === 5) {
+            hotelsBuiltRef.current += 1;
+            sfx.hotel();
+            setBurst({ key: ++burstKeyRef.current, kind: 'hotel', tile: idx, player: pr.owner ?? 0 });
+          } else {
+            housesBuiltRef.current += 1;
+            sfx.build();
+            setBurst({ key: ++burstKeyRef.current, kind: 'build', tile: idx, player: pr.owner ?? 0 });
+          }
+          setBuildFlash({ tile: idx, at: Date.now() });
+          if (buildFlashTimeoutRef.current) clearTimeout(buildFlashTimeoutRef.current);
+          buildFlashTimeoutRef.current = setTimeout(() => setBuildFlash(null), 2200);
+        }
+      });
+    }
+    if (prevOwners) {
+      game.property.forEach((pr, idx) => {
+        if (pr.owner !== null && prevOwners[idx] === null) {
+          sfx.buy();
+          setBurst({ key: ++burstKeyRef.current, kind: 'buy', tile: idx, player: pr.owner });
+        }
+      });
+    }
+    if (prevMoney) {
+      const [m0, m1] = [game.players[0].money, game.players[1].money];
+      const [o0, o1] = prevMoney;
+      let flight: MoneyFlight | null = null;
+      if (m0 < o0 && m1 > o1) {
+        flight = { key: Date.now(), from: tilePos(game.players[0].position), to: tilePos(game.players[1].position) };
+        sfx.rent();
+        setMoneyLine(`${game.players[0].name} pays $${m1 - o1} rent to ${game.players[1].name}`);
+        setWalletPulse({ player: 1, key: Date.now() });
+      } else if (m1 < o1 && m0 > o0) {
+        flight = { key: Date.now(), from: tilePos(game.players[1].position), to: tilePos(game.players[0].position) };
+        sfx.rent();
+        setMoneyLine(`${game.players[1].name} pays $${m0 - o0} rent to ${game.players[0].name}`);
+        setWalletPulse({ player: 0, key: Date.now() });
+      } else if (m0 < o0 || m1 < o1) {
+        const loser = m0 < o0 ? 0 : 1;
+        flight = { key: Date.now(), from: tilePos(game.players[loser].position), to: [0, 0] };
+        sfx.coin();
+        setMoneyLine(`${game.players[loser].name} pays $${(loser === 0 ? o0 - m0 : o1 - m1)} to the bank`);
+      } else if (m0 > o0 || m1 > o1) {
+        const gainer = m0 > o0 ? 0 : 1;
+        flight = { key: Date.now(), from: [0, 0], to: tilePos(game.players[gainer].position) };
+        sfx.coin();
+        setMoneyLine(`${game.players[gainer].name} collects $${(gainer === 0 ? m0 - o0 : m1 - o1)}`);
+        setWalletPulse({ player: gainer, key: Date.now() });
+      }
+      if (flight) {
+        if (walletPulseTimeoutRef.current) clearTimeout(walletPulseTimeoutRef.current);
+        walletPulseTimeoutRef.current = setTimeout(() => setWalletPulse(null), 1400);
+      }
+      if (flight) {
+        setMoneyFlight(flight);
+        if (moneyFlightTimeoutRef.current) clearTimeout(moneyFlightTimeoutRef.current);
+        moneyFlightTimeoutRef.current = setTimeout(() => setMoneyFlight(null), 1100);
+      }
+    }
+    if (prevPositions) {
+      game.players.forEach((p, i) => {
+        if (p.position !== prevPositions[i] && BOARD[p.position].kind === 'station') sfx.airport();
+      });
+    }
+    if (game.lastDice) {
+      const total = game.lastDice[0] + game.lastDice[1];
+      if (total > luckiestRef.current) luckiestRef.current = total;
+    }
+    prevHousesRef.current = game.property.map((pr) => pr.houses);
+    prevOwnersRef.current = game.property.map((pr) => pr.owner);
+    prevMoneyRef.current = [game.players[0].money, game.players[1].money];
+    prevPositionsRef.current = [game.players[0].position, game.players[1].position];
+  }, [game]);
+
+  // Card flip sound when a Chance / Chest card opens.
+  useEffect(() => {
+    if (cardModal) sfx.card();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardModal]);
+
+  // Bot dice rattle while Cosy Bot is about to roll. The condition is
+  // computed inline here because botTumbling is declared later in
+  // this component and a deps array evaluates during render.
+  useEffect(() => {
+    const botAboutToRoll =
+      game !== null && mode === 'solo' && game.turn === 1 && game.phase === 'roll' && game.winner === null;
+    if (botAboutToRoll) sfx.dice();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game, mode]);
+
+  // Victory statistics + jingle/sting, once per game.
+  useEffect(() => {
+    if (!game || game.winner === null || winStatsRef.current) return;
+    winStatsRef.current = true;
+    const w = game.winner;
+    if (mode === 'duo' || w === 0) sfx.win();
+    else sfx.lose();
+    setStats((prev) => ({
+      ...prev,
+      longestMs: Math.max(prev.longestMs, Date.now() - gameStartRef.current),
+      luckiest: Math.max(prev.luckiest, luckiestRef.current),
+      propertiesAtWin: BOARD.filter((sq) => game.property[sq.index].owner === w).length,
+      moneyAtWin: netWorth(game, w),
+      housesBuilt: housesBuiltRef.current,
+      hotelsBuilt: hotelsBuiltRef.current,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game?.winner]);
 
   const beginGame = (m: Mode) => {
     const tokens: [string, string] =
@@ -283,6 +595,27 @@ export default function MonopolyPage() {
     setBuildChoice(null);
     recordedRef.current = false;
     botBuiltRef.current = '';
+    // Fresh presentation counters for the new match.
+    gameStartRef.current = Date.now();
+    luckiestRef.current = 0;
+    housesBuiltRef.current = 0;
+    hotelsBuiltRef.current = 0;
+    winStatsRef.current = false;
+    prevHousesRef.current = null;
+    prevOwnersRef.current = null;
+    prevMoneyRef.current = null;
+    prevPositionsRef.current = null;
+    prevJailRef.current = null;
+    prevDisplayRef.current = null;
+    setBurst(null);
+    setMoneyFlight(null);
+    setBuildFlash(null);
+    setPassGo(null);
+    setMoneyLine(null);
+    setWalletPulse(null);
+    setTravelHighlight(null);
+    setStepPuff(null);
+    setStats((prev) => ({ ...prev, games: prev.games + 1 }));
   };
 
   // Reset animation/card/deed state whenever a fresh game starts.
@@ -315,6 +648,25 @@ export default function MonopolyPage() {
     }, 170);
     return () => clearInterval(id);
   }, []);
+
+  // Travel highlights: each time an animated token steps onto a new
+  // square, light that tile up briefly, puff a little dust, and play
+  // a soft footstep — synced to the existing 170ms stepping. Skipped
+  // entirely for reduced-motion (and always mute-gated by the engine).
+  useEffect(() => {
+    const prev = prevDisplayRef.current;
+    prevDisplayRef.current = displayPos;
+    if (!prev || !game || game.turnCount === 0 || reducedMotion()) return;
+    const moved = displayPos.findIndex((sq, i) => sq !== prev[i]);
+    if (moved < 0) return;
+    const tile = displayPos[moved];
+    setTravelHighlight(tile);
+    setStepPuff({ key: Date.now() + moved, tile });
+    sfx.step();
+    if (travelTimeoutRef.current) clearTimeout(travelTimeoutRef.current);
+    travelTimeoutRef.current = setTimeout(() => setTravelHighlight(null), 220);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayPos]);
 
   // Bot dice tumble: while Cosy Bot is about to roll, the centre dice
   // cycle faces (display only — the bot's real roll lands afterwards).
@@ -366,6 +718,7 @@ export default function MonopolyPage() {
   /** Roll with a dice tumble; the dice are fixed first, animation only. */
   const animateRoll = (apply: (dice: [number, number]) => void) => {
     if (rollAnim) return;
+    sfx.dice();
     const dice = rollDicePair(Math.random);
     if (reducedMotion()) {
       apply(dice);
@@ -450,6 +803,7 @@ export default function MonopolyPage() {
   if (mode === null || game === null || current === null) {
     return (
       <main className="mx-auto w-full max-w-3xl px-4 pb-16">
+        <MonopolyButtonStyles />
         <div className="mt-2">
           <Link href="/" className="btn !px-3 !py-2 text-sm">
             <ArrowLeft size={16} aria-hidden /> Games
@@ -620,13 +974,62 @@ export default function MonopolyPage() {
         ? botStatus
         : `${playerLabel(mode, game.turn)} · On ${current ? BOARD[current.position].name : ''}`;
 
+  // Cinematic camera mode, derived from game state only (presentation).
+  const walking =
+    game !== null &&
+    (displayPos[0] !== game.players[0].position || displayPos[1] !== game.players[1].position);
+  const cameraMode: CameraMode =
+    winner !== null
+      ? 'victory'
+      : rollAnim !== null || botTumbling
+        ? 'dice'
+        : walking
+          ? 'walk'
+          : game !== null && game.phase === 'buy' && game.pendingBuy !== null
+            ? 'buy'
+            : buildFlash !== null
+              ? 'build'
+              : game !== null && game.phase === 'jail'
+                ? 'jail'
+                : 'idle';
+  const focusTile: number | null =
+    game !== null && game.phase === 'buy' && game.pendingBuy !== null
+      ? game.pendingBuy
+      : (buildFlash?.tile ?? (game !== null && game.phase === 'jail' ? 10 : null));
+
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-16">
-      <div className="mt-2 flex items-center justify-between gap-2">
+      <MonopolyButtonStyles />
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <Link href="/" className="btn !px-3 !py-2 text-sm">
           <ArrowLeft size={16} aria-hidden /> Games
         </Link>
         <span className="chip">{mode === 'solo' ? 'Solo vs Cosy Bot' : 'Two players'}</span>
+        <button
+          type="button"
+          className="btn !px-3 !py-2 text-sm"
+          onClick={() => setView3D((v) => !v)}
+          aria-label={view3D ? 'Switch to the classic 2D board' : 'Switch to the 3D board'}
+        >
+          {view3D ? '2D board' : '3D board'}
+        </button>
+        <button
+          type="button"
+          className="btn !px-3 !py-2 text-sm"
+          onClick={() => {
+            const next = !muted;
+            setMuted(next);
+            saveMuted(next);
+            if (next) stopAmbient();
+            else {
+              ensureAudio();
+              startAmbient();
+            }
+          }}
+          aria-label={muted ? 'Unmute game sounds' : 'Mute game sounds'}
+        >
+          {muted ? '🔇 Sound off' : '🔊 Sound on'}
+        </button>
       </div>
       <h1 className="mt-4 text-3xl font-bold">Monopoly</h1>
       <p className="mt-1 text-[var(--ink-dim)]">
@@ -665,12 +1068,28 @@ export default function MonopolyPage() {
         )}
       </section>
 
+      {/* Pass-Go bonus popup — motion + sound, never a silent jump. */}
+      {passGo && (
+        <motion.div
+          key={passGo.key}
+          className="card mt-4 p-3 text-center"
+          style={{ borderColor: '#facc15', background: 'linear-gradient(180deg, #fef3c7, #ffffff)' }}
+          initial={{ y: -14, opacity: 0, scale: 0.96 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+        >
+          <p className="font-bold" style={{ color: '#92400e' }}>
+            Pass Start! {playerLabel(mode, passGo.player as PlayerIndex)} collects ${passGo.amount}
+          </p>
+        </motion.div>
+      )}
+
       {/* Player money panels */}
       <section className="mt-4 grid grid-cols-2 gap-2">
         {game.players.map((p, i) => (
           <div
             key={p.name}
-            className="card p-3"
+            className={walletPulse?.player === i ? 'card wallet-pulse p-3' : 'card p-3'}
             style={{
               borderColor: game.turn === i && winner === null ? PLAYER_COLOURS[i] : undefined,
               boxShadow: game.turn === i && winner === null ? `0 0 0 2px ${PLAYER_COLOURS[i]}` : undefined,
@@ -682,7 +1101,7 @@ export default function MonopolyPage() {
               {playerLabel(mode, i as PlayerIndex)}
               {p.bankrupt ? ' · out' : game.turn === i && winner === null ? ' · your turn' : ''}
             </p>
-            <p className="text-lg font-bold">${p.money}</p>
+            <p className="text-lg font-bold"><AnimatedMoney value={p.money} /></p>
             <p className="text-sm text-[var(--ink-dim)]">
               On {BOARD[p.position].name}
               {p.inJail ? ' · in Prison' : ''}
@@ -696,7 +1115,53 @@ export default function MonopolyPage() {
         ))}
       </section>
 
+      {/* Latest money transfer, in plain words — every money event
+          gets a visible line, never just a changed number. */}
+      {moneyLine && (
+        <p className="mt-3 text-center text-sm font-semibold" style={{ color: '#15803d' }}>
+          {moneyLine}
+        </p>
+      )}
+
+      {/* 3D board — the cherry-blossom garden scene. If it cannot run
+          (no WebGL, or a scene error), the classic 2D board below is
+          shown instead; gameplay is identical either way. */}
+      {view3D && (
+        <section className="mt-4" aria-label="3D game board">
+          <Monopoly3D
+            game={game}
+            displayPos={displayPos}
+            gameTokens={gameTokens}
+            rolling={rollAnim !== null || botTumbling}
+            faces={game.lastDice ?? [3, 4]}
+            doubles={game.rolledDoubles}
+            cameraMode={cameraMode}
+            focusTile={focusTile}
+            followSquare={displayPos[game.turn]}
+            burst={burst}
+            moneyFlight={moneyFlight}
+            cardOpen={cardModal !== null}
+            isBotTurn={isBotTurn}
+            highlightTile={travelHighlight}
+            jailClosed={game.players.some((p) => p.inJail)}
+            dimmed={mode === 'solo' && winner === 1}
+            stepPuff={stepPuff}
+            onTileClick={(idx) => setDeedIndex(idx)}
+            onError={() => {
+              setView3D(false);
+              setMsg('3D view is not available here — showing the classic board.');
+            }}
+            reducedMotion={reducedMotion()}
+          />
+          <p className="mt-2 text-center text-sm text-[var(--ink-dim)]">
+            The camera follows the game on its own — zooming to the dice, walking
+            with your token, and orbiting the board on a win.
+          </p>
+        </section>
+      )}
+
       {/* Board — dark 3D board: raised tiles, isometric city centre, 3D dice. */}
+      {!view3D && (
       <section
         className="mt-4 p-2 sm:p-3"
         aria-label="Game board"
@@ -934,7 +1399,7 @@ export default function MonopolyPage() {
             </p>
           </div>
         </div>
-      </section>
+      </section>)}
 
       {/* Deed card: tap any property, airport or utility, or land on one
           offered for sale. All figures come from BOARD — nothing invented. */}
@@ -999,14 +1464,18 @@ export default function MonopolyPage() {
           }}
           onClick={() => setCardModal(null)}
         >
-          <div
+          <motion.div
             className="card w-full max-w-sm p-5 text-center"
             style={{
+              transformPerspective: 900,
               background: cardModal.deck === 'chance'
                 ? 'linear-gradient(180deg, #3b1d4a, #241640)'
                 : 'linear-gradient(180deg, #3a2a1a, #241a10)',
               borderTop: `6px solid ${cardModal.deck === 'chance' ? '#ff6b9d' : '#d9a05b'}`,
             }}
+            initial={{ rotateY: -75, y: 44, opacity: 0 }}
+            animate={{ rotateY: 0, y: 0, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 20 }}
             onClick={(e) => e.stopPropagation()}
           >
             <p className="text-sm font-bold tracking-wide" style={{ color: cardModal.deck === 'chance' ? '#ff6b9d' : '#d9a05b' }}>
@@ -1016,7 +1485,7 @@ export default function MonopolyPage() {
             <button type="button" className="btn btn-primary mt-4" onClick={() => setCardModal(null)}>
               Continue
             </button>
-          </div>
+          </motion.div>
         </div>
       )}
 
@@ -1289,23 +1758,68 @@ export default function MonopolyPage() {
       </section>
 
       {winner !== null && (
-        <section className="card mt-4 p-5 text-center">
-          <p className="font-display text-2xl font-bold">
-            {playerLabel(mode, winner)} wins the board walk!
-          </p>
-          <p className="mt-1 text-sm text-[var(--ink-dim)]">
-            {mode === 'solo' && winner === 0
-              ? 'You bankrupted the bot — lovely strolling.'
-              : mode === 'solo'
-                ? 'The bot takes this one. No harm done — the board is ready again.'
-                : 'A well-walked game. Play again whenever you like.'}
-          </p>
-          <div className="mt-3 flex justify-center gap-2">
-            <button type="button" className="btn btn-primary" onClick={restart}>
-              Play again
-            </button>
-            <Link href="/" className="btn">Home</Link>
-          </div>
+        <section
+          className="card mt-4 p-5 text-center"
+          style={
+            mode === 'solo' && winner === 1
+              ? { background: 'linear-gradient(180deg, #1e1b3a, #0f0a24)', borderColor: '#312e81' }
+              : undefined
+          }
+        >
+          {(() => {
+            const w = winner as PlayerIndex;
+            const loser = (1 - w) as PlayerIndex;
+            const loserLabel = playerLabel(mode, loser);
+            const winnerLabel = playerLabel(mode, w);
+            const turnCapped = game.log.some((l) => l.startsWith('Turn cap reached'));
+            const reason = turnCapped
+              ? `Turn limit reached — ${winnerLabel} led on value.`
+              : game.players[loser].bankrupt
+                ? `${loserLabel} ran out of money.`
+                : `${loserLabel} was beaten on the board.`;
+            const isDefeat = mode === 'solo' && winner === 1;
+            return (
+              <>
+                <p className="font-display text-2xl font-bold">
+                  {isDefeat ? 'The board goes quiet…' : `${winnerLabel} wins the board walk!`}
+                </p>
+                <p className="mt-1 text-sm text-[var(--ink-dim)]">
+                  {isDefeat
+                    ? 'Cosy Bot takes this one. No harm done — the board is ready again.'
+                    : mode === 'solo'
+                      ? 'You bankrupted the bot — lovely strolling.'
+                      : 'A well-walked game. Play again whenever you like.'}
+                </p>
+                <p className="mt-2 text-sm font-semibold">
+                  {isDefeat ? `Defeat — ${reason}` : `Reason: ${reason}`}
+                </p>
+                <div className="mt-3 flex flex-wrap justify-center gap-2">
+                  <button type="button" className="btn btn-primary" onClick={restart}>
+                    Play again
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => { setMode(null); setGame(null); setPendingMode(null); }}
+                  >
+                    Change mode
+                  </button>
+                  <Link href="/" className="btn">Home</Link>
+                </div>
+              </>
+            );
+          })()}
+          {/* Victory statistics — best-effort, per-device, from this
+              match plus past matches on this device. */}
+          <dl className="mx-auto mt-4 grid max-w-md grid-cols-2 gap-2 text-left text-sm">
+            <div><dt className="text-[var(--ink-dim)]">Games played</dt><dd className="font-bold">{Math.max(stats.games, 1)}</dd></div>
+            <div><dt className="text-[var(--ink-dim)]">Longest match</dt><dd className="font-bold">{formatDuration(Math.max(stats.longestMs, Date.now() - gameStartRef.current))}</dd></div>
+            <div><dt className="text-[var(--ink-dim)]">Luckiest roll</dt><dd className="font-bold">{Math.max(stats.luckiest, luckiestRef.current) || '—'}</dd></div>
+            <div><dt className="text-[var(--ink-dim)]">Properties at win</dt><dd className="font-bold">{BOARD.filter((sq) => game.property[sq.index].owner === winner).length}</dd></div>
+            <div><dt className="text-[var(--ink-dim)]">Money at win</dt><dd className="font-bold">${netWorth(game, winner)}</dd></div>
+            <div><dt className="text-[var(--ink-dim)]">Houses built</dt><dd className="font-bold">{Math.max(stats.housesBuilt, housesBuiltRef.current)}</dd></div>
+            <div><dt className="text-[var(--ink-dim)]">Hotels built</dt><dd className="font-bold">{Math.max(stats.hotelsBuilt, hotelsBuiltRef.current)}</dd></div>
+          </dl>
         </section>
       )}
       <StickyActionBar status={stickyStatus} actions={stickyActions} />
