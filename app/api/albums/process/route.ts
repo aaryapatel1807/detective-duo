@@ -53,6 +53,15 @@ export async function POST(request: Request) {
   let failed = 0;
   let examined = 0;
   let budgetStopped = false;
+  // The live failure's message, surfaced to the page (Nov 2026): the
+  // function logs are unreachable from this setup, and without the
+  // message every failure looked identical from the outside. Only
+  // messages are returned — no stacks, keys, or storage internals.
+  const errors: string[] = [];
+  const noteError = (e: unknown) => {
+    const msg = (e instanceof Error ? e.message : String(e)).slice(0, 200);
+    if (msg && !errors.includes(msg)) errors.push(msg);
+  };
   for (const photo of pending) {
     if (overBudget(startedAt, Date.now(), PROCESS_BUDGET_MS)) {
       budgetStopped = true;
@@ -91,6 +100,7 @@ export async function POST(request: Request) {
       // counted it. The photo stays pending for the next call, and
       // after MAX_ATTEMPTS claims it is marked failed above.
       console.error('album process failed for', photo.id, e);
+      noteError(e);
     }
   }
   const pendingRemaining = await countPending(sb);
@@ -103,5 +113,6 @@ export async function POST(request: Request) {
     pendingRemaining,
     failedTotal,
     budgetStopped,
+    errors,
   });
 }

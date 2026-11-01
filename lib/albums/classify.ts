@@ -53,6 +53,10 @@ async function getSessions(assetBase?: string): Promise<Sessions> {
   // page kept showing them as Classifying… (Nov 2026).
   const wasmDir = resolveWasmDir();
   if (wasmDir) ort.env.wasm.wasmPaths = wasmDir;
+  // One thread: the threaded binary still loads, but no pthread
+  // workers are spawned — worker creation is the shakiest part of
+  // running this backend inside a serverless function.
+  ort.env.wasm.numThreads = 1;
   const [faceBytes, sceneBytes, labelsBytes] = await Promise.all([
     assetBytes(FACE_MODEL, assetBase),
     assetBytes(SCENE_MODEL, assetBase),

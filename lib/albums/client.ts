@@ -250,6 +250,8 @@ export interface ProcessResult {
   pendingRemaining: number;
   failedTotal: number;
   budgetStopped: boolean;
+  /** Server-side failure messages from this pass, if any. */
+  errors?: string[];
 }
 
 /** One classification pass. Throws on 503/401 like the other calls. */

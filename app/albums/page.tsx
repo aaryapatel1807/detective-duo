@@ -46,6 +46,7 @@ export default function AlbumsPage() {
   const [uploads, setUploads] = useState<UploadState[]>([]);
   const [classifyProgress, setClassifyProgress] = useState<{ done: number; total: number } | null>(null);
   const [classifyStuck, setClassifyStuck] = useState(false);
+  const [classifyError, setClassifyError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -135,6 +136,7 @@ export default function AlbumsPage() {
       const batchSet = new Set(batchIds);
       let lastReadyIds = new Set<string>();
       let lastFailedTotal = 0;
+      let lastErrors: string[] = [];
       let rounds = 0;
       let pendingRemaining = 1;
       while (rounds < 30 && pendingRemaining > 0) {
@@ -143,6 +145,7 @@ export default function AlbumsPage() {
           const result = await processAlbumsOnce(key, 10);
           pendingRemaining = result.pendingRemaining;
           lastFailedTotal = result.failedTotal;
+          if (result.errors?.length) lastErrors = result.errors;
         } catch {
           break;
         }
@@ -177,6 +180,7 @@ export default function AlbumsPage() {
         const done = batchIds.filter((id) => lastReadyIds.has(id)).length;
         setClassifyProgress(done >= batchSet.size ? null : { done, total: batchSet.size });
         setClassifyStuck(done < batchSet.size || pendingRemaining > 0 || lastFailedTotal > 0);
+        setClassifyError(lastErrors.length ? lastErrors[0]! : null);
         // When nothing is pending anywhere, an unfinished batch photo
         // cannot still be classifying — it ended up 'failed'. Say so
         // in the upload list (it renders state 'failed' as
@@ -299,6 +303,7 @@ export default function AlbumsPage() {
   const retryClassify = async () => {
     if (!albumKey) return;
     setClassifyStuck(false);
+    setClassifyError(null);
     try {
       await retryAlbums(albumKey);
     } catch {
@@ -418,6 +423,11 @@ export default function AlbumsPage() {
                 <button type="button" className="btn !px-3 !py-1 text-sm" onClick={() => void retryClassify()}>
                   Retry classification
                 </button>
+              </p>
+            )}
+            {classifyStuck && classifyError && (
+              <p className="mt-2 text-sm text-[var(--ink-dim)]" role="status">
+                Server said: {classifyError}
               </p>
             )}
           </section>
