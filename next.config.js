@@ -17,12 +17,6 @@ const nextConfig = {
         './node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs',
         './node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm',
       ],
-      // Temporary diagnostic route (Nov 2026): same wasm pair, so it
-      // tests exactly what the process route runs. Remove with it.
-      '/api/albums/diag': [
-        './node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs',
-        './node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm',
-      ],
     },
   },
 };
