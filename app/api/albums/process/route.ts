@@ -6,6 +6,11 @@ import { countFailed, countPending, downloadFile, getServiceClient, listPending,
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// Cold classify (model fetch + two session inits) can exceed the
+// default function limit and get killed mid-photo — a kill leaves
+// no error behind, only a burned claim. Give the function room;
+// the deploy will say if the plan caps this lower.
+export const maxDuration = 60;
 
 /**
  * POST /api/albums/process — classify pending photos (upload retries +
