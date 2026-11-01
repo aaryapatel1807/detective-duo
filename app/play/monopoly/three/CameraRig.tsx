@@ -45,13 +45,20 @@ export default function CameraRig({
       const a = t * 0.22;
       target.set(Math.sin(a) * 15, 10, Math.cos(a) * 15);
     } else if (mode === 'dice') {
-      target.set(0, 4.6, 8.2);
+      // Dice beat: the camera lowers slightly and leans in.
+      target.set(0, 3.6, 7.4);
       lookTarget.set(0, 0.6, 2.7);
     } else if (mode === 'walk') {
       const [fx, fz] = tilePos(followSquare);
       target.set(fx * 0.5, 7.6, fz * 0.5 + 7.2);
       lookTarget.set(fx, 0.3, fz);
-    } else if ((mode === 'buy' || mode === 'build') && focusTile !== null) {
+    } else if (mode === 'build' && focusTile !== null) {
+      // Build beat: the camera rotates gently around the house.
+      const [fx, fz] = tilePos(focusTile);
+      const a = t * 0.5;
+      target.set(fx + Math.sin(a) * 3.4, 5.6, fz + Math.cos(a) * 3.4);
+      lookTarget.set(fx, 0.3, fz);
+    } else if (mode === 'buy' && focusTile !== null) {
       const [fx, fz] = tilePos(focusTile);
       const len = Math.hypot(fx, fz) || 1;
       target.set(fx + (fx / len) * 2.6, 6.4, fz + (fz / len) * 2.6);

@@ -4,13 +4,18 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { SEASON_PARTICLES, type Season } from './ambience';
 
 const PETAL_COUNT = 90;
 
-/** Falling petals across the whole garden, swaying in the wind. */
-export function Petals() {
+/** Falling seasonal particles across the whole garden, swaying in
+ * the wind: cherry petals in spring, pale gold in summer, orange
+ * leaves in autumn, white snow in winter/Christmas, pink petals for
+ * Valentine's. One instanced mesh, no per-frame allocation. */
+export function Petals({ season = 'spring' }: { season?: Season }) {
   const mesh = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
+  const dress = SEASON_PARTICLES[season];
   const seeds = useMemo(() => {
     return Array.from({ length: PETAL_COUNT }, () => ({
       x: (Math.random() - 0.5) * 26,
@@ -26,12 +31,12 @@ export function Petals() {
     const t = clock.getElapsedTime();
     for (let i = 0; i < PETAL_COUNT; i += 1) {
       const s = seeds[i];
-      s.y -= 0.016 * s.speed;
+      s.y -= 0.016 * s.speed * dress.speed;
       if (s.y < -2) s.y = 7;
       dummy.position.set(
-        s.x + Math.sin(t * 0.7 + s.sway) * 0.8,
+        s.x + Math.sin(t * 0.7 + s.sway) * 0.8 * dress.sway,
         s.y,
-        s.z + Math.cos(t * 0.5 + s.sway) * 0.6,
+        s.z + Math.cos(t * 0.5 + s.sway) * 0.6 * dress.sway,
       );
       dummy.rotation.set(t * 0.8 + s.spin, s.spin, t * 0.5 + s.spin);
       dummy.updateMatrix();
@@ -41,9 +46,56 @@ export function Petals() {
   });
   return (
     <instancedMesh ref={mesh} args={[undefined, undefined, PETAL_COUNT]} frustumCulled={false}>
-      <planeGeometry args={[0.22, 0.14]} />
-      <meshBasicMaterial color="#ffb7c5" side={THREE.DoubleSide} transparent opacity={0.9} />
+      <planeGeometry args={[dress.size, dress.size * 0.64]} />
+      <meshBasicMaterial color={dress.color} side={THREE.DoubleSide} transparent opacity={0.9} />
     </instancedMesh>
+  );
+}
+
+const HEART_COUNT = 10;
+
+/** Valentine's hearts: a few small heart shapes drifting up through
+ * the garden and looping. Static when reduced-motion is on. */
+export function Hearts({ reducedMotion = false }: { reducedMotion?: boolean }) {
+  const geo = useMemo(() => {
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 0.28);
+    shape.bezierCurveTo(0, 0.48, -0.42, 0.48, -0.42, 0.22);
+    shape.bezierCurveTo(-0.42, -0.02, 0, -0.14, 0, -0.34);
+    shape.bezierCurveTo(0, -0.14, 0.42, -0.02, 0.42, 0.22);
+    shape.bezierCurveTo(0.42, 0.48, 0, 0.48, 0, 0.28);
+    return new THREE.ShapeGeometry(shape);
+  }, []);
+  const group = useRef<THREE.Group>(null);
+  const seeds = useMemo(
+    () =>
+      Array.from({ length: HEART_COUNT }, (_, i) => ({
+        x: (Math.random() - 0.5) * 14,
+        y: Math.random() * 6 - 1,
+        z: (Math.random() - 0.5) * 14,
+        speed: 0.25 + Math.random() * 0.3,
+        phase: (i / HEART_COUNT) * Math.PI * 2,
+      })),
+    [],
+  );
+  useFrame(({ clock }) => {
+    if (!group.current || reducedMotion) return;
+    const t = clock.getElapsedTime();
+    group.current.children.forEach((child, i) => {
+      const s = seeds[i];
+      const y = -1 + (((t * s.speed + s.y + 1) % 8) + 8) % 8;
+      child.position.set(s.x + Math.sin(t * 0.6 + s.phase) * 0.7, y, s.z);
+      child.rotation.y = Math.sin(t * 0.8 + s.phase) * 0.5;
+    });
+  });
+  return (
+    <group ref={group}>
+      {seeds.map((s, i) => (
+        <mesh key={i} geometry={geo} position={[s.x, s.y, s.z]} scale={0.7}>
+          <meshBasicMaterial color="#ff6b9d" side={THREE.DoubleSide} transparent opacity={0.85} />
+        </mesh>
+      ))}
+    </group>
   );
 }
 

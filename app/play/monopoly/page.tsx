@@ -97,7 +97,15 @@ main .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
 main .turn-banner-pulse { animation: bannerPulse 1s ease-out; }
 main .mono-tile { transition: filter 0.2s ease, transform 0.15s ease; }
 main .mono-tile:hover { filter: brightness(1.18); }
-main .mono-tile:active { transform: scale(0.98); }`}</style>
+main .mono-tile:active { transform: scale(0.98); }
+/* Premium UI polish, scoped to this page only: slightly larger card
+ * radii, and a gentle animated border glow on the active player
+ * panel alone (drop-shadow so it never fights the panel own
+ * box-shadow). Gradients stay theme-owned — this page never
+ * overrides the Sachi theme card backgrounds. */
+main .card { border-radius: 20px; }
+@keyframes activeGlow { 0%, 100% { filter: drop-shadow(0 0 2px rgba(255,143,179,0.25)); } 50% { filter: drop-shadow(0 0 10px rgba(255,143,179,0.55)); } }
+main .active-glow { animation: activeGlow 2.4s ease-in-out infinite; }`}</style>
   );
 }
 
@@ -269,7 +277,9 @@ function gridPos(index: number): { gridRow: string; gridColumn: string } {
 
 function playerLabel(mode: Mode, index: PlayerIndex): string {
   if (mode === 'solo') return index === 0 ? 'You' : 'Cosy Bot';
-  return `Player ${index + 1}`;
+  // Duo pass-and-play is the couple's own game: their real names,
+  // not generic labels. Solo stays You vs Cosy Bot.
+  return index === 0 ? 'Aarya' : 'Sachi';
 }
 
 /** Display name: strip ", Country" from property names; corners have no comma. */
@@ -919,7 +929,7 @@ export default function MonopolyPage() {
 
   const startGame = (m: Mode) => {
     const names: [string, string] =
-      m === 'solo' ? ['You', 'Cosy Bot'] : ['Player 1', 'Player 2'];
+      m === 'solo' ? ['You', 'Cosy Bot'] : ['Aarya', 'Sachi'];
     setMode(m);
     setGame(createGame(`monopoly|${userId ?? 'guest'}|${Date.now()}`, names));
     setMsg(null);
@@ -1291,7 +1301,7 @@ export default function MonopolyPage() {
           {pendingMode === 'duo' && (
             <div className="mt-4">
               <p className="font-semibold">
-                {duoPickStep === 0 ? 'Player 1, pick your token' : 'Player 2, pick your token'}
+                {duoPickStep === 0 ? 'Aarya, pick your token' : 'Sachi, pick your token'}
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {MONOPOLY_TOKENS.filter((t) => duoPickStep === 0 || t.id !== duoTokens[0]).map((t) => (
@@ -1316,19 +1326,19 @@ export default function MonopolyPage() {
                 ))}
               </div>
               <p className="mt-2 flex items-center gap-2 text-sm">
-                Player 1: <TokenMark token={duoTokens[0]} colour={PLAYER_COLOURS[0]} size={24} />
-                <span className="text-[var(--ink-dim)]">Player 2:</span>
+                Aarya: <TokenMark token={duoTokens[0]} colour={PLAYER_COLOURS[0]} size={24} />
+                <span className="text-[var(--ink-dim)]">Sachi:</span>
                 <TokenMark token={duoTokens[1]} colour={PLAYER_COLOURS[1]} size={24} />
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {duoPickStep === 0 ? (
                   <button type="button" className="btn btn-primary" onClick={() => setDuoPickStep(1)}>
-                    Player 2 picks next
+                    Sachi picks next
                   </button>
                 ) : (
                   <>
                     <button type="button" className="btn" onClick={() => setDuoPickStep(0)}>
-                      Back to Player 1
+                      Back to Aarya
                     </button>
                     <button type="button" className="btn btn-primary" onClick={() => beginGame('duo')}>
                       Start two-player game
@@ -1578,7 +1588,7 @@ export default function MonopolyPage() {
         {game.players.map((p, i) => (
           <div
             key={p.name}
-            className={walletPulse?.player === i ? 'card wallet-pulse p-3' : 'card p-3'}
+            className={`${walletPulse?.player === i ? 'card wallet-pulse p-3' : 'card p-3'}${game.turn === i && winner === null ? ' active-glow' : ''}`}
             style={{
               borderColor: game.turn === i && winner === null ? PLAYER_COLOURS[i] : undefined,
               boxShadow: game.turn === i && winner === null ? `0 0 0 2px ${PLAYER_COLOURS[i]}` : undefined,
@@ -1626,6 +1636,10 @@ export default function MonopolyPage() {
           shown instead; gameplay is identical either way. */}
       {view3D && (
         <section className="mt-4" aria-label="3D game board">
+          {/* Soft depth vignette around the edges of the 3D view: a
+              cheap CSS radial gradient, NOT postprocessing, and
+              pointer-events none so tiles stay clickable. */}
+          <div style={{ position: 'relative' }}>
           <Monopoly3D
             game={game}
             displayPos={displayPos}
@@ -1654,6 +1668,18 @@ export default function MonopolyPage() {
             }}
             reducedMotion={reducedMotion()}
           />
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: 18,
+              pointerEvents: 'none',
+              background:
+                'radial-gradient(ellipse at center, transparent 55%, rgba(20,10,30,0.28) 100%)',
+            }}
+          />
+          </div>
           <p className="mt-2 text-center text-sm text-[var(--ink-dim)]">
             The camera follows the game on its own — zooming to the dice, walking
             with your token, and orbiting the board on a win.
@@ -2322,7 +2348,11 @@ export default function MonopolyPage() {
             );
           })()}
           {/* Victory statistics — best-effort, per-device, from this
-              match plus past matches on this device. */}
+              match plus past matches on this device. Presented as the
+              couple's shared record: one device, both players. */}
+          <p className="mt-4 text-center text-sm font-semibold">
+            Your shared record — every game on this device, together.
+          </p>
           <dl className="mx-auto mt-4 grid max-w-md grid-cols-2 gap-2 text-left text-sm">
             <div><dt className="text-[var(--ink-dim)]">Games played</dt><dd className="font-bold">{Math.max(stats.games, 1)}</dd></div>
             <div><dt className="text-[var(--ink-dim)]">Longest match</dt><dd className="font-bold">{formatDuration(Math.max(stats.longestMs, Date.now() - gameStartRef.current))}</dd></div>

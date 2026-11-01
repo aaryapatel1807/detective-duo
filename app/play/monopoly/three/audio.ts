@@ -222,13 +222,40 @@ export function startAmbient(): void {
     windGain.connect(master);
     wind.start();
     ambientNodes.push(wind, windGain);
+    // Garden fountain: a quiet trickling loop (band-passed noise),
+    // kept very low so it never competes with game sounds.
+    const fountain = ctx.createBufferSource();
+    fountain.buffer = buffer;
+    fountain.loop = true;
+    const fountainFilter = ctx.createBiquadFilter();
+    fountainFilter.type = 'bandpass';
+    fountainFilter.frequency.value = 1100;
+    fountainFilter.Q.value = 0.8;
+    const fountainGain = ctx.createGain();
+    fountainGain.gain.value = 0.012;
+    fountain.connect(fountainFilter);
+    fountainFilter.connect(fountainGain);
+    fountainGain.connect(master);
+    fountain.start();
+    ambientNodes.push(fountain, fountainGain);
+    // Soft pentatonic plucks: one gentle note every 9–16 seconds.
+    // Synthesized triangles, not a piano recording or licensed track.
+    const pentatonic = [523.25, 587.33, 659.25, 783.99, 880.0];
+    const pluck = (): void => {
+      if (ctx && !muted) {
+        const f = pentatonic[Math.floor(Math.random() * pentatonic.length)];
+        tone(f, f, 0.5, 'triangle', 0.03);
+        tone(f * 2, f * 2, 0.3, 'sine', 0.012, 0.02);
+      }
+      window.setTimeout(pluck, 9000 + Math.random() * 7000);
+    };
+    window.setTimeout(pluck, 8000);
     // Gentle pad: two detuned triangles drifting between soft chords.
     const chords = [
       [261.6, 329.6, 392.0],
       [220.0, 261.6, 329.6],
       [246.9, 293.7, 392.0],
-    ];
-    let chordIndex = 0;
+    ];let chordIndex = 0;
     const pad = (): void => {
       if (!ctx || !master) return;
       const freqs = chords[chordIndex % chords.length];

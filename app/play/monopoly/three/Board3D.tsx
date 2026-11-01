@@ -17,7 +17,7 @@ function shortName(name: string): string {
   return name.split(',')[0] ?? name;
 }
 
-function House({ position, hotel }: { position: [number, number, number]; hotel: boolean }) {
+function House({ position, hotel, night }: { position: [number, number, number]; hotel: boolean; night: boolean }) {
   const colour = hotel ? '#facc15' : '#4ade80';
   const roof = hotel ? '#fde047' : '#22c55e';
   return (
@@ -34,12 +34,190 @@ function House({ position, hotel }: { position: [number, number, number]; hotel:
         <boxGeometry args={[0.07, 0.12, 0.02]} />
         <meshStandardMaterial color="#14532d" roughness={0.8} />
       </mesh>
+      {/* A window that glows warmly at night, dim by day. */}
+      <mesh position={[-0.05, 0.02, 0.11]}>
+        <boxGeometry args={[0.05, 0.06, 0.02]} />
+        <meshStandardMaterial
+          color="#ffd977"
+          emissive="#ffb830"
+          emissiveIntensity={night ? 1.6 : 0.15}
+          roughness={0.5}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/** A miniature landmark on a property tile: one tiny original
+ * procedural silhouette per country group, sitting on the tile's
+ * outer edge so it never covers the name, price, tokens, or houses.
+ * Shapes are generic (a clock tower, a suspension bridge, a pagoda)
+ * — never a traced or copied depiction, and never a logo. At tile
+ * size they read as silhouettes, which is the point; the deed card
+ * stays the readable detail view. Landmarks never intercept clicks. */
+function Landmark({ group, tileX, tileZ }: { group: string; tileX: number; tileZ: number }) {
+  const len = Math.hypot(tileX, tileZ) || 1;
+  const ox = tileX / len;
+  const oz = tileZ / len;
+  const noRay = { raycast: () => null } as const;
+  const pos: [number, number, number] = [tileX + ox * 0.34, 0.3, tileZ + oz * 0.34];
+  // Group-level shapes; hero cities share their group's landmark,
+  // which is what still reads at this size.
+  if (group === 'yellow') {
+    // Japan: a tiny pagoda with a sakura dot.
+    return (
+      <group position={pos}>
+        <mesh {...noRay} position={[0, 0.04, 0]}>
+          <boxGeometry args={[0.22, 0.08, 0.22]} />
+          <meshStandardMaterial color="#8b5a2b" roughness={0.8} />
+        </mesh>
+        <mesh {...noRay} position={[0, 0.12, 0]}>
+          <boxGeometry args={[0.16, 0.1, 0.16]} />
+          <meshStandardMaterial color="#b91c1c" roughness={0.7} />
+        </mesh>
+        <mesh {...noRay} position={[0, 0.21, 0]} rotation={[0, Math.PI / 4, 0]}>
+          <coneGeometry args={[0.17, 0.1, 4]} />
+          <meshStandardMaterial color="#334155" roughness={0.7} />
+        </mesh>
+        <mesh {...noRay} position={[0.14, 0.03, 0.1]}>
+          <sphereGeometry args={[0.045, 8, 6]} />
+          <meshStandardMaterial color="#ffb7c5" roughness={0.9} />
+        </mesh>
+      </group>
+    );
+  }
+  if (group === 'green') {
+    // United Kingdom: a clock tower plus a red phone-box shape.
+    return (
+      <group position={pos}>
+        <mesh {...noRay} position={[-0.06, 0.17, 0]}>
+          <boxGeometry args={[0.1, 0.34, 0.1]} />
+          <meshStandardMaterial color="#a8a29e" roughness={0.8} />
+        </mesh>
+        <mesh {...noRay} position={[-0.06, 0.3, 0.06]}>
+          <boxGeometry args={[0.09, 0.09, 0.02]} />
+          <meshStandardMaterial color="#fef3c7" emissive="#fde68a" emissiveIntensity={0.4} roughness={0.6} />
+        </mesh>
+        <mesh {...noRay} position={[0.1, 0.06, 0]}>
+          <boxGeometry args={[0.08, 0.12, 0.08]} />
+          <meshStandardMaterial color="#dc2626" roughness={0.6} />
+        </mesh>
+      </group>
+    );
+  }
+  if (group === 'darkblue') {
+    // United States: a suspension-bridge shape over a water shimmer.
+    return (
+      <group position={pos}>
+        {[-0.12, 0.12].map((x) => (
+          <mesh key={x} {...noRay} position={[x, 0.13, 0]}>
+            <boxGeometry args={[0.05, 0.26, 0.05]} />
+            <meshStandardMaterial color="#ea580c" roughness={0.6} />
+          </mesh>
+        ))}
+        <mesh {...noRay} position={[0, 0.26, 0]}>
+          <boxGeometry args={[0.3, 0.03, 0.03]} />
+          <meshStandardMaterial color="#ea580c" roughness={0.6} />
+        </mesh>
+        <mesh {...noRay} position={[0, 0.02, 0]}>
+          <boxGeometry args={[0.3, 0.02, 0.1]} />
+          <meshStandardMaterial color="#7ec8e3" emissive="#38bdf8" emissiveIntensity={0.35} roughness={0.3} />
+        </mesh>
+      </group>
+    );
+  }
+  if (group === 'pink') {
+    // France: a tapered lattice tower silhouette.
+    return (
+      <group position={pos}>
+        <mesh {...noRay} position={[0, 0.18, 0]}>
+          <cylinderGeometry args={[0.02, 0.15, 0.36, 4]} />
+          <meshStandardMaterial color="#64748b" roughness={0.5} metalness={0.4} />
+        </mesh>
+        <mesh {...noRay} position={[0, 0.38, 0]}>
+          <sphereGeometry args={[0.03, 8, 6]} />
+          <meshStandardMaterial color="#facc15" emissive="#facc15" emissiveIntensity={0.5} roughness={0.5} />
+        </mesh>
+      </group>
+    );
+  }
+  if (group === 'red') {
+    // Italy: a domed building.
+    return (
+      <group position={pos}>
+        <mesh {...noRay} position={[0, 0.06, 0]}>
+          <boxGeometry args={[0.22, 0.12, 0.18]} />
+          <meshStandardMaterial color="#fef3c7" roughness={0.8} />
+        </mesh>
+        <mesh {...noRay} position={[0, 0.13, 0]}>
+          <sphereGeometry args={[0.11, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshStandardMaterial color="#b45309" roughness={0.6} />
+        </mesh>
+      </group>
+    );
+  }
+  if (group === 'orange') {
+    // Germany: a timber-framed house with a steep roof.
+    return (
+      <group position={pos}>
+        <mesh {...noRay} position={[0, 0.07, 0]}>
+          <boxGeometry args={[0.2, 0.14, 0.16]} />
+          <meshStandardMaterial color="#fef3c7" roughness={0.85} />
+        </mesh>
+        <mesh {...noRay} position={[0, 0.08, 0.085]}>
+          <boxGeometry args={[0.2, 0.02, 0.01]} />
+          <meshStandardMaterial color="#6b4226" roughness={0.9} />
+        </mesh>
+        <mesh {...noRay} position={[0, 0.19, 0]} rotation={[0, Math.PI / 4, 0]}>
+          <coneGeometry args={[0.17, 0.12, 4]} />
+          <meshStandardMaterial color="#7c2d12" roughness={0.8} />
+        </mesh>
+      </group>
+    );
+  }
+  if (group === 'lightblue') {
+    // Spain: an arched gateway with a small dome.
+    return (
+      <group position={pos}>
+        {[-0.08, 0.08].map((x) => (
+          <mesh key={x} {...noRay} position={[x, 0.07, 0]}>
+            <boxGeometry args={[0.05, 0.14, 0.12]} />
+            <meshStandardMaterial color="#fde68a" roughness={0.8} />
+          </mesh>
+        ))}
+        <mesh {...noRay} position={[0, 0.15, 0]}>
+          <boxGeometry args={[0.22, 0.04, 0.12]} />
+          <meshStandardMaterial color="#fde68a" roughness={0.8} />
+        </mesh>
+        <mesh {...noRay} position={[0, 0.2, 0]}>
+          <sphereGeometry args={[0.07, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshStandardMaterial color="#dc2626" roughness={0.6} />
+        </mesh>
+      </group>
+    );
+  }
+  // Portugal (brown): a white house with a terracotta roof and a
+  // small tower.
+  return (
+    <group position={pos}>
+      <mesh {...noRay} position={[-0.03, 0.07, 0]}>
+        <boxGeometry args={[0.18, 0.14, 0.16]} />
+        <meshStandardMaterial color="#ffffff" roughness={0.85} />
+      </mesh>
+      <mesh {...noRay} position={[-0.03, 0.17, 0]} rotation={[0, Math.PI / 4, 0]}>
+        <coneGeometry args={[0.15, 0.1, 4]} />
+        <meshStandardMaterial color="#c2410c" roughness={0.8} />
+      </mesh>
+      <mesh {...noRay} position={[0.12, 0.1, 0]}>
+        <cylinderGeometry args={[0.035, 0.035, 0.2, 8]} />
+        <meshStandardMaterial color="#fef3c7" roughness={0.8} />
+      </mesh>
     </group>
   );
 }
 
 /** Houses on one tile; the newest building drops in with a bounce. */
-function Buildings({ square, houses, tileX, tileZ }: { square: number; houses: number; tileX: number; tileZ: number }) {
+function Buildings({ square, houses, tileX, tileZ, night }: { square: number; houses: number; tileX: number; tileZ: number; night: boolean }) {
   const group = useRef<THREE.Group>(null);
   const dropStart = useRef(-10);
   const prevCount = useRef(houses);
@@ -70,6 +248,7 @@ function Buildings({ square, houses, tileX, tileZ }: { square: number; houses: n
           <House
             key={i}
             hotel={isHotel}
+            night={night}
             position={[
               tileX + dir[0] * 0.3 + perp[0] * off,
               0.3 + (isHotel ? 0.21 : 0.13),
@@ -205,6 +384,7 @@ export default function Board3D({
   shineTile,
   landingTile,
   reducedMotion,
+  night = false,
   onTileClick,
 }: {
   game: GameState;
@@ -214,6 +394,7 @@ export default function Board3D({
   shineTile: number | null;
   landingTile: { tile: number; key: number } | null;
   reducedMotion: boolean;
+  night?: boolean;
   onTileClick: (index: number) => void;
 }) {
   const cityTex = useLoader(THREE.TextureLoader, '/monopoly-city.jpg');
@@ -304,7 +485,10 @@ export default function Board3D({
                 <meshBasicMaterial color={PLAYER_COLOURS[prop.owner]} transparent opacity={0.95} side={THREE.DoubleSide} />
               </mesh>
             )}
-            <Buildings square={sq.index} houses={prop.houses} tileX={x} tileZ={z} />
+            {sq.kind === 'property' && sq.group && (
+              <Landmark group={sq.group} tileX={x} tileZ={z} />
+            )}
+            <Buildings square={sq.index} houses={prop.houses} tileX={x} tileZ={z} night={night} />
           </group>
         );
       })}
