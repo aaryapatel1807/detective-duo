@@ -824,6 +824,106 @@ export const BOOTH_FILTERS: BoothFilter[] = [
     ],
     note: 'Soft bloom, romantic. Bright + low contrast: check on brown skin.',
   },
+  // Famous social-app looks, added Nov 2026 — none of these duplicate
+  // the 22 above. Instagram grades are original approximations of the
+  // well-known looks (cool contrast, warm vivid, faded, etc.), built
+  // from this file's own CSS/overlay system, not copied code or
+  // assets. Snapchat's famous filters are AR face lenses (dog ears,
+  // butterfly crown, baby/old-age), which need face tracking this
+  // booth does not have — the two Snapchat-style entries below are
+  // playful colour grades in that spirit, not the lenses themselves.
+  // Same rule as the cute set: tune on real couple photos, darkest
+  // skin first, before calling them final.
+  {
+    id: 'clarendon',
+    name: 'Clarendon',
+    css: 'contrast(1.18) saturate(1.30) brightness(1.03) hue-rotate(-5deg)',
+    overlays: [{ kind: 'vignette', color: '#1a2a3a', alpha: 0.12, blend: 'multiply' }],
+    note: 'Instagram-style: cool, punchy, vivid. High contrast: check on brown skin.',
+  },
+  {
+    id: 'juno',
+    name: 'Juno',
+    css: 'contrast(1.10) saturate(1.35) brightness(1.05) sepia(0.08) hue-rotate(-5deg)',
+    overlays: [{ kind: 'gradient', colors: ['#ffd9a8', '#ff8f6b'], alpha: 0.12, blend: 'soft-light' }],
+    note: 'Instagram-style: warm and vivid, reds and yellows pop.',
+  },
+  {
+    id: 'lark',
+    name: 'Lark',
+    css: 'brightness(1.12) contrast(0.95) saturate(0.85) hue-rotate(5deg)',
+    overlays: [{ kind: 'gradient', colors: ['#c8dce8', '#e8f2f5'], alpha: 0.12, blend: 'soft-light' }],
+    note: 'Instagram-style: bright, airy, blues and greens muted.',
+  },
+  {
+    id: 'gingham',
+    name: 'Gingham',
+    css: 'brightness(1.05) contrast(0.90) saturate(0.75)',
+    overlays: [{ kind: 'vignette', color: '#000000', alpha: 0.15, blend: 'multiply' }],
+    note: 'Instagram-style: faded, soft, vintage-light.',
+  },
+  {
+    id: 'valencia',
+    name: 'Valencia',
+    css: 'brightness(1.08) contrast(0.95) saturate(1.10) sepia(0.25)',
+    overlays: [{ kind: 'tint', color: '#ffe9a8', alpha: 0.14, blend: 'screen' }],
+    note: 'Instagram-style: warm faded yellow glow.',
+  },
+  {
+    id: 'xpro2',
+    name: 'X-Pro II',
+    css: 'contrast(1.30) saturate(1.25) sepia(0.15)',
+    overlays: [{ kind: 'vignette', color: '#000000', alpha: 0.30, blend: 'multiply' }],
+    note: 'Instagram-style: dramatic, contrasty, warm shadows. High contrast: check on brown skin.',
+  },
+  {
+    id: 'lofi',
+    name: 'Lo-Fi',
+    css: 'contrast(1.25) saturate(1.50)',
+    overlays: [{ kind: 'vignette', color: '#000000', alpha: 0.25, blend: 'multiply' }],
+    note: 'Instagram-style: bold colour, deep shadows. High saturation: check on brown skin.',
+  },
+  {
+    id: 'aden',
+    name: 'Aden',
+    css: 'brightness(1.08) contrast(0.90) saturate(0.90) sepia(0.12)',
+    overlays: [{ kind: 'gradient', colors: ['#ffe8d6', '#ffd9e6'], alpha: 0.12, blend: 'soft-light' }],
+    note: 'Instagram-style: soft pastel warmth, low contrast.',
+  },
+  {
+    id: 'ludwig',
+    name: 'Ludwig',
+    css: 'contrast(1.05) saturate(0.95) sepia(0.10) hue-rotate(-5deg)',
+    overlays: [{ kind: 'vignette', color: '#ffb37a', alpha: 0.15, blend: 'soft-light' }],
+    note: 'Instagram-style: warm, slightly muted, reds warm.',
+  },
+  {
+    id: 'perpetua',
+    name: 'Perpetua',
+    css: 'brightness(1.06) contrast(0.95) saturate(0.90) hue-rotate(10deg)',
+    overlays: [{ kind: 'gradient', colors: ['#c8e8d8', '#c8d8e8'], alpha: 0.12, blend: 'soft-light' }],
+    note: 'Instagram-style: soft pastel green-blue wash.',
+  },
+  {
+    id: 'butterfly-dream',
+    name: 'Butterfly Dream',
+    css: 'brightness(1.12) contrast(0.95) saturate(1.10) hue-rotate(-5deg)',
+    overlays: [
+      { kind: 'gradient', colors: ['#ffc9e6', '#d9c8ff'], alpha: 0.14, blend: 'soft-light' },
+      { kind: 'stars', colors: ['#ffffff', '#ffd9f2'], count: 70, alpha: 0.35 },
+    ],
+    note: 'Snapchat-style: dreamy pastel + sparkles, in the spirit of the butterfly lens.',
+  },
+  {
+    id: 'party-pop',
+    name: 'Party Pop',
+    css: 'brightness(1.10) contrast(1.15) saturate(1.40)',
+    overlays: [
+      { kind: 'glow', color: '#ffd98a', alpha: 0.12, blend: 'screen' },
+      { kind: 'stars', colors: ['#ffffff', '#ffd98a'], count: 80, alpha: 0.4 },
+    ],
+    note: 'Snapchat-style: vivid, glowing, party-bright.',
+  },
 ];
 
 export function boothFilterById(id: string): BoothFilter {
