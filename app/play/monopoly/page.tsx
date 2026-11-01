@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Dices, Home, RotateCcw } from 'lucide-react';
 import {
+  acceptTrade,
   BOARD,
   botBuildChoice,
   botJailAction,
@@ -21,9 +22,11 @@ import {
   buyProperty,
   createGame,
   declineBuy,
+  declineTrade,
   groupColour,
   netWorth,
   payJailFine,
+  proposeTrade,
   rollDicePair,
   rollJailDice,
   rollTurn,
@@ -133,123 +136,30 @@ function DieFace({ value, label }: { value: number; label: string }) {
   );
 }
 
-/** Tiny drawn house / hotel shapes for owned properties (no emoji art). */
+/** Small 3D-style buildings for owned properties: front face, shaded
+ * side face and pitched roof, so houses read as buildings, not icons.
+ * Count stays exact: 1-4 houses, a taller hotel at 5. */
 function HouseMark({ hotel }: { hotel: boolean }) {
   if (hotel) {
     return (
-      <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden>
-        <rect x="2" y="2" width="12" height="10" rx="1" fill="#facc15" />
-        <rect x="4" y="4" width="3" height="3" fill="#7c2d12" />
-        <rect x="9" y="4" width="3" height="3" fill="#7c2d12" />
-        <rect x="4" y="8" width="3" height="3" fill="#7c2d12" />
-        <rect x="9" y="8" width="3" height="3" fill="#7c2d12" />
+      <svg width="16" height="14" viewBox="0 0 16 14" aria-hidden>
+        <polygon points="12,2 16,0 16,14 12,14" fill="#a16207" />
+        <polygon points="0,4 8,0 12,2 12,4" fill="#fde047" />
+        <rect x="0" y="4" width="12" height="10" fill="#facc15" />
+        <rect x="2" y="6" width="3" height="3" fill="#7c2d12" />
+        <rect x="7" y="6" width="3" height="3" fill="#7c2d12" />
+        <rect x="2" y="10" width="3" height="3" fill="#7c2d12" />
+        <rect x="7" y="10" width="3" height="3" fill="#7c2d12" />
       </svg>
     );
   }
   return (
-    <svg width="11" height="10" viewBox="0 0 11 10" aria-hidden>
-      <polygon points="5.5,0 11,5 0,5" fill="#4ade80" />
-      <rect x="2" y="5" width="7" height="5" fill="#bbf7d0" />
-    </svg>
-  );
-}
-
-/**
- * Original isometric-style miniature city, drawn in SVG (oblique projection:
- * front face with a window grid, shaded side and top faces, pitched roofs).
- * No image files, no art copied from any other game.
- */
-function CitySkyline() {
-  const buildings = [
-    { x: 10, y: 88, w: 52, h: 102, color: '#7fb3d5', roof: 'flat' as const },
-    { x: 70, y: 62, w: 58, h: 128, color: '#f2a0b5', roof: 'pitched' as const },
-    { x: 136, y: 104, w: 48, h: 86, color: '#f2c94c', roof: 'flat' as const },
-    { x: 192, y: 74, w: 54, h: 116, color: '#f28482', roof: 'pitched' as const },
-    { x: 254, y: 96, w: 56, h: 94, color: '#b8a9e8', roof: 'flat' as const },
-  ];
-  const shade = (hex: string, f: number) => {
-    const n = parseInt(hex.slice(1), 16);
-    const r = Math.min(255, Math.round(((n >> 16) & 255) * f));
-    const g = Math.min(255, Math.round(((n >> 8) & 255) * f));
-    const b = Math.min(255, Math.round((n & 255) * f));
-    return `rgb(${r},${g},${b})`;
-  };
-  return (
-    <svg
-      viewBox="0 0 360 240"
-      role="img"
-      aria-label="A miniature city in the middle of the board"
-      style={{ width: '100%', maxWidth: 340, height: 'auto', display: 'block' }}
-    >
-      {/* Ground, roads and park */}
-      <rect x="0" y="190" width="360" height="50" fill="#1a2440" />
-      <rect x="0" y="212" width="360" height="12" fill="#0b0820" />
-      <line x1="0" y1="218" x2="360" y2="218" stroke="#e8e0ff" strokeWidth="1.5" strokeDasharray="8 8" opacity="0.6" />
-      <rect x="246" y="192" width="96" height="18" rx="4" fill="#2f9e5f" />
-      {/* Trees */}
-      {[
-        [262, 200],
-        [288, 203],
-        [318, 199],
-        [24, 222],
-      ].map(([cx, cy], i) => (
-        <g key={i}>
-          <rect x={cx - 1.5} y={cy} width="3" height="8" fill="#7c4a21" />
-          <circle cx={cx} cy={cy - 2} r="8" fill="#2f9e5f" />
-          <circle cx={cx - 3} cy={cy - 5} r="4" fill="#57c984" />
-        </g>
-      ))}
-      {buildings.map((b, bi) => {
-        const rows = Math.max(1, Math.floor(b.h / 20));
-        const cols = Math.max(2, Math.floor(b.w / 16));
-        return (
-          <g key={bi}>
-            {/* Side and top faces give the 3D depth */}
-            <polygon
-              points={`${b.x + b.w},${b.y} ${b.x + b.w + 12},${b.y - 12} ${b.x + b.w + 12},${b.y + b.h - 12} ${b.x + b.w},${b.y + b.h}`}
-              fill={shade(b.color, 0.62)}
-            />
-            <polygon
-              points={`${b.x},${b.y} ${b.x + 12},${b.y - 12} ${b.x + b.w + 12},${b.y - 12} ${b.x + b.w},${b.y}`}
-              fill={shade(b.color, 1.25)}
-            />
-            {b.roof === 'pitched' ? (
-              <polygon
-                points={`${b.x - 2},${b.y} ${b.x + b.w / 2},${b.y - 18} ${b.x + b.w + 2},${b.y}`}
-                fill={shade(b.color, 0.8)}
-              />
-            ) : (
-              <rect x={b.x + 2} y={b.y - 4} width={b.w - 4} height="4" fill={shade(b.color, 0.8)} />
-            )}
-            <rect x={b.x} y={b.y} width={b.w} height={b.h} fill={b.color} />
-            {Array.from({ length: rows }, (_, r) =>
-              Array.from({ length: cols }, (_, c) => (
-                <rect
-                  key={`${r}-${c}`}
-                  x={b.x + 5 + c * 16}
-                  y={b.y + 8 + r * 20}
-                  width="7"
-                  height="9"
-                  fill={(r + c) % 3 === 0 ? '#ffe9a8' : '#dbeafe'}
-                  opacity="0.9"
-                />
-              )),
-            )}
-          </g>
-        );
-      })}
-      {/* Foreground cottages with pitched roofs */}
-      {[
-        { x: 30, color: '#90be6d' },
-        { x: 292, color: '#f9c74f' },
-      ].map((c, i) => (
-        <g key={i}>
-          <rect x={c.x} y="168" width="38" height="26" fill={c.color} />
-          <polygon points={`${c.x - 3},168 ${c.x + 19},150 ${c.x + 41},168`} fill={shade(c.color, 0.75)} />
-          <rect x={c.x + 14} y="178" width="10" height="16" fill="#5b3a1e" />
-          <rect x={c.x + 4} y="172" width="7" height="7" fill="#dbeafe" />
-        </g>
-      ))}
+    <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden>
+      <polygon points="10,2 14,0 14,12 10,12" fill="#166534" />
+      <polygon points="0,4 5,0 10,2 10,4" fill="#22c55e" />
+      <rect x="0" y="4" width="10" height="8" fill="#4ade80" />
+      <rect x="2" y="6" width="3" height="3" fill="#14532d" />
+      <rect x="6" y="8" width="2" height="4" fill="#14532d" />
     </svg>
   );
 }
@@ -320,6 +230,27 @@ export default function MonopolyPage() {
   const [duoTokens, setDuoTokens] = useState<[string, string]>(['heart', 'star']);
   const [duoPickStep, setDuoPickStep] = useState<0 | 1>(0);
   const [gameTokens, setGameTokens] = useState<[string, string]>(['heart', 'star']);
+  // Animated token positions: tokens hop square-by-square toward the
+  // logical position instead of teleporting. Card jumps (forward
+  // distance > 12, or into Prison) snap straight to the destination.
+  const [displayPos, setDisplayPos] = useState<[number, number]>([0, 0]);
+  const displayTargetRef = useRef<[number, number]>([0, 0]);
+  // Dice tumble: cycling faces shown while a roll is animating. The
+  // rolled values are fixed BEFORE the tumble starts, so the animation
+  // can never change the outcome.
+  const [rollAnim, setRollAnim] = useState<null | { faces: [number, number] }>(null);
+  const [botFaces, setBotFaces] = useState<[number, number]>([3, 4]);
+  const rollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Drawn-card modal + deed card (both cosmetic detail views).
+  const [cardModal, setCardModal] = useState<null | { deck: 'chance' | 'chest'; text: string }>(null);
+  const shownCardKeysRef = useRef<Set<string>>(new Set());
+  const prevPendingBuyRef = useRef<number | null>(null);
+  const [deedIndex, setDeedIndex] = useState<number | null>(null);
+  // Duo trade form (duo-only; solo never shows it).
+  const [tradeOfferProps, setTradeOfferProps] = useState<number[]>([]);
+  const [tradeRequestProps, setTradeRequestProps] = useState<number[]>([]);
+  const [tradeOfferMoney, setTradeOfferMoney] = useState('');
+  const [tradeRequestMoney, setTradeRequestMoney] = useState('');
   const recordedRef = useRef(false);
   const botBuiltRef = useRef('');
 
@@ -352,6 +283,118 @@ export default function MonopolyPage() {
     setBuildChoice(null);
     recordedRef.current = false;
     botBuiltRef.current = '';
+  };
+
+  // Reset animation/card/deed state whenever a fresh game starts.
+  useEffect(() => {
+    if (!game) return;
+    displayTargetRef.current = [game.players[0].position, game.players[1].position];
+    setDisplayPos([game.players[0].position, game.players[1].position]);
+    setCardModal(null);
+    setDeedIndex(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game?.turnCount === 0 && game ? game : null]);
+
+  // Keep the animated target in step with the logical game state.
+  useEffect(() => {
+    if (!game) return;
+    displayTargetRef.current = [game.players[0].position, game.players[1].position];
+  }, [game]);
+
+  // Step tokens toward their target, one square per tick.
+  useEffect(() => {
+    const id = setInterval(() => {
+      setDisplayPos((prev) => {
+        const t = displayTargetRef.current;
+        return prev.map((cur, i) => {
+          if (cur === t[i]) return cur;
+          const fwd = (t[i] - cur + 40) % 40;
+          return fwd >= 1 && fwd <= 12 ? (cur + 1) % 40 : t[i];
+        }) as [number, number];
+      });
+    }, 170);
+    return () => clearInterval(id);
+  }, []);
+
+  // Bot dice tumble: while Cosy Bot is about to roll, the centre dice
+  // cycle faces (display only — the bot's real roll lands afterwards).
+  const botTumbling =
+    game !== null && mode === 'solo' && game.turn === 1 && game.phase === 'roll' && game.winner === null;
+  useEffect(() => {
+    if (!botTumbling) return;
+    const id = setInterval(() => {
+      setBotFaces([1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)]);
+    }, 120);
+    return () => clearInterval(id);
+  }, [botTumbling]);
+
+  // Show a drawn Chance / Neighbour Chest card as a real card the first
+  // time its log line appears (get-out cards are not discarded, so their
+  // deck is read from the square the drawer is standing on).
+  useEffect(() => {
+    if (!game) return;
+    const cardLines = game.log.filter((l) => l.startsWith('Card: '));
+    const lastLine = cardLines[cardLines.length - 1];
+    if (!lastLine) return;
+    const text = lastLine.slice('Card: '.length);
+    const key = `${game.turnCount}|${text}`;
+    if (shownCardKeysRef.current.has(key)) return;
+    shownCardKeysRef.current.add(key);
+    const discarded = [...game.chanceDiscard, ...game.chestDiscard].find((c) => c.text === text);
+    if (discarded) {
+      setCardModal({ deck: discarded.deck, text });
+      return;
+    }
+    const drawer = (1 - game.turn) as 0 | 1;
+    const drawerSquare = BOARD[game.players[drawer].position];
+    setCardModal({ deck: drawerSquare.kind === 'chest' ? 'chest' : 'chance', text });
+  }, [game]);
+
+  // Auto-open the deed card when a property is offered for sale; closing
+  // it does not reopen it until the next offer.
+  useEffect(() => {
+    if (!game) return;
+    const pending = game.pendingBuy;
+    if (pending !== null && prevPendingBuyRef.current !== pending) setDeedIndex(pending);
+    prevPendingBuyRef.current = pending;
+  }, [game]);
+
+  const reducedMotion = () =>
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /** Roll with a dice tumble; the dice are fixed first, animation only. */
+  const animateRoll = (apply: (dice: [number, number]) => void) => {
+    if (rollAnim) return;
+    const dice = rollDicePair(Math.random);
+    if (reducedMotion()) {
+      apply(dice);
+      return;
+    }
+    let n = 0;
+    setRollAnim({ faces: [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)] });
+    if (rollIntervalRef.current) clearInterval(rollIntervalRef.current);
+    rollIntervalRef.current = setInterval(() => {
+      n += 1;
+      if (n >= 9) {
+        if (rollIntervalRef.current) clearInterval(rollIntervalRef.current);
+        rollIntervalRef.current = null;
+        setRollAnim(null);
+        apply(dice);
+      } else {
+        setRollAnim({ faces: [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)] });
+      }
+    }, 100);
+  };
+
+  const handleRoll = () => {
+    if (!game || game.phase !== 'roll' || (mode === 'solo' && game.turn === 1)) return;
+    animateRoll((dice) => setGame(rollTurn(game, dice)));
+  };
+
+  const handleJailRoll = () => {
+    if (!game || game.phase !== 'jail') return;
+    animateRoll((dice) => setGame(rollJailDice(game, dice)));
   };
 
   const current = game ? game.players[game.turn] : null;
@@ -511,8 +554,9 @@ export default function MonopolyPage() {
             </div>
           )}
           <p className="mt-3 text-sm text-[var(--ink-dim)]">
-            No real money, no timers, no auctions or trading — decline a property
-            and it simply stays for sale. First to bankrupt the other wins.
+            No real money, no timers, no auctions — decline a property
+            and it simply stays for sale. Two-player games can also trade
+            before rolling. First to bankrupt the other wins.
           </p>
         </section>
       </main>
@@ -546,14 +590,14 @@ export default function MonopolyPage() {
         ? [{ label: 'Cosy Bot is thinking…', onClick: () => {}, disabled: true }]
         : game.phase === 'roll'
           ? [
-              { label: 'Roll dice', onClick: () => setGame(rollTurn(game, rollDicePair(Math.random))), primary: true },
+              { label: rollAnim ? 'Rolling…' : 'Roll dice', onClick: handleRoll, primary: true, disabled: rollAnim !== null },
               { label: 'Start over', onClick: restart },
             ]
           : game.phase === 'jail'
             ? [
                 { label: 'Pay $50', onClick: () => setGame(payJailFine(game)), primary: true },
                 { label: `Use a pass (${current.getOutCards})`, onClick: () => setGame(useJailCard(game)), disabled: current.getOutCards <= 0 },
-                { label: 'Roll for doubles', onClick: () => setGame(rollJailDice(game, rollDicePair(Math.random))) },
+                { label: rollAnim ? 'Rolling…' : 'Roll for doubles', onClick: handleJailRoll, disabled: rollAnim !== null },
               ]
             : game.phase === 'buy' && pendingSquare
               ? [
@@ -561,11 +605,19 @@ export default function MonopolyPage() {
                   { label: 'Pass', onClick: () => setGame(declineBuy(game)) },
                 ]
               : [{ label: 'Start over', onClick: restart }];
+  const botStatus =
+    game.phase === 'roll'
+      ? 'Cosy Bot is rolling…'
+      : game.phase === 'buy'
+        ? 'Cosy Bot is deciding…'
+        : game.phase === 'jail'
+          ? 'Cosy Bot in Prison…'
+          : 'Cosy Bot is thinking…';
   const stickyStatus =
     winner !== null
       ? `${playerLabel(mode, winner)} wins!`
       : isBotTurn
-        ? 'Cosy Bot is thinking…'
+        ? botStatus
         : `${playerLabel(mode, game.turn)} · On ${current ? BOARD[current.position].name : ''}`;
 
   return (
@@ -592,7 +644,7 @@ export default function MonopolyPage() {
           {winner !== null
             ? `${playerLabel(mode, winner)} wins!`
             : isBotTurn
-              ? 'Cosy Bot is thinking…'
+              ? botStatus
               : mode === 'duo'
                 ? `${playerLabel(mode, game.turn)} — your turn`
                 : 'Your turn'}
@@ -621,13 +673,14 @@ export default function MonopolyPage() {
             className="card p-3"
             style={{
               borderColor: game.turn === i && winner === null ? PLAYER_COLOURS[i] : undefined,
+              boxShadow: game.turn === i && winner === null ? `0 0 0 2px ${PLAYER_COLOURS[i]}` : undefined,
               opacity: p.bankrupt ? 0.6 : 1,
             }}
           >
             <p className="flex items-center gap-2 font-bold" style={{ color: PLAYER_COLOURS[i] }}>
               <TokenMark token={gameTokens[i]} colour={PLAYER_COLOURS[i]} size={22} />
               {playerLabel(mode, i as PlayerIndex)}
-              {p.bankrupt ? ' · out' : ''}
+              {p.bankrupt ? ' · out' : game.turn === i && winner === null ? ' · your turn' : ''}
             </p>
             <p className="text-lg font-bold">${p.money}</p>
             <p className="text-sm text-[var(--ink-dim)]">
@@ -663,9 +716,11 @@ export default function MonopolyPage() {
         >
           {BOARD.map((square) => {
             const propState = game.property[square.index];
+            // Tokens render at their ANIMATED position, so they hop
+            // square-by-square instead of teleporting.
             const tokens = game.players
               .map((p, i) => ({ p, i }))
-              .filter(({ p }) => p.position === square.index && !p.bankrupt);
+              .filter(({ p, i }) => displayPos[i] === square.index && !p.bankrupt);
             const isCorner =
               square.kind === 'go' ||
               square.kind === 'jail' ||
@@ -675,8 +730,31 @@ export default function MonopolyPage() {
             return (
               <div
                 key={square.index}
+                onClick={() => {
+                  if (
+                    square.kind === 'property' ||
+                    square.kind === 'station' ||
+                    square.kind === 'utility'
+                  ) {
+                    setDeedIndex(square.index);
+                  }
+                }}
+                role={
+                  square.kind === 'property' || square.kind === 'station' || square.kind === 'utility'
+                    ? 'button'
+                    : undefined
+                }
+                aria-label={
+                  square.kind === 'property' || square.kind === 'station' || square.kind === 'utility'
+                    ? `View deed card for ${square.name}`
+                    : undefined
+                }
                 style={{
                   ...gridPos(square.index),
+                  cursor:
+                    square.kind === 'property' || square.kind === 'station' || square.kind === 'utility'
+                      ? 'pointer'
+                      : 'default',
                   background: 'linear-gradient(180deg, #3a2566, #2a1b4a)',
                   borderRadius: 10,
                   border:
@@ -790,22 +868,157 @@ export default function MonopolyPage() {
             className="flex flex-col items-center justify-center gap-2 p-2 text-center"
           >
             <p className="font-display text-lg font-bold text-white sm:text-xl">Monopoly</p>
-            <CitySkyline />
+            {/* Realistic centre city: an original photorealistic miniature
+                city photograph generated fresh for this game (no copied
+                artwork, no logos, no board art from any other game). */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/monopoly-city.jpg"
+              alt="A miniature city in the middle of the board"
+              style={{ width: '100%', maxWidth: 340, height: 'auto', display: 'block', borderRadius: 12 }}
+            />
             <div className="flex items-center gap-3" aria-hidden={false}>
-              <DieFace value={game.lastDice ? game.lastDice[0] : 3} label={game.lastDice ? `First die: ${game.lastDice[0]}` : 'Die showing three'} />
-              <DieFace value={game.lastDice ? game.lastDice[1] : 4} label={game.lastDice ? `Second die: ${game.lastDice[1]}` : 'Die showing four'} />
+              <DieFace
+                value={rollAnim ? rollAnim.faces[0] : botTumbling ? botFaces[0] : game.lastDice ? game.lastDice[0] : 3}
+                label={
+                  rollAnim
+                    ? 'Dice tumbling'
+                    : botTumbling
+                      ? 'Cosy Bot dice tumbling'
+                      : game.lastDice
+                        ? `First die: ${game.lastDice[0]}`
+                        : 'Die showing three'
+                }
+              />
+              <DieFace
+                value={rollAnim ? rollAnim.faces[1] : botTumbling ? botFaces[1] : game.lastDice ? game.lastDice[1] : 4}
+                label={
+                  rollAnim
+                    ? 'Dice tumbling'
+                    : botTumbling
+                      ? 'Cosy Bot dice tumbling'
+                      : game.lastDice
+                        ? `Second die: ${game.lastDice[1]}`
+                        : 'Die showing four'
+                }
+              />
             </div>
             <p className="text-sm" style={{ color: '#d8ccf0' }}>
-              {game.lastDice
-                ? `Dice: ${game.lastDice[0]} · ${game.lastDice[1]}`
-                : 'Roll to start your stroll.'}
+              {rollAnim
+                ? 'Rolling…'
+                : botTumbling
+                  ? 'Cosy Bot is rolling…'
+                  : game.lastDice
+                    ? `Dice: ${game.lastDice[0]} · ${game.lastDice[1]}`
+                    : 'Roll to start your stroll.'}
             </p>
+            {/* Card decks, visible on the board even when no card is showing. */}
+            <div className="flex items-center gap-3" aria-label="Card decks">
+              <span
+                className="flex flex-col items-center justify-center rounded-md px-2 py-1 text-[10px] font-bold"
+                style={{ background: 'linear-gradient(180deg, #ff6b9d, #c2185b)', color: '#fff', minWidth: 56 }}
+              >
+                <span aria-hidden className="text-base leading-none">?</span>
+                Chance · {game.chanceDeck.length} left
+              </span>
+              <span
+                className="flex flex-col items-center justify-center rounded-md px-2 py-1 text-[10px] font-bold"
+                style={{ background: 'linear-gradient(180deg, #8b5a2b, #5d3a1a)', color: '#fff', minWidth: 56 }}
+              >
+                <span aria-hidden className="text-base leading-none">📦</span>
+                Chest · {game.chestDeck.length} left
+              </span>
+            </div>
             <p className="text-sm" style={{ color: '#d8ccf0' }}>
               Pass Start: +$200 · Prison fine: $50
             </p>
           </div>
         </div>
       </section>
+
+      {/* Deed card: tap any property, airport or utility, or land on one
+          offered for sale. All figures come from BOARD — nothing invented. */}
+      {deedIndex !== null && (() => {
+        const sq = BOARD[deedIndex];
+        const st = game.property[deedIndex];
+        const owner = st.owner;
+        return (
+          <section className="card mt-4 p-4" aria-label={`Deed card for ${sq.name}`}>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold" style={{ color: groupColour(sq.group) }}>
+                  {sq.group === 'station' ? 'Airport' : sq.group === 'utility' ? 'Utility' : `${sq.name.split(',')[1]?.trim() ?? ''} group`}
+                </p>
+                <p className="font-display text-xl font-bold">{sq.name}</p>
+                <p className="text-sm text-[var(--ink-dim)]">
+                  {owner === null
+                    ? 'Unowned'
+                    : `${playerLabel(mode, owner)} owns this${st.houses === 5 ? ' · hotel' : st.houses > 0 ? ` · ${st.houses} house${st.houses > 1 ? 's' : ''}` : ''}`}
+                </p>
+              </div>
+              <button type="button" className="btn !px-3 !py-2 text-sm" onClick={() => setDeedIndex(null)}>
+                Close
+              </button>
+            </div>
+            <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
+              <div><dt className="text-[var(--ink-dim)]">Price</dt><dd className="font-bold">${sq.price ?? '—'}</dd></div>
+              {sq.kind === 'property' && sq.rent && (
+                <>
+                  <div><dt className="text-[var(--ink-dim)]">Rent · no houses</dt><dd className="font-bold">${sq.rent[0]}</dd></div>
+                  <div><dt className="text-[var(--ink-dim)]">Rent · 1 house</dt><dd className="font-bold">${sq.rent[1]}</dd></div>
+                  <div><dt className="text-[var(--ink-dim)]">Rent · 2 houses</dt><dd className="font-bold">${sq.rent[2]}</dd></div>
+                  <div><dt className="text-[var(--ink-dim)]">Rent · 3 houses</dt><dd className="font-bold">${sq.rent[3]}</dd></div>
+                  <div><dt className="text-[var(--ink-dim)]">Rent · 4 houses</dt><dd className="font-bold">${sq.rent[4]}</dd></div>
+                  <div><dt className="text-[var(--ink-dim)]">Rent · hotel</dt><dd className="font-bold">${sq.rent[5]}</dd></div>
+                  <div><dt className="text-[var(--ink-dim)]">House / hotel cost</dt><dd className="font-bold">${sq.houseCost}</dd></div>
+                </>
+              )}
+              {sq.kind === 'station' && (
+                <div className="col-span-2"><dt className="text-[var(--ink-dim)]">Rent</dt><dd className="font-bold">$25 · $50 · $100 · $200 for 1–4 airports owned</dd></div>
+              )}
+              {sq.kind === 'utility' && (
+                <div className="col-span-2"><dt className="text-[var(--ink-dim)]">Rent</dt><dd className="font-bold">4× the dice total with one utility · 10× with both</dd></div>
+              )}
+            </dl>
+            <p className="mt-2 text-sm text-[var(--ink-dim)]">
+              Tap another property tile to view its deed.
+            </p>
+          </section>
+        );
+      })()}
+
+      {/* Drawn card, shown as a real card instead of only a log line. */}
+      {cardModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${cardModal.deck === 'chance' ? 'Chance' : 'Neighbour Chest'} card`}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(8, 4, 20, 0.72)', padding: 16,
+          }}
+          onClick={() => setCardModal(null)}
+        >
+          <div
+            className="card w-full max-w-sm p-5 text-center"
+            style={{
+              background: cardModal.deck === 'chance'
+                ? 'linear-gradient(180deg, #3b1d4a, #241640)'
+                : 'linear-gradient(180deg, #3a2a1a, #241a10)',
+              borderTop: `6px solid ${cardModal.deck === 'chance' ? '#ff6b9d' : '#d9a05b'}`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm font-bold tracking-wide" style={{ color: cardModal.deck === 'chance' ? '#ff6b9d' : '#d9a05b' }}>
+              {cardModal.deck === 'chance' ? 'CHANCE' : 'NEIGHBOUR CHEST'}
+            </p>
+            <p className="mt-3 text-lg font-semibold leading-snug">{cardModal.text}</p>
+            <button type="button" className="btn btn-primary mt-4" onClick={() => setCardModal(null)}>
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Controls */}
       {winner === null && (
@@ -814,9 +1027,10 @@ export default function MonopolyPage() {
             <button
               type="button"
               className="btn btn-primary"
-              onClick={() => setGame(rollTurn(game, rollDicePair(Math.random)))}
+              disabled={rollAnim !== null}
+              onClick={handleRoll}
             >
-              <Dices size={18} aria-hidden /> Roll dice
+              <Dices size={18} aria-hidden /> {rollAnim ? 'Rolling…' : 'Roll dice'}
             </button>
           )}
           {game.phase === 'jail' && !isBotTurn && (
@@ -835,9 +1049,10 @@ export default function MonopolyPage() {
               <button
                 type="button"
                 className="btn"
-                onClick={() => setGame(rollJailDice(game, rollDicePair(Math.random)))}
+                disabled={rollAnim !== null}
+                onClick={handleJailRoll}
               >
-                Roll for doubles
+                {rollAnim ? 'Rolling…' : 'Roll for doubles'}
               </button>
             </>
           )}
@@ -889,6 +1104,152 @@ export default function MonopolyPage() {
                 Build
               </button>
             </div>
+          )}
+          {msg && <p className="mt-2 text-sm font-semibold">{msg}</p>}
+        </section>
+      )}
+
+      {/* Duo trade: propose before rolling, opponent answers on their device turn. */}
+      {mode === 'duo' && winner === null && (
+        <section className="card mt-4 p-4">
+          {game.trade ? (
+            <>
+              <p className="font-semibold">Trade offer — pass the device to {playerLabel(mode, (1 - game.trade.proposer) as PlayerIndex)} to answer</p>
+              <p className="mt-1 text-sm">
+                {playerLabel(mode, game.trade.proposer)} offers:{' '}
+                {game.trade.offerProps.length > 0
+                  ? game.trade.offerProps.map((i) => BOARD[i].name).join(', ')
+                  : 'nothing'}
+                {game.trade.offerMoney > 0 ? ` + $${game.trade.offerMoney}` : ''}
+              </p>
+              <p className="mt-1 text-sm">
+                Asks for:{' '}
+                {game.trade.requestProps.length > 0
+                  ? game.trade.requestProps.map((i) => BOARD[i].name).join(', ')
+                  : 'nothing'}
+                {game.trade.requestMoney > 0 ? ` + $${game.trade.requestMoney}` : ''}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" className="btn btn-primary" onClick={() => { const r = acceptTrade(game); setGame(r.state); setMsg(r.message); }}>
+                  Accept trade
+                </button>
+                <button type="button" className="btn" onClick={() => { const r = declineTrade(game); setGame(r.state); setMsg(r.message); }}>
+                  Decline
+                </button>
+              </div>
+            </>
+          ) : game.phase === 'roll' ? (
+            <>
+              <p className="font-semibold">Propose a trade</p>
+              <p className="mt-1 text-sm text-[var(--ink-dim)]">
+                Offer your properties and money for your opponent's. Accepting swaps them at once; your turn continues.
+              </p>
+              <p className="mt-3 text-sm font-semibold">You offer</p>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {BOARD.filter(
+                  (sq) =>
+                    (sq.kind === 'property' || sq.kind === 'station' || sq.kind === 'utility') &&
+                    game.property[sq.index].owner === game.turn,
+                ).map((sq) => (
+                  <label key={sq.index} className="btn !px-3 !py-2 text-sm" style={{ cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      className="mr-1"
+                      checked={tradeOfferProps.includes(sq.index)}
+                      onChange={() =>
+                        setTradeOfferProps((prev) =>
+                          prev.includes(sq.index) ? prev.filter((i) => i !== sq.index) : [...prev, sq.index],
+                        )
+                      }
+                    />
+                    {sq.name}
+                  </label>
+                ))}
+                {BOARD.filter(
+                  (sq) =>
+                    (sq.kind === 'property' || sq.kind === 'station' || sq.kind === 'utility') &&
+                    game.property[sq.index].owner === game.turn,
+                ).length === 0 && <span className="text-sm text-[var(--ink-dim)]">You own nothing tradable yet.</span>}
+              </div>
+              <p className="mt-3 text-sm font-semibold">You ask for</p>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {BOARD.filter(
+                  (sq) =>
+                    (sq.kind === 'property' || sq.kind === 'station' || sq.kind === 'utility') &&
+                    game.property[sq.index].owner === (1 - game.turn),
+                ).map((sq) => (
+                  <label key={sq.index} className="btn !px-3 !py-2 text-sm" style={{ cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      className="mr-1"
+                      checked={tradeRequestProps.includes(sq.index)}
+                      onChange={() =>
+                        setTradeRequestProps((prev) =>
+                          prev.includes(sq.index) ? prev.filter((i) => i !== sq.index) : [...prev, sq.index],
+                        )
+                      }
+                    />
+                    {sq.name}
+                  </label>
+                ))}
+                {BOARD.filter(
+                  (sq) =>
+                    (sq.kind === 'property' || sq.kind === 'station' || sq.kind === 'utility') &&
+                    game.property[sq.index].owner === (1 - game.turn),
+                ).length === 0 && <span className="text-sm text-[var(--ink-dim)]">Your opponent owns nothing tradable yet.</span>}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <label className="text-sm">
+                  Money you offer $
+                  <input
+                    className="input ml-1 w-24"
+                    type="number"
+                    min={0}
+                    inputMode="numeric"
+                    value={tradeOfferMoney}
+                    onChange={(e) => setTradeOfferMoney(e.target.value)}
+                  />
+                </label>
+                <label className="text-sm">
+                  Money you ask $
+                  <input
+                    className="input ml-1 w-24"
+                    type="number"
+                    min={0}
+                    inputMode="numeric"
+                    value={tradeRequestMoney}
+                    onChange={(e) => setTradeRequestMoney(e.target.value)}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    const r = proposeTrade(
+                      game,
+                      tradeOfferProps,
+                      Math.max(0, Math.floor(Number(tradeOfferMoney) || 0)),
+                      tradeRequestProps,
+                      Math.max(0, Math.floor(Number(tradeRequestMoney) || 0)),
+                    );
+                    setGame(r.state);
+                    setMsg(r.message);
+                    if (r.ok) {
+                      setTradeOfferProps([]);
+                      setTradeRequestProps([]);
+                      setTradeOfferMoney('');
+                      setTradeRequestMoney('');
+                    }
+                  }}
+                >
+                  Propose trade
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-[var(--ink-dim)]">
+              Trades are proposed before rolling, on your own turn.
+            </p>
           )}
           {msg && <p className="mt-2 text-sm font-semibold">{msg}</p>}
         </section>

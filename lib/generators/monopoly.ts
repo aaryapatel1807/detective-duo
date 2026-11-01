@@ -67,6 +67,17 @@ export interface PlayerState {
 
 export type Phase = 'roll' | 'jail' | 'buy' | 'over';
 
+/** A duo-only trade offer: the current player's properties + money for
+ * the opponent's properties + money. Cosmetic to the core loop: it never
+ * fires in solo play, and accepting never advances the turn. */
+export interface TradeOffer {
+  proposer: PlayerIndex;
+  offerProps: number[];
+  offerMoney: number;
+  requestProps: number[];
+  requestMoney: number;
+}
+
 export interface GameState {
   players: [PlayerState, PlayerState];
   property: PropertyState[];
@@ -85,6 +96,8 @@ export interface GameState {
   winner: PlayerIndex | null;
   turnCount: number;
   log: string[];
+  /** Open trade offer, or null. Duo-only; solo games never set it. */
+  trade: TradeOffer | null;
 }
 
 export type CardEffect =
@@ -261,6 +274,7 @@ export function createGame(seed?: string, names?: [string, string]): GameState {
     winner: null,
     turnCount: 0,
     log: ['A fresh board, $1500 each. Player 1 rolls first.'],
+    trade: null,
   };
 }
 
@@ -640,6 +654,78 @@ export function declineBuy(state: GameState): GameState {
   s.log.push(`${s.players[s.turn].name} passes on ${BOARD[pending].name}.`);
   s.pendingBuy = null;
   return advanceTurn(s, s.rolledDoubles);
+}
+
+function isTradable(index: number): boolean {
+  const kind = BOARD[index]?.kind;
+  return kind === 'property' || kind === 'station' || kind === 'utility';
+}
+
+/** Propose a trade (duo-only, during the proposer's roll phase, no open offer). */
+export function proposeTrade(
+  state: GameState,
+  offerProps: number[],
+  offerMoney: number,
+  requestProps: number[],
+  requestMoney: number,
+): { state: GameState; ok: boolean; message: string } {
+  const proposer = state.turn;
+  const opponent = other(proposer);
+  const fail = (message: string) => ({ state, ok: false, message });
+  if (state.winner !== null) return fail('The game is over.');
+  if (state.phase !== 'roll') return fail('Trades are offered before rolling, not mid-turn.');
+  if (state.trade !== null) return fail('A trade offer is already open.');
+  if (!Number.isInteger(offerMoney) || !Number.isInteger(requestMoney) || offerMoney < 0 || requestMoney < 0) {
+    return fail('Trade money must be a whole number of $0 or more.');
+  }
+  const offerSet = new Set(offerProps);
+  const requestSet = new Set(requestProps);
+  if (offerSet.size !== offerProps.length || requestSet.size !== requestProps.length) {
+    return fail('Each property can appear only once in a trade.');
+  }
+  for (const idx of [...offerProps, ...requestProps]) {
+    if (!isTradable(idx)) return fail('Only properties, airports and utilities can be traded.');
+  }
+  for (const idx of offerProps) {
+    if (requestSet.has(idx)) return fail('A property cannot be on both sides of a trade.');
+    if (state.property[idx].owner !== proposer) return fail('You can only offer properties you own.');
+  }
+  for (const idx of requestProps) {
+    if (state.property[idx].owner !== opponent) return fail('You can only ask for properties your opponent owns.');
+  }
+  if (offerProps.length === 0 && offerMoney === 0) return fail('Offer something: a property, money, or both.');
+  if (requestProps.length === 0 && requestMoney === 0) return fail('Ask for something: a property, money, or both.');
+  if (state.players[proposer].money < offerMoney) return fail('You do not have that much money to offer.');
+  if (state.players[opponent].money < requestMoney) return fail('Your opponent does not have that much money to give.');
+  const s = clone(state);
+  s.trade = { proposer, offerProps: [...offerProps], offerMoney, requestProps: [...requestProps], requestMoney };
+  s.log.push(`${s.players[proposer].name} proposes a trade.`);
+  return { state: s, ok: true, message: 'Trade proposed — pass the device to your opponent to answer.' };
+}
+
+/** Accept the open trade: swap the listed properties and money. Turn does not advance. */
+export function acceptTrade(state: GameState): { state: GameState; ok: boolean; message: string } {
+  if (state.trade === null) return { state, ok: false, message: 'No trade offer is open.' };
+  const t = state.trade;
+  const opponent = other(t.proposer);
+  const s = clone(state);
+  for (const idx of t.offerProps) s.property[idx].owner = opponent;
+  for (const idx of t.requestProps) s.property[idx].owner = t.proposer;
+  s.players[t.proposer].money += t.requestMoney - t.offerMoney;
+  s.players[opponent].money += t.offerMoney - t.requestMoney;
+  s.trade = null;
+  s.log.push(`${s.players[opponent].name} accepts the trade.`);
+  return { state: s, ok: true, message: 'Trade accepted.' };
+}
+
+/** Decline the open trade: nothing changes hands. */
+export function declineTrade(state: GameState): { state: GameState; ok: boolean; message: string } {
+  const t = state.trade;
+  if (t === null) return { state, ok: false, message: 'No trade offer is open.' };
+  const s = clone(state);
+  s.log.push(`${s.players[other(t.proposer)].name} declines the trade.`);
+  s.trade = null;
+  return { state: s, ok: true, message: 'Trade declined.' };
 }
 
 /** Squares the player may build on right now (full set, even building, affordable, not a hotel yet). */

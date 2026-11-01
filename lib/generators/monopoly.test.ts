@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  acceptTrade,
   BOARD,
   buyProperty,
   createGame,
   declineBuy,
+  declineTrade,
   buildHouse,
   buildableSquares,
   ownsFullSet,
+  proposeTrade,
   rentFor,
   rollJailDice,
   rollTurn,
@@ -183,4 +186,41 @@ describe('monopoly board', () => {
     expect(winner === 0 || winner === 1).toBe(true);
     expect(turns).toBeLessThanOrEqual(1500);
   }, 30000);
+});
+
+describe('duo trade', () => {
+  it('accepting swaps properties and money, and the turn does not advance', () => {
+    const g = createGame('trade-1');
+    g.property[1].owner = 0;
+    g.property[3].owner = 1;
+    const proposed = proposeTrade(g, [1], 100, [3], 50);
+    expect(proposed.ok).toBe(true);
+    expect(proposed.state.trade).not.toBe(null);
+    const accepted = acceptTrade(proposed.state);
+    expect(accepted.ok).toBe(true);
+    expect(accepted.state.property[1].owner).toBe(1);
+    expect(accepted.state.property[3].owner).toBe(0);
+    expect(accepted.state.players[0].money).toBe(1500 - 100 + 50);
+    expect(accepted.state.players[1].money).toBe(1500 + 100 - 50);
+    expect(accepted.state.trade).toBe(null);
+    expect(accepted.state.turn).toBe(0);
+    expect(accepted.state.phase).toBe('roll');
+  });
+
+  it('declining changes nothing, and invalid offers are rejected', () => {
+    const g = createGame('trade-2');
+    g.property[1].owner = 0;
+    g.property[3].owner = 1;
+    const declined = declineTrade(proposeTrade(g, [1], 0, [3], 0).state);
+    expect(declined.ok).toBe(true);
+    expect(declined.state.property[1].owner).toBe(0);
+    expect(declined.state.property[3].owner).toBe(1);
+    expect(declined.state.players[0].money).toBe(1500);
+    // Offering a property you do not own, asking for one they do not own,
+    // and offering money you do not have are all rejected.
+    expect(proposeTrade(g, [3], 0, [1], 0).ok).toBe(false);
+    expect(proposeTrade(g, [1], 0, [1], 0).ok).toBe(false);
+    expect(proposeTrade(g, [1], 99999, [3], 0).ok).toBe(false);
+    expect(proposeTrade(g, [], 0, [], 0).ok).toBe(false);
+  });
 });
