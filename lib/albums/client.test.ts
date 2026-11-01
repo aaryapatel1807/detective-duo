@@ -78,6 +78,14 @@ describe('album client', () => {
     });
     expect(needsCompression(bigGif)).toBe(false);
   });
+  it('always converts HEIC photos, even small ones the server cannot read', () => {
+    const smallHeic = new File(['x'], 'photo.heic', { type: 'image/heic' });
+    expect(needsCompression(smallHeic)).toBe(true);
+    const heicByExtension = new File(['x'], 'IMG_1234.HEIF', { type: '' });
+    expect(needsCompression(heicByExtension)).toBe(true);
+    const smallJpeg = new File(['x'], 'photo.jpg', { type: 'image/jpeg' });
+    expect(needsCompression(smallJpeg)).toBe(false);
+  });
   it('maps a 413 to a plain too-large error', async () => {
     mockFetchOnce(413, {});
     await expect(fetchAlbumSummary('KEY1')).rejects.toThrow(/too large/);

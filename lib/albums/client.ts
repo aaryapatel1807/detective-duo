@@ -110,10 +110,21 @@ export const ALBUM_UPLOAD_MAX_DIMENSION = 2048;
 
 const COMPRESSIBLE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
-/** True when a file must be shrunk before upload: big enough to risk
- * the platform's request-body cap, and of a type the browser can
- * redraw (JPEG/PNG/WebP). Anything else goes up untouched. */
+/** iPhone photos: HEIC/HEIF. The server cannot read them (see
+ * images.ts), so they must always be converted to JPEG in the
+ * browser first — even small ones — wherever the browser can decode
+ * them. Type may be empty on some pickers, so the extension counts. */
+export function isHeicFile(file: File): boolean {
+  if (file.type === 'image/heic' || file.type === 'image/heif') return true;
+  return /\.hei[cf]$/i.test(file.name);
+}
+
+/** True when a file must be shrunk/converted before upload: big
+ * enough to risk the platform's request-body cap and of a type the
+ * browser can redraw (JPEG/PNG/WebP), or any HEIC file (which the
+ * server cannot read at all). Anything else goes up untouched. */
 export function needsCompression(file: File): boolean {
+  if (isHeicFile(file)) return true;
   return file.size > ALBUM_UPLOAD_PASSTHROUGH_BYTES && COMPRESSIBLE_TYPES.has(file.type);
 }
 
@@ -169,13 +180,17 @@ async function decodePhoto(file: File): Promise<ImageBitmap | HTMLImageElement> 
 }
 
 /**
- * Shrink a big photo for upload, or return it untouched. Any failure
- * (undecodable format like HEIC in most browsers, no canvas) falls
- * back to the original — a failed shrink must never become a failed
- * upload; worst case the old size behaviour applies.
+ * Shrink a big photo for upload, or convert a HEIC photo to JPEG, or
+ * return it untouched. For ordinary formats any failure falls back to
+ * the original — a failed shrink must never become a failed upload.
+ * For HEIC there is no safe fallback: the server cannot read HEIC at
+ * all, so an undecodable HEIC fails fast here with a plain message
+ * (shown as the Failed detail on the page) instead of uploading a
+ * file that is guaranteed to fail server-side.
  */
 export async function compressPhotoForUpload(file: File): Promise<PreparedPhoto> {
   const exif = await readOriginalExif(file);
+  const heic = isHeicFile(file);
   if (!needsCompression(file)) return { file, ...exif };
   try {
     const bitmap = await decodePhoto(file);
@@ -186,13 +201,25 @@ export async function compressPhotoForUpload(file: File): Promise<PreparedPhoto>
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return { file, ...exif };
+    if (!ctx) {
+      if (heic) throw new Error('heic-unreadable');
+      return { file, ...exif };
+    }
     ctx.drawImage(bitmap, 0, 0, w, h);
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.82));
-    if (!blob) return { file, ...exif };
+    if (!blob) {
+      if (heic) throw new Error('heic-unreadable');
+      return { file, ...exif };
+    }
     const name = file.name.replace(/\.[^.]+$/, '') + '.jpg';
     return { file: new File([blob], name, { type: 'image/jpeg' }), ...exif };
-  } catch {
+  } catch (e) {
+    if (heic) {
+      throw new Error(
+        'This photo is an iPhone HEIC file and this browser could not read it — please upload a JPEG version instead (in Photos, share the photo and save it as JPEG, or set iPhone Settings → Camera → Formats to Most Compatible for future photos).',
+      );
+    }
+    void e;
     return { file, ...exif };
   }
 }

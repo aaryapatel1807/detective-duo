@@ -18,7 +18,15 @@ const ALLOWED_FORMATS = new Set(['jpeg', 'png', 'webp']);
  */
 export async function processImage(buffer: Buffer): Promise<{ full: Buffer; thumb: Buffer; format: string }> {
   const meta = await sharp(buffer).metadata();
-  if (!meta.format || !ALLOWED_FORMATS.has(meta.format)) {
+  // Sharp's format type omits heif/heic, but the runtime value for
+  // iPhone photos is 'heif' — compare as a plain string.
+  const format = meta.format as string | undefined;
+  if (!format || !ALLOWED_FORMATS.has(format as 'jpeg' | 'png' | 'webp')) {
+    if (format === 'heif' || format === 'heic') {
+      throw new Error(
+        'unsupported image format: heif — iPhone HEIC photos cannot be uploaded; please upload a JPEG version instead',
+      );
+    }
     throw new Error(`unsupported image format: ${meta.format ?? 'unknown'} (use JPEG, PNG, or WebP)`);
   }
   const full = await sharp(buffer)
