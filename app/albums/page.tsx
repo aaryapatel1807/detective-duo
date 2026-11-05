@@ -49,7 +49,6 @@ export default function AlbumsPage() {
   // only stages them, so only the ones still here when Upload is
   // tapped ever reach the album.
   const [staged, setStaged] = useState<{ file: File; url: string; name: string }[]>([]);
-  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
   const [classifyProgress, setClassifyProgress] = useState<{ done: number; total: number } | null>(null);
   const [classifyStuck, setClassifyStuck] = useState(false);
   const [classifyError, setClassifyError] = useState<string | null>(null);
@@ -344,25 +343,26 @@ export default function AlbumsPage() {
     await onUploadFiles(files);
   };
 
-  // Remove a saved photo for good. Two taps: the first arms the
-  // button ("Remove?"), the second deletes it from storage and the
-  // album, then refreshes the view.
+  // Remove a saved photo for good, on one tap: it vanishes from
+  // the grid immediately (optimistic), then the server deletes its
+  // stored files and record. If that delete fails, the photo comes
+  // back with a notice instead of silently staying gone.
   const removePhoto = async (id: string) => {
     if (!albumKey) return;
-    if (confirmRemoveId !== id) {
-      setConfirmRemoveId(id);
-      return;
-    }
-    setConfirmRemoveId(null);
-    try {
-      await deleteAlbumPhoto(albumKey, id);
-    } catch {
-      setNotice('Could not remove that photo — try again.');
-      return;
-    }
+    const prevPhotos = photos;
+    const prevTotal = total;
     if (lightbox?.id === id) setLightbox(null);
     setPhotos((prev) => prev.filter((p) => p.id !== id));
     setTotal((t) => Math.max(0, t - 1));
+    try {
+      await deleteAlbumPhoto(albumKey, id);
+      setNotice('Photo removed.');
+    } catch {
+      setPhotos(prevPhotos);
+      setTotal(prevTotal);
+      setNotice('Could not remove that photo — try again.');
+      return;
+    }
     void load(albumKey, album, month);
   };
 
@@ -615,12 +615,10 @@ export default function AlbumsPage() {
                         <button
                           type="button"
                           onClick={() => void removePhoto(p.id)}
-                          aria-label={confirmRemoveId === p.id ? 'Tap again to remove this photo' : 'Remove this photo from the album'}
-                          className={`absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold ${
-                            confirmRemoveId === p.id ? 'bg-[#d7263d] text-white' : 'bg-black/70 text-white'
-                          }`}
+                          aria-label="Remove this photo from the album"
+                          className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-sm font-bold text-white"
                         >
-                          {confirmRemoveId === p.id ? '?' : '✕'}
+                          ✕
                         </button>
                       </div>
                     ))}
@@ -661,12 +659,8 @@ export default function AlbumsPage() {
               <button type="button" className="btn" onClick={() => setLightbox(null)}>
                 Close
               </button>
-              <button
-                type="button"
-                className={`btn ${confirmRemoveId === lightbox.id ? '!bg-[#d7263d] !text-white' : ''}`}
-                onClick={() => void removePhoto(lightbox.id)}
-              >
-                {confirmRemoveId === lightbox.id ? 'Tap again to remove' : 'Remove photo'}
+              <button type="button" className="btn" onClick={() => void removePhoto(lightbox.id)}>
+                Remove photo
               </button>
             </div>
           </div>
