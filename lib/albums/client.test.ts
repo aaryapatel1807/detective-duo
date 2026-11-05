@@ -3,6 +3,7 @@ import {
   ALBUM_UPLOAD_PASSTHROUGH_BYTES,
   AlbumsKeyError,
   AlbumsNotConfiguredError,
+  deleteAlbumPhoto,
   faceLabel,
   fetchAlbumPhotos,
   fetchAlbumSummary,
@@ -69,6 +70,15 @@ describe('album client', () => {
     const result = await uploadAlbumPhoto('KEY1', 'Sachi', file);
     expect(result.id).toBe('2');
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    vi.unstubAllGlobals();
+  });
+  it('deletes a photo with the key as a header and the id in the URL', async () => {
+    const fetchMock = mockFetchOnce(200, { ok: true });
+    await deleteAlbumPhoto('KEY1', 'photo-9');
+    const [url, init] = (fetchMock as ReturnType<typeof vi.fn>).mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/api/albums/photos?id=photo-9');
+    expect(init.method).toBe('DELETE');
+    expect((init.headers as Record<string, string>)['x-album-key']).toBe('KEY1');
     vi.unstubAllGlobals();
   });
   it('labels face counts for the UI', () => {

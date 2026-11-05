@@ -128,6 +128,29 @@ export async function resetStuckPhotos(sb: SupabaseClient, roomCode: string): Pr
   return (failed.data ?? []).length + (stuck.data ?? []).length;
 }
 
+/**
+ * Remove one photo completely: its stored files plus its table row.
+ * Room-scoped, so a photo from another room can never be removed
+ * through this path. Returns false when no such photo exists in
+ * this room. A missing stored file does not block the row delete —
+ * the photo is gone either way.
+ */
+export async function deletePhoto(sb: SupabaseClient, roomCode: string, id: string): Promise<boolean> {
+  const { data: row, error: rowError } = await sb
+    .from(ALBUM_TABLE)
+    .select('storage_path,thumb_path')
+    .eq('id', id)
+    .eq('room_code', roomCode)
+    .single();
+  if (rowError || !row) return false;
+  await sb.storage
+    .from(ALBUM_BUCKET)
+    .remove([(row as { storage_path: string }).storage_path, (row as { thumb_path: string }).thumb_path]);
+  const { error } = await sb.from(ALBUM_TABLE).delete().eq('id', id).eq('room_code', roomCode);
+  if (error) throw new Error(`delete failed: ${error.message}`);
+  return true;
+}
+
 export async function listRoomPhotos(sb: SupabaseClient, roomCode: string, cap = 2000): Promise<AlbumPhotoRow[]> {
   const { data, error } = await sb
     .from(ALBUM_TABLE)

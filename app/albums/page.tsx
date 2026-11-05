@@ -8,6 +8,7 @@ import {
   AlbumsKeyError,
   AlbumsNotConfiguredError,
   faceLabel,
+  deleteAlbumPhoto,
   fetchAlbumPhotos,
   fetchAlbumSummary,
   processAlbumsOnce,
@@ -44,6 +45,11 @@ export default function AlbumsPage() {
   const [month, setMonth] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<AlbumPhotoOut | null>(null);
   const [uploads, setUploads] = useState<UploadState[]>([]);
+  // Photos picked from this device but not saved yet: choosing files
+  // only stages them, so only the ones still here when Upload is
+  // tapped ever reach the album.
+  const [staged, setStaged] = useState<{ file: File; url: string; name: string }[]>([]);
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
   const [classifyProgress, setClassifyProgress] = useState<{ done: number; total: number } | null>(null);
   const [classifyStuck, setClassifyStuck] = useState(false);
   const [classifyError, setClassifyError] = useState<string | null>(null);
@@ -264,9 +270,30 @@ export default function AlbumsPage() {
     setPhotos([]);
   };
 
-  const onUploadFiles = async (files: FileList | null) => {
-    if (!files || !albumKey) return;
-    const list = [...files].filter((f) => f.type.startsWith('image/'));
+  // Choosing files only stages them for review — nothing is saved
+  // until Upload is tapped, so only the photos still staged then
+  // reach the album.
+  const stageFiles = (files: FileList | null) => {
+    if (!files) return;
+    const fresh = [...files]
+      .filter((f) => f.type.startsWith('image/'))
+      .map((f) => ({ file: f, url: URL.createObjectURL(f), name: f.name }));
+    if (fresh.length > 0) setStaged((prev) => [...prev, ...fresh]);
+  };
+
+  const removeStaged = (name: string) => {
+    setStaged((prev) => {
+      const kept = prev.filter((s) => s.name !== name);
+      prev
+        .filter((s) => s.name === name)
+        .forEach((s) => URL.revokeObjectURL(s.url));
+      return kept;
+    });
+  };
+
+  const onUploadFiles = async (files: File[]) => {
+    if (!albumKey) return;
+    const list = files.filter((f) => f.type.startsWith('image/'));
     if (list.length === 0) return;
     setUploads(list.map((f) => ({ name: f.name, state: 'uploading' as const, detail: 'Uploading…' })));
     setClassifyProgress(null);
@@ -309,6 +336,36 @@ export default function AlbumsPage() {
     }
   };
 
+  const uploadStaged = async () => {
+    if (staged.length === 0) return;
+    const files = staged.map((s) => s.file);
+    staged.forEach((s) => URL.revokeObjectURL(s.url));
+    setStaged([]);
+    await onUploadFiles(files);
+  };
+
+  // Remove a saved photo for good. Two taps: the first arms the
+  // button ("Remove?"), the second deletes it from storage and the
+  // album, then refreshes the view.
+  const removePhoto = async (id: string) => {
+    if (!albumKey) return;
+    if (confirmRemoveId !== id) {
+      setConfirmRemoveId(id);
+      return;
+    }
+    setConfirmRemoveId(null);
+    try {
+      await deleteAlbumPhoto(albumKey, id);
+    } catch {
+      setNotice('Could not remove that photo — try again.');
+      return;
+    }
+    if (lightbox?.id === id) setLightbox(null);
+    setPhotos((prev) => prev.filter((p) => p.id !== id));
+    setTotal((t) => Math.max(0, t - 1));
+    void load(albumKey, album, month);
+  };
+
   // Reset failed/stuck photos and classify them again. Covers both
   // 'failed' rows and 'pending' rows that burned all their claims.
   const retryClassify = async () => {
@@ -344,7 +401,7 @@ export default function AlbumsPage() {
           <h2 className="text-lg font-bold">One secret key</h2>
           <p className="mt-1 text-sm text-[var(--ink-dim)]">
             This album belongs to two people only. Enter the secret key you share —
-            nothing else opens it. Photos uploaded here stay here permanently.
+            nothing else opens it. Photos you save stay here until you remove them.
           </p>
           <label className="mt-4 flex flex-col gap-1 text-sm font-semibold">
             Your name
@@ -394,7 +451,8 @@ export default function AlbumsPage() {
           <section className="panel mt-4 p-5">
             <h2 className="text-lg font-bold">Add photos</h2>
             <p className="mt-1 text-sm text-[var(--ink-dim)]">
-              From your phone or computer. They get compressed, dated, and sorted automatically.
+              From your phone or computer. Pick some to review first — only the ones you keep get saved.
+              They get compressed, dated, and sorted automatically.
             </p>
             <input
               ref={fileRef}
@@ -404,13 +462,54 @@ export default function AlbumsPage() {
               className="hidden"
               aria-label="Choose photos"
               onChange={(e) => {
-                void onUploadFiles(e.target.files);
+                stageFiles(e.target.files);
                 e.target.value = '';
               }}
             />
             <button type="button" className="btn btn-primary mt-3" onClick={() => fileRef.current?.click()}>
               <Upload size={18} aria-hidden /> Choose photos
             </button>
+            {staged.length > 0 && (
+              <div className="mt-4">
+                <p className="text-sm font-semibold">
+                  {staged.length} photo{staged.length === 1 ? '' : 's'} picked — remove any you don’t want, then save the rest.
+                </p>
+                <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                  {staged.map((s) => (
+                    <div key={s.name} className="relative overflow-hidden rounded-xl">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={s.url} alt={s.name} className="aspect-square w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeStaged(s.name)}
+                        aria-label={`Remove ${s.name} from this upload`}
+                        className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-sm font-bold text-white"
+                      >
+                        ✕
+                      </button>
+                      <span className="absolute bottom-1 left-1 max-w-[90%] truncate text-xs font-semibold text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+                        {s.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" className="btn btn-primary" onClick={() => void uploadStaged()}>
+                    Upload {staged.length} photo{staged.length === 1 ? '' : 's'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => {
+                      staged.forEach((s) => URL.revokeObjectURL(s.url));
+                      setStaged([]);
+                    }}
+                  >
+                    Clear all
+                  </button>
+                </div>
+              </div>
+            )}
             {uploads.length > 0 && (
               <ul className="mt-3 space-y-1">
                 {uploads.map((u) => (
@@ -502,16 +601,28 @@ export default function AlbumsPage() {
                   </p>
                   <div className="album-grid mt-3">
                     {photos.map((p) => (
-                      <button key={p.id} type="button" onClick={() => setLightbox(p)} aria-label={`Open photo by ${p.uploader}`}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={p.thumbUrl} alt="" loading="lazy" className="album-thumb" />
-                        <span className="mt-1 block text-left text-xs text-[var(--ink-dim)]">
-                          {formatDate(p.takenAt ?? p.createdAt) || 'Unknown date'} ·{' '}
-                          {p.status === 'failed'
-                            ? 'Couldn’t sort — tap Retry classification above'
-                            : faceLabel(p.faceCount)}
-                        </span>
-                      </button>
+                      <div key={p.id} className="relative">
+                        <button type="button" onClick={() => setLightbox(p)} aria-label={`Open photo by ${p.uploader}`}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={p.thumbUrl} alt="" loading="lazy" className="album-thumb" />
+                          <span className="mt-1 block text-left text-xs text-[var(--ink-dim)]">
+                            {formatDate(p.takenAt ?? p.createdAt) || 'Unknown date'} ·{' '}
+                            {p.status === 'failed'
+                              ? 'Couldn’t sort — tap Retry classification above'
+                              : faceLabel(p.faceCount)}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void removePhoto(p.id)}
+                          aria-label={confirmRemoveId === p.id ? 'Tap again to remove this photo' : 'Remove this photo from the album'}
+                          className={`absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold ${
+                            confirmRemoveId === p.id ? 'bg-[#d7263d] text-white' : 'bg-black/70 text-white'
+                          }`}
+                        >
+                          {confirmRemoveId === p.id ? '?' : '✕'}
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </>
@@ -546,9 +657,18 @@ export default function AlbumsPage() {
               <span className="chip">by {lightbox.uploader}</span>
               {lightbox.takenAt && <span className="chip">{formatDate(lightbox.takenAt)}</span>}
             </div>
-            <button type="button" className="btn mt-4" onClick={() => setLightbox(null)}>
-              Close
-            </button>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button type="button" className="btn" onClick={() => setLightbox(null)}>
+                Close
+              </button>
+              <button
+                type="button"
+                className={`btn ${confirmRemoveId === lightbox.id ? '!bg-[#d7263d] !text-white' : ''}`}
+                onClick={() => void removePhoto(lightbox.id)}
+              >
+                {confirmRemoveId === lightbox.id ? 'Tap again to remove' : 'Remove photo'}
+              </button>
+            </div>
           </div>
         </div>
       )}

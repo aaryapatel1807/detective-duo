@@ -291,6 +291,15 @@ export async function runAlbumProcess(key?: string): Promise<void> {
   }
 }
 
+/** Remove one saved photo for good (stored files + record). */
+export async function deleteAlbumPhoto(key: string, id: string): Promise<void> {
+  const res = await fetch(`/api/albums/photos?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { 'x-album-key': key },
+  });
+  await throwIfBad(res);
+}
+
 /** Reset failed/stuck photos to pending so they can be classified again. */
 export async function retryAlbums(key: string): Promise<{ reset: number }> {
   const res = await fetch('/api/albums/retry', {

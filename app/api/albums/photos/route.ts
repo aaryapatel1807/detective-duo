@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ALBUMS, photoInAlbum, photoMonth } from '@/lib/albums/albums';
 import { SHARED_ALBUM_ROOM, albumKeyFromRequest, checkAlbumKey } from '@/lib/albums/auth';
-import { getServiceClient, listRoomPhotos, signUrl } from '@/lib/albums/store';
+import { deletePhoto, getServiceClient, listRoomPhotos, signUrl } from '@/lib/albums/store';
 import type { AlbumId } from '@/lib/albums/types';
 
 export const runtime = 'nodejs';
@@ -69,4 +69,33 @@ export async function GET(request: Request) {
     }
   }
   return NextResponse.json({ photos, total: filtered.length, limit, offset });
+}
+
+/**
+ * DELETE /api/albums/photos?id=<uuid> — remove one photo for good:
+ * its stored files and its table row. Same shared key as the rest
+ * of the album routes; the row must belong to the shared room.
+ */
+export async function DELETE(request: Request) {
+  const sb = getServiceClient();
+  if (!sb) {
+    return NextResponse.json({ error: 'albums are not configured yet' }, { status: 503 });
+  }
+  const auth = checkAlbumKey(albumKeyFromRequest(request));
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+  const id = new URL(request.url).searchParams.get('id');
+  if (!id) {
+    return NextResponse.json({ error: 'id is required' }, { status: 400 });
+  }
+  try {
+    const removed = await deletePhoto(sb, SHARED_ALBUM_ROOM, id);
+    if (!removed) {
+      return NextResponse.json({ error: 'photo not found' }, { status: 404 });
+    }
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'delete failed' }, { status: 500 });
+  }
 }
