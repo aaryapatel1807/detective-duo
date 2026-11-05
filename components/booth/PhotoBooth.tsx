@@ -454,23 +454,27 @@ function TemplateCard({
 type Phase = 'idle' | 'countdown' | 'review' | 'done';
 
 /**
- * Live filter grid: every tile plays the real camera feed with its
- * own filter applied, so you see all the looks side by side instead
- * of guessing from a swatch. All tiles share the one camera stream
- * (no extra getUserMedia calls); without a camera they fall back to
- * a gradient swatch wearing the same filter.
+ * Filter grid: every tile shows the camera feed with its own filter
+ * applied, so you see all the looks side by side instead of guessing
+ * from a swatch. The tiles show a still frame, refreshed every
+ * couple of seconds from the one camera stream — they used to each
+ * play their own live <video>, which meant 40 simultaneous decoders
+ * of a 1080p stream and the whole booth lagged badly (Nov 2026).
+ * Without a camera they fall back to a gradient swatch wearing the
+ * same filter.
  */
 function FilterGrid({
   selected,
   onSelect,
-  stream,
+  frame,
   mirror,
   columns,
   row,
 }: {
   selected: string;
   onSelect: (id: string) => void;
-  stream: MediaStream | null;
+  /** Still frame of the camera feed (data URL), refreshed by the parent. */
+  frame: string | null;
   mirror: boolean;
   columns: string;
   /**
@@ -501,20 +505,14 @@ function FilterGrid({
               row ? 'w-20 shrink-0 sm:w-24' : ''
             } ${active ? 'booth-tile-active border-[#ffc83d]' : 'border-transparent'}`}
           >
-            {stream ? (
-              <video
-                ref={(v) => {
-                  if (v && v.srcObject !== stream) {
-                    v.srcObject = stream;
-                    void v.play().catch(() => {});
-                  }
-                }}
-                autoPlay
-                playsInline
-                muted
+            {frame ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={frame}
+                alt=""
+                aria-hidden
                 className="h-full w-full object-cover"
                 style={{ transform: mirror ? 'scaleX(-1)' : undefined, filter: f.css || undefined }}
-                aria-hidden
               />
             ) : (
               <span
@@ -615,6 +613,34 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
   const [mirror, setMirror] = useState(false);
   // The one camera stream, shared with the live filter tiles.
   const [tileStream, setTileStream] = useState<MediaStream | null>(null);
+  // One still frame of the camera feed for all filter tiles, refreshed
+  // every 2s (see the FilterGrid note). 160px is plenty for the tiles.
+  const [tileFrame, setTileFrame] = useState<string | null>(null);
+  const tileCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    if (!tileStream) {
+      setTileFrame(null);
+      return;
+    }
+    const snap = () => {
+      const video = videoRef.current;
+      if (!video || !video.videoWidth) return;
+      const canvas = (tileCanvasRef.current ??= document.createElement('canvas'));
+      canvas.width = 160;
+      canvas.height = 160;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      drawCover(ctx, video, 0, 0, 160, 160);
+      setTileFrame(canvas.toDataURL('image/jpeg', 0.7));
+    };
+    const soon = setTimeout(snap, 400);
+    const every = setInterval(snap, 2000);
+    return () => {
+      clearTimeout(soon);
+      clearInterval(every);
+    };
+  }, [tileStream]);
   const [duoTurns, setDuoTurns] = useState(false);
   const [playerA, setPlayerA] = useState('You');
   const [playerB, setPlayerB] = useState('Partner');
@@ -1522,7 +1548,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
             <FilterGrid
               selected={filterId}
               onSelect={setFilterId}
-              stream={tileStream}
+              frame={tileFrame}
               mirror={mirror}
               columns="grid-cols-5"
               row
@@ -1717,7 +1743,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
             <FilterGrid
               selected={filterId}
               onSelect={setFilterId}
-              stream={tileStream}
+              frame={tileFrame}
               mirror={mirror}
               columns="grid-cols-5"
             />
