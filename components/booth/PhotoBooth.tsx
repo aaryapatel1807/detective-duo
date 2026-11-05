@@ -719,9 +719,13 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
     try {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       const stream = await navigator.mediaDevices.getUserMedia({
+        // Ask for full HD: `ideal` is a preference, never a demand,
+        // so a camera that tops out lower still works — it just
+        // gives the best it has. The old 1280×720 request capped
+        // every shot below what most phone cameras can do.
         video: deviceId
-          ? { deviceId: { exact: deviceId } }
-          : { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+          ? { deviceId: { exact: deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+          : { width: { ideal: 1920 }, height: { ideal: 1080 }, facingMode: 'user' },
         audio: false,
       });
       if (gen !== cameraGenRef.current) {
@@ -816,7 +820,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
 
   // ------------------------------------------------------------ capture ----
   const refreshShotUrls = useCallback(() => {
-    setShotUrls(shotsRef.current.map((c) => c.toDataURL('image/jpeg', 0.8)));
+    setShotUrls(shotsRef.current.map((c) => c.toDataURL('image/jpeg', 0.92)));
   }, []);
 
   const captureShot = useCallback(
@@ -1525,7 +1529,7 @@ export default function PhotoBooth({ roomCode }: { roomCode?: string }) {
             />
           </div>
           <div className="order-1 flex min-w-0 flex-1 flex-col items-center">
-            <div className="relative z-[41] mx-auto w-full max-w-[480px] overflow-hidden rounded-xl bg-black">
+            <div className="relative z-[41] mx-auto w-full max-w-[640px] overflow-hidden rounded-xl bg-black">
               <video
                 ref={(node) => {
                   videoRef.current = node;

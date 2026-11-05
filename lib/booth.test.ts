@@ -222,10 +222,10 @@ describe('photo booth pose packs', () => {
 });
 
 describe('booth filters', () => {
-  it('ships the original 10 plus the 12 researched cute looks plus 12 social-app looks', () => {
-    expect(BOOTH_FILTERS.length).toBe(34);
-    expect(new Set(BOOTH_FILTERS.map((f) => f.id)).size).toBe(34);
-    for (const id of ['clarendon', 'juno', 'lark', 'gingham', 'valencia', 'xpro2', 'lofi', 'aden', 'ludwig', 'perpetua', 'butterfly-dream', 'party-pop']) {
+  it('ships the original 10 plus the 12 researched cute looks plus 12 social-app looks plus 6 digicam looks', () => {
+    expect(BOOTH_FILTERS.length).toBe(40);
+    expect(new Set(BOOTH_FILTERS.map((f) => f.id)).size).toBe(40);
+    for (const id of ['clarendon', 'juno', 'lark', 'gingham', 'valencia', 'xpro2', 'lofi', 'aden', 'ludwig', 'perpetua', 'butterfly-dream', 'party-pop', 'digicam-flash', 'ccd-warm', 'y2k-pop', 'night-flash', 'disposable', 'soft-2000s']) {
       expect(BOOTH_FILTERS.map((f) => f.id)).toContain(id);
     }
     for (const f of BOOTH_FILTERS) {

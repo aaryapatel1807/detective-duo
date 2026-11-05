@@ -924,6 +924,71 @@ export const BOOTH_FILTERS: BoothFilter[] = [
     ],
     note: 'Snapchat-style: vivid, glowing, party-bright.',
   },
+  // Digicam set, added Nov 2026 — early-2000s point-and-shoot looks
+  // (direct flash, CCD colour, grain), built from this file's own
+  // CSS/overlay system as original grades. They live in the same
+  // filter tray as everything else, so they work in every layout —
+  // Polaroid included, where a single big flash-lit shot is the
+  // whole point: pick a layout, pick a digicam look, shoot.
+  {
+    id: 'digicam-flash',
+    name: 'Digicam Flash',
+    css: 'brightness(1.18) contrast(1.25) saturate(1.15)',
+    overlays: [
+      { kind: 'glow', color: '#ffffff', alpha: 0.18, blend: 'screen' },
+      { kind: 'vignette', color: '#000000', alpha: 0.22, blend: 'multiply' },
+      { kind: 'grain', alpha: 0.07 },
+    ],
+    note: 'Harsh direct flash, bright centre, dark edges.',
+  },
+  {
+    id: 'ccd-warm',
+    name: 'CCD Warm',
+    css: 'brightness(1.04) contrast(0.96) saturate(0.88) sepia(0.18)',
+    overlays: [
+      { kind: 'tint', color: '#d9a066', alpha: 0.12, blend: 'soft-light' },
+      { kind: 'grain', alpha: 0.09 },
+    ],
+    note: 'Early-2000s CCD sensor: warm, muted, grainy.',
+  },
+  {
+    id: 'y2k-pop',
+    name: 'Y2K Pop',
+    css: 'brightness(1.08) contrast(1.20) saturate(1.35) hue-rotate(5deg)',
+    overlays: [{ kind: 'gradient', colors: ['#c8dce8', '#e8f2f5'], alpha: 0.12, blend: 'soft-light' }],
+    note: 'Cool, punchy, flash-bright.',
+  },
+  {
+    id: 'night-flash',
+    name: 'Night Flash',
+    css: 'brightness(1.06) contrast(1.35) saturate(1.10)',
+    overlays: [
+      { kind: 'vignette', color: '#000000', alpha: 0.35, blend: 'multiply' },
+      { kind: 'grain', alpha: 0.08 },
+    ],
+    note: 'Flash-lit subject, dark background. High contrast: check on brown skin.',
+  },
+  {
+    id: 'disposable',
+    name: 'Disposable Cam',
+    css: 'brightness(1.06) contrast(0.92) saturate(0.90) sepia(0.12)',
+    overlays: [
+      { kind: 'gradient', colors: ['#ffb37a', '#ff8fb3'], alpha: 0.14, blend: 'soft-light' },
+      { kind: 'grain', alpha: 0.1 },
+      { kind: 'vignette', color: '#000000', alpha: 0.15, blend: 'multiply' },
+    ],
+    note: 'Grainy drugstore disposable + light leak.',
+  },
+  {
+    id: 'soft-2000s',
+    name: '2000s Soft',
+    css: 'brightness(1.12) contrast(0.88) saturate(0.90) hue-rotate(-5deg)',
+    overlays: [
+      { kind: 'tint', color: '#ffffff', alpha: 0.1, blend: 'screen' },
+      { kind: 'orton', alpha: 0.3, blur: 8 },
+    ],
+    note: 'Soft flash, dreamy, low contrast.',
+  },
 ];
 
 export function boothFilterById(id: string): BoothFilter {
