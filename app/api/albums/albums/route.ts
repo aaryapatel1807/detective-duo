@@ -8,8 +8,11 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/albums/albums — auto-album counts, timeline months, and
- * place-cluster count for the one shared album. Only 'ready' photos
- * are counted. Requires the x-album-key header (the one shared key).
+ * place-cluster count for the one shared album. Every photo counts
+ * in 'all' (including ones still sorting), so the counts match the
+ * grid; the sorted albums still only count classified photos, since
+ * photoInAlbum keeps unclassified ones out of them. Requires the
+ * x-album-key header (the one shared key).
  */
 export async function GET(request: Request) {
   const sb = getServiceClient();
@@ -20,7 +23,7 @@ export async function GET(request: Request) {
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
-  const rows = (await listRoomPhotos(sb, SHARED_ALBUM_ROOM)).filter((p) => p.status === 'ready');
+  const rows = await listRoomPhotos(sb, SHARED_ALBUM_ROOM);
   const albums = ALBUMS.map((a) => ({
     id: a.id,
     title: a.title,

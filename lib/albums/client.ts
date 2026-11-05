@@ -188,13 +188,17 @@ async function decodePhoto(file: File): Promise<ImageBitmap | HTMLImageElement> 
  * (shown as the Failed detail on the page) instead of uploading a
  * file that is guaranteed to fail server-side.
  */
-export async function compressPhotoForUpload(file: File): Promise<PreparedPhoto> {
+export async function compressPhotoForUpload(
+  file: File,
+  opts: { maxDimension?: number; quality?: number } = {},
+): Promise<PreparedPhoto> {
   const exif = await readOriginalExif(file);
   const heic = isHeicFile(file);
   if (!needsCompression(file)) return { file, ...exif };
   try {
     const bitmap = await decodePhoto(file);
-    const scale = Math.min(1, ALBUM_UPLOAD_MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
+    const maxDimension = opts.maxDimension ?? ALBUM_UPLOAD_MAX_DIMENSION;
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
     const w = Math.max(1, Math.round(bitmap.width * scale));
     const h = Math.max(1, Math.round(bitmap.height * scale));
     const canvas = document.createElement('canvas');
@@ -206,7 +210,9 @@ export async function compressPhotoForUpload(file: File): Promise<PreparedPhoto>
       return { file, ...exif };
     }
     ctx.drawImage(bitmap, 0, 0, w, h);
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.82));
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, 'image/jpeg', opts.quality ?? 0.82),
+    );
     if (!blob) {
       if (heic) throw new Error('heic-unreadable');
       return { file, ...exif };
@@ -225,21 +231,32 @@ export async function compressPhotoForUpload(file: File): Promise<PreparedPhoto>
 }
 
 export async function uploadAlbumPhoto(key: string, uploader: string, file: File): Promise<UploadResult> {
-  const photo = await compressPhotoForUpload(file);
-  const form = new FormData();
-  form.set('key', key);
-  form.set('uploader', uploader);
-  form.set('file', photo.file);
-  if (photo.takenAt) form.set('takenAt', photo.takenAt);
-  if (photo.lat !== null) form.set('lat', String(photo.lat));
-  if (photo.lon !== null) form.set('lon', String(photo.lon));
-  const res = await fetch('/api/albums/upload', {
-    method: 'POST',
-    headers: { 'x-album-key': key },
-    body: form,
-  });
-  await throwIfBad(res);
-  return (await res.json()) as UploadResult;
+  const post = async (photo: PreparedPhoto): Promise<UploadResult> => {
+    const form = new FormData();
+    form.set('key', key);
+    form.set('uploader', uploader);
+    form.set('file', photo.file);
+    if (photo.takenAt) form.set('takenAt', photo.takenAt);
+    if (photo.lat !== null) form.set('lat', String(photo.lat));
+    if (photo.lon !== null) form.set('lon', String(photo.lon));
+    const res = await fetch('/api/albums/upload', {
+      method: 'POST',
+      headers: { 'x-album-key': key },
+      body: form,
+    });
+    await throwIfBad(res);
+    return (await res.json()) as UploadResult;
+  };
+  try {
+    return await post(await compressPhotoForUpload(file));
+  } catch (e) {
+    // A HEIC this browser cannot read will never succeed — do not
+    // retry it. Anything else gets one retry at a much smaller size:
+    // flaky mobile networks and oversize bodies are the usual
+    // killers, and a 1024px JPEG is a fraction of the first try.
+    if (e instanceof Error && e.message.startsWith('This photo is an iPhone HEIC')) throw e;
+    return await post(await compressPhotoForUpload(file, { maxDimension: 1024, quality: 0.7 }));
+  }
 }
 
 export interface ProcessResult {

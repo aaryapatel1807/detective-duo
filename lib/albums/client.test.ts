@@ -60,6 +60,17 @@ describe('album client', () => {
     expect((form.get('file') as File).name).toBe('photo.jpg');
     vi.unstubAllGlobals();
   });
+  it('retries a failed upload once at a smaller size', async () => {
+    const fail = { ok: false, status: 500, json: async () => ({ error: 'boom' }) };
+    const ok = { ok: true, status: 200, json: async () => ({ id: '2', status: 'pending', faceCount: null, sceneTags: [], takenAt: null }) };
+    const fetchMock = vi.fn().mockResolvedValueOnce(fail).mockResolvedValueOnce(ok);
+    vi.stubGlobal('fetch', fetchMock);
+    const file = new File(['x'], 'photo.jpg', { type: 'image/jpeg' });
+    const result = await uploadAlbumPhoto('KEY1', 'Sachi', file);
+    expect(result.id).toBe('2');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    vi.unstubAllGlobals();
+  });
   it('labels face counts for the UI', () => {
     expect(faceLabel(null)).toBe('Classifying…');
     expect(faceLabel(0)).toBe('No faces');

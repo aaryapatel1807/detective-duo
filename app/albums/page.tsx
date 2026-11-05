@@ -506,7 +506,10 @@ export default function AlbumsPage() {
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={p.thumbUrl} alt="" loading="lazy" className="album-thumb" />
                         <span className="mt-1 block text-left text-xs text-[var(--ink-dim)]">
-                          {formatDate(p.takenAt ?? p.createdAt) || 'Unknown date'} · {faceLabel(p.faceCount)}
+                          {formatDate(p.takenAt ?? p.createdAt) || 'Unknown date'} ·{' '}
+                          {p.status === 'failed'
+                            ? 'Couldn’t sort — tap Retry classification above'
+                            : faceLabel(p.faceCount)}
                         </span>
                       </button>
                     ))}
@@ -530,7 +533,11 @@ export default function AlbumsPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={lightbox.fullUrl} alt={`Photo by ${lightbox.uploader}`} />
             <div className="mt-3 flex flex-wrap gap-2">
-              <span className="chip">{faceLabel(lightbox.faceCount)}</span>
+              {lightbox.status === 'failed' ? (
+                <span className="chip">Couldn’t sort — tap Retry classification</span>
+              ) : (
+                <span className="chip">{faceLabel(lightbox.faceCount)}</span>
+              )}
               {lightbox.sceneTags.map((t) => (
                 <span key={t} className="chip">
                   {t}

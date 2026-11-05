@@ -10,8 +10,13 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/albums/photos?album=all&month=YYYY-MM&limit=50&offset=0
  * Lists the shared album's photos with signed thumbnail + full URLs
- * (1 hour). Only 'ready' photos are listed; pending ones appear once
- * classified. Requires the x-album-key header (the one shared key).
+ * (1 hour). Every status is listed: a photo shows up the moment it
+ * is uploaded (pending, "Sorting…") instead of only after
+ * classification — the old ready-only list made any classification
+ * hiccup look like the upload itself had failed. Unclassified
+ * photos only pass the 'all' album (photoInAlbum keeps them out of
+ * the sorted albums until their faces/tags are known). Requires the
+ * x-album-key header (the one shared key).
  */
 export async function GET(request: Request) {
   const sb = getServiceClient();
@@ -35,7 +40,6 @@ export async function GET(request: Request) {
   const offset = Math.max(0, parseInt(params.get('offset') ?? '0', 10) || 0);
   const rows = await listRoomPhotos(sb, SHARED_ALBUM_ROOM);
   const filtered = rows
-    .filter((p) => p.status === 'ready')
     .filter((p) => photoInAlbum(p, album))
     .filter((p) => month === null || photoMonth(p) === month)
     .sort((a, b) => {
